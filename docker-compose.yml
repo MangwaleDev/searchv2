@@ -48,8 +48,8 @@ services:
       nofile:
         soft: 65536
         hard: 65536
-    ports:
-      - "9200:9200"
+    # ports:
+    #   - "9200:9200"  # Uncomment for local debugging
     volumes:
       - opensearch-data:/usr/share/opensearch/data
     networks:
@@ -84,7 +84,7 @@ services:
     container_name: search-mysql
     environment:
       MYSQL_DATABASE: ${MYSQL_DATABASE:-mangwale}
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-secret}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-${MYSQL_PASSWORD:-changeme_strong_password}}
     # ports:
     #   - "3306:3306"
     command: 
@@ -100,7 +100,7 @@ services:
       - search-network
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD:-secret}"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD:-${MYSQL_PASSWORD:-changeme_strong_password}}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -108,8 +108,8 @@ services:
   search-redis:
     image: redis:7.2-alpine
     container_name: search-redis
-    ports:
-      - "6379:6379"
+    # ports:
+    #   - "6379:6379"  # Uncomment for local debugging
     volumes:
       - redis-data:/data
     networks:
