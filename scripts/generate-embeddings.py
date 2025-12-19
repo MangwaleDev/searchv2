@@ -136,6 +136,20 @@ class EmbeddingGenerator:
             if "veg" in doc_with_vector and isinstance(doc_with_vector["veg"], int):
                 doc_with_vector["veg"] = bool(doc_with_vector["veg"])
             
+            # Fix images field - convert object to string or remove if invalid
+            if "images" in doc_with_vector:
+                images_val = doc_with_vector["images"]
+                if isinstance(images_val, dict):
+                    # Convert dict to string (e.g., {"img": "file.png"} -> "file.png")
+                    doc_with_vector["images"] = images_val.get("img", "") if images_val else ""
+                elif not isinstance(images_val, str):
+                    doc_with_vector["images"] = str(images_val) if images_val else ""
+            
+            # Fix image field similarly
+            if "image" in doc_with_vector and isinstance(doc_with_vector["image"], dict):
+                image_val = doc_with_vector["image"]
+                doc_with_vector["image"] = image_val.get("img", "") if image_val else ""
+            
             bulk_body.append(json.dumps(doc_with_vector))
         
         # Send bulk request

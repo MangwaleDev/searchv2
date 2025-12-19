@@ -223,8 +223,8 @@ services:
       context: .
       dockerfile: Dockerfile.embedding
     container_name: search-embedding-service
-    # ports:
-    #   - "3101:3101"
+    ports:
+      - "3101:3101"  # Expose for local reindexing scripts
     networks:
       - search-network
     restart: unless-stopped
