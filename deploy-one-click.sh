@@ -33,6 +33,7 @@ preflight_checks() {
     # Docker
     if ! command -v docker &> /dev/null; then
         print_error "Docker not installed. Please install Docker first."
+        print_info "Install with: curl -fsSL https://get.docker.com | sh"
         exit 1
     fi
     print_success "Docker installed"
@@ -40,6 +41,7 @@ preflight_checks() {
     # Docker Compose
     if ! command -v docker-compose &> /dev/null && ! docker compose version &> /dev/null; then
         print_error "Docker Compose not installed."
+        print_info "Install with: sudo apt-get install docker-compose-plugin"
         exit 1
     fi
     print_success "Docker Compose installed"
@@ -47,9 +49,30 @@ preflight_checks() {
     # Check Docker daemon
     if ! docker info &> /dev/null; then
         print_error "Docker daemon not running. Please start Docker."
+        print_info "Start with: sudo systemctl start docker"
         exit 1
     fi
     print_success "Docker daemon running"
+    
+    # Check curl
+    if ! command -v curl &> /dev/null; then
+        print_warning "curl not found. Installing..."
+        sudo apt-get update && sudo apt-get install -y curl || true
+    fi
+    print_success "curl available"
+    
+    # Check jq (optional but useful)
+    if ! command -v jq &> /dev/null; then
+        print_warning "jq not found. Installing..."
+        sudo apt-get update && sudo apt-get install -y jq || true
+    fi
+    
+    # Check git
+    if ! command -v git &> /dev/null; then
+        print_warning "git not found. Installing..."
+        sudo apt-get update && sudo apt-get install -y git || true
+    fi
+    print_success "git available"
     
     # Disk space
     AVAILABLE_SPACE=$(df -BG . | tail -1 | awk '{print $4}' | sed 's/G//')
@@ -66,6 +89,27 @@ preflight_checks() {
     else
         print_success "Memory: ${AVAILABLE_MEM}GB available"
     fi
+    
+    # Check if ports are available
+    check_port() {
+        local port=$1
+        if command -v lsof &> /dev/null; then
+            if lsof -i :$port &> /dev/null; then
+                print_warning "Port $port is in use"
+                return 1
+            fi
+        elif command -v netstat &> /dev/null; then
+            if netstat -tuln | grep -q ":$port "; then
+                print_warning "Port $port is in use"
+                return 1
+            fi
+        fi
+        return 0
+    }
+    
+    check_port 80 && print_success "Port 80 available"
+    check_port 443 && print_success "Port 443 available"
+    check_port 8081 && print_success "Port 8081 available"
 }
 
 ###############################################################################
@@ -87,13 +131,30 @@ setup_environment() {
     source .env
     set +a
     
-    # Set defaults if not specified
-    DOMAIN=${DOMAIN:-search.test.mangwale.ai}
+    # Ask for domain
+    echo ""
+    print_info "Current domain: ${DOMAIN:-search.test.mangwale.ai}"
+    read -p "Enter domain (press Enter to keep current): " INPUT_DOMAIN
+    
+    if [ -n "$INPUT_DOMAIN" ]; then
+        DOMAIN="$INPUT_DOMAIN"
+        # Update .env file with new domain
+        if grep -q "^DOMAIN=" .env; then
+            sed -i "s|^DOMAIN=.*|DOMAIN=$DOMAIN|" .env
+        else
+            echo "DOMAIN=$DOMAIN" >> .env
+        fi
+        print_success "Domain updated to: $DOMAIN"
+    else
+        DOMAIN=${DOMAIN:-search.test.mangwale.ai}
+        print_info "Using domain: $DOMAIN"
+    fi
+    
+    # Set defaults
     HTTP_PORT=${HTTP_PORT:-80}
     HTTPS_PORT=${HTTPS_PORT:-443}
     
     print_success "Environment configured"
-    print_info "Domain: $DOMAIN"
 }
 
 ###############################################################################
