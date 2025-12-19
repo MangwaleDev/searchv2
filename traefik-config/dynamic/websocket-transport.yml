@@ -1,0 +1,7 @@
+http:
+  serversTransports:
+    websocket-transport:
+      forwardingTimeouts:
+        dialTimeout: 60s
+        responseHeaderTimeout: 0s
+        idleConnTimeout: 0s

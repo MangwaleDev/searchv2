@@ -41,9 +41,13 @@ docker-compose*.yml
 Dockerfile*
 .dockerignore
 
-# Scripts
-scripts/
+# Scripts (exclude most, keep embedding)
+# Note: embedding-service.py needs to be copied
 *.sh
+scripts/*.sh
+scripts/ai/
+scripts/*.js
+scripts/*.py
 !scripts/embedding-service.py
 
 # Test files
