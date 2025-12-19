@@ -66,7 +66,7 @@ echo -e "${GREEN}✓${NC} ecom_items: ${ECOM_COUNT} documents"
 echo ""
 
 # Create vector indices
-echo -e "${YELLOW}[3/6]${NC} Creating vector indices (v3 with 768-dim)..."
+echo -e "${YELLOW}[3/6]${NC} Creating vector indices (food: 768-dim, ecom: 384-dim)..."
 
 # Check if v3 indices already exist
 FOOD_V3_EXISTS=$(curl -s "${OPENSEARCH_URL}/food_items_v3" -o /dev/null -w '%{http_code}')
@@ -107,7 +107,7 @@ python3 scripts/generate-embeddings.py \
 echo ""
 
 # Generate embeddings for ecom
-echo -e "${YELLOW}[5/6]${NC} Generating embeddings for ecom items (768-dim)..."
+echo -e "${YELLOW}[5/6]${NC} Generating embeddings for ecom items (384-dim)..."
 echo "   This will take approximately $(( ECOM_COUNT / 40 )) seconds at 40 items/sec"
 echo ""
 
@@ -149,10 +149,12 @@ ECOM_DIMS=$(curl -s "${OPENSEARCH_URL}/ecom_items_v3/_search?size=1" | jq -r '.h
 echo "  food_items_v3: ${FOOD_DIMS} dimensions"
 echo "  ecom_items_v3: ${ECOM_DIMS} dimensions"
 
-if [ "$FOOD_DIMS" -eq 768 ] && [ "$ECOM_DIMS" -ge 384 ]; then
+if [ "$FOOD_DIMS" -eq 768 ] && [ "$ECOM_DIMS" -eq 384 ]; then
     echo -e "${GREEN}✓${NC} Vector dimensions are correct"
 else
     echo -e "${RED}❌ Unexpected vector dimensions${NC}"
+    echo "   Expected: food=768, ecom=384"
+    echo "   Got: food=${FOOD_DIMS}, ecom=${ECOM_DIMS}"
     exit 1
 fi
 

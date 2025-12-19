@@ -5,7 +5,8 @@
 OPENSEARCH_URL="http://localhost:9200"
 
 echo "🔧 Creating vector indices for semantic search..."
-echo "📦 Using 768-dimensional vectors (food: jonny9f/food_embeddings, ecom: all-mpnet-base-v2)"
+echo "📦 Food: 768-dim vectors (jonny9f/food_embeddings)"
+echo "📦 Ecom: 384-dim vectors (all-MiniLM-L6-v2)"
 echo ""
 
 # Food Items V3 (768 dimensions with food model)
@@ -90,8 +91,8 @@ curl -X PUT "${OPENSEARCH_URL}/food_items_v3" -H 'Content-Type: application/json
 }
 ' 2>&1 | grep -E 'acknowledged|error' && echo ""
 
-# Ecom Items V3 (768 dimensions with general model)
-echo "📦 Creating ecom_items_v3 index with 768-dim vectors..."
+# Ecom Items V3 (384 dimensions with general model)
+echo "📦 Creating ecom_items_v3 index with 384-dim vectors..."
 curl -X PUT "${OPENSEARCH_URL}/ecom_items_v3" -H 'Content-Type: application/json' -d'
 {
   "settings": {
@@ -116,7 +117,7 @@ curl -X PUT "${OPENSEARCH_URL}/ecom_items_v3" -H 'Content-Type: application/json
       "store_location": {"type": "geo_point"},
       "item_vector": {
         "type": "knn_vector",
-        "dimension": 768,
+        "dimension": 384,
         "method": {
           "name": "hnsw",
           "space_type": "cosinesimil",
