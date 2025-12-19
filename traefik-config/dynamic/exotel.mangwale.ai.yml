@@ -1,0 +1,92 @@
+# ==============================================================================
+# Exotel Voice API Routing - exotel.mangwale.ai
+# ==============================================================================
+# Routes Exotel callbacks and voice APIs to Mercury services
+# Mercury IP: 192.168.0.151
+# ==============================================================================
+
+http:
+  routers:
+    # HTTP to HTTPS redirect
+    exotel-redirect:
+      rule: Host(`exotel.mangwale.ai`)
+      entryPoints: [web]
+      service: noop@internal
+      middlewares: [exotel-redirect-https]
+
+    # Nerve System API - primary callback (new)
+    exotel-nerve:
+      rule: Host(`exotel.mangwale.ai`) && PathPrefix(`/api/nerve`)
+      entryPoints: [websecure]
+      tls:
+        certResolver: letsencrypt
+      service: nerve-service
+      priority: 100
+
+    # Legacy AI callback - route to Nerve (for existing IVR apps)
+    exotel-ai-callback:
+      rule: Host(`exotel.mangwale.ai`) && PathPrefix(`/api/voice/ai-callback`)
+      entryPoints: [websecure]
+      tls:
+        certResolver: letsencrypt
+      service: nerve-service
+      middlewares: [rewrite-ai-callback]
+      priority: 95
+
+    # Exotel JS Service - other voice endpoints
+    exotel-voice:
+      rule: Host(`exotel.mangwale.ai`) && PathPrefix(`/api/voice`)
+      entryPoints: [websecure]
+      tls:
+        certResolver: letsencrypt
+      service: exotel-js-service
+      priority: 85
+
+    # Exotel JS Service - AI endpoints
+    exotel-ai:
+      rule: Host(`exotel.mangwale.ai`) && PathPrefix(`/api/ai`)
+      entryPoints: [websecure]
+      tls:
+        certResolver: letsencrypt
+      service: exotel-js-service
+      priority: 80
+
+    # UI Dashboard
+    exotel-ui:
+      rule: Host(`exotel.mangwale.ai`)
+      entryPoints: [websecure]
+      tls:
+        certResolver: letsencrypt
+      service: exotel-ui
+      priority: 1
+
+  middlewares:
+    exotel-redirect-https:
+      redirectScheme:
+        scheme: https
+        permanent: true
+    
+    # Rewrite /api/voice/ai-callback to /api/nerve/callback
+    rewrite-ai-callback:
+      replacePathRegex:
+        regex: "^/api/voice/ai-callback(.*)"
+        replacement: "/api/nerve/callback$1"
+
+  services:
+    # Nerve System on Mercury - Port 7100
+    nerve-service:
+      loadBalancer:
+        servers:
+          - url: "http://192.168.0.151:7100"
+
+    # Exotel JS Service on Mercury - Port 3100
+    exotel-js-service:
+      loadBalancer:
+        servers:
+          - url: "http://192.168.0.151:3100"
+
+    # Exotel UI on Mercury - Port 3101
+    exotel-ui:
+      loadBalancer:
+        servers:
+          - url: "http://192.168.0.151:3101"

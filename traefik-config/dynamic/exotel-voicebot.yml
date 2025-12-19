@@ -1,0 +1,27 @@
+# ==============================================================
+# Exotel Voicebot WebSocket Routing
+# Routes WebSocket streaming to Mercury voice-streaming service
+# ==============================================================
+http:
+  routers:
+    exotel-voicebot-ws:
+      rule: Host(`exotel.mangwale.ai`) && PathPrefix(`/ws/voicebot`)
+      entryPoints: [websecure]
+      tls:
+        certResolver: letsencrypt
+      service: voice-streaming
+      priority: 120
+
+    exotel-voicebot-url:
+      rule: Host(`exotel.mangwale.ai`) && PathPrefix(`/ws-url`)
+      entryPoints: [websecure]
+      tls:
+        certResolver: letsencrypt
+      service: voice-streaming
+      priority: 115
+
+  services:
+    voice-streaming:
+      loadBalancer:
+        servers:
+          - url: "http://192.168.0.151:7200"

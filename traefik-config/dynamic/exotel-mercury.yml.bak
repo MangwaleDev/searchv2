@@ -1,0 +1,61 @@
+# Exotel Voice API - Routes to Mercury
+http:
+  routers:
+    exotel-nerve:
+      rule: "Host(`exotel.mangwale.ai`) && PathPrefix(`/api/nerve`)"
+      entryPoints:
+        - websecure
+      service: nerve-system
+      middlewares:
+        - nerve-strip-prefix
+      tls:
+        certResolver: letsencrypt
+      priority: 100
+
+    exotel-ai:
+      rule: "Host(`exotel.mangwale.ai`) && PathPrefix(`/api/ai`)"
+      entryPoints:
+        - websecure
+      service: mercury-exotel-js
+      tls:
+        certResolver: letsencrypt
+      priority: 50
+
+    exotel-mercury-secure:
+      rule: "Host(`exotel.mangwale.ai`)"
+      entryPoints:
+        - websecure
+      service: mercury-exotel-js
+      tls:
+        certResolver: letsencrypt
+      priority: 1
+    
+    exotel-mercury:
+      rule: "Host(`exotel.mangwale.ai`)"
+      entryPoints:
+        - web
+      middlewares:
+        - exotel-redirect-https
+      service: mercury-exotel-js
+
+  middlewares:
+    exotel-redirect-https:
+      redirectScheme:
+        scheme: https
+        permanent: true
+    
+    nerve-strip-prefix:
+      stripPrefix:
+        prefixes:
+          - "/api/nerve"
+
+  services:
+    nerve-system:
+      loadBalancer:
+        servers:
+          - url: "http://192.168.0.151:7100"
+
+    mercury-exotel-js:
+      loadBalancer:
+        servers:
+          - url: "http://192.168.0.151:3100"

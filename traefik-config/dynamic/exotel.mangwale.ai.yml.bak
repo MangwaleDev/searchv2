@@ -1,0 +1,61 @@
+# =============================================================================
+# Exotel Voice API Routing - exotel.mangwale.ai
+# =============================================================================
+# Routes Exotel callbacks to Mercury's Nerve System
+# Mercury IP: 192.168.0.151
+# Nerve System Port: 7100
+# =============================================================================
+
+http:
+  routers:
+    # HTTP to HTTPS redirect
+    exotel-redirect:
+      rule: Host(`exotel.mangwale.ai`)
+      entryPoints: [web]
+      service: noop@internal
+      middlewares: [exotel-redirect-https]
+
+    # Main Nerve System API route
+    exotel-nerve:
+      rule: Host(`exotel.mangwale.ai`) && PathPrefix(`/api/nerve`)
+      entryPoints: [websecure]
+      tls:
+        certResolver: letsencrypt
+      service: nerve-system
+      priority: 100
+
+    # Legacy Exotel JS service (fallback)
+    exotel-legacy:
+      rule: Host(`exotel.mangwale.ai`) && PathPrefix(`/api/ai`)
+      entryPoints: [websecure]
+      tls:
+        certResolver: letsencrypt
+      service: exotel-js-service
+
+    # Root path - health check
+    exotel-root:
+      rule: Host(`exotel.mangwale.ai`)
+      entryPoints: [websecure]
+      tls:
+        certResolver: letsencrypt
+      service: nerve-system
+      priority: 1
+
+  middlewares:
+    exotel-redirect-https:
+      redirectScheme:
+        scheme: https
+        permanent: true
+
+  services:
+    # Nerve System (Python/FastAPI) - Port 7100
+    nerve-system:
+      loadBalancer:
+        servers:
+          - url: "http://192.168.0.151:7100"
+
+    # Legacy Exotel JS Service - Port 3100
+    exotel-js-service:
+      loadBalancer:
+        servers:
+          - url: "http://192.168.0.151:3100"
