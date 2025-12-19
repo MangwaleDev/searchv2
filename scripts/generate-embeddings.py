@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Generate embeddings for OpenSearch documents and bulk index with vectors.
-Processes documents in batches for efficient memory usage.
+Supports dual-model architecture: food (768-dim) and general (384/768-dim)
 """
 
 import requests
@@ -17,19 +17,20 @@ BATCH_SIZE = 100  # Process 100 documents at a time
 MAX_EMBEDDING_BATCH = 50  # Embedding service processes 50 texts at once
 
 class EmbeddingGenerator:
-    def __init__(self, source_index: str, target_index: str):
+    def __init__(self, source_index: str, target_index: str, model_type: str = 'general'):
         self.source_index = source_index
         self.target_index = target_index
+        self.model_type = model_type
         self.processed_count = 0
         self.error_count = 0
         self.start_time = time.time()
         
     def get_embedding(self, texts: List[str]) -> Optional[List[List[float]]]:
-        """Get embeddings from embedding service"""
+        """Get embeddings from embedding service with model_type support"""
         try:
             response = requests.post(
                 f"{EMBEDDING_SERVICE_URL}/embed",
-                json={"texts": texts},
+                json={"texts": texts, "model_type": self.model_type},
                 timeout=30
             )
             response.raise_for_status()
@@ -92,56 +93,50 @@ class EmbeddingGenerator:
                 headers={"Content-Type": "application/json"}
             )
     
-    def prepare_texts_for_embedding(self, documents: List[Dict]) -> tuple[List[str], List[str], List[str]]:
-        """Prepare name, description, and combined texts"""
-        names = []
-        descriptions = []
-        combined = []
+    def prepare_text_for_embedding(self, documents: List[Dict]) -> List[str]:
+        """Prepare combined text for single item_vector (v3 approach)"""
+        texts = []
         
         for doc in documents:
             source = doc.get("_source", {})
             name = source.get("name", "").strip()
             desc = source.get("description", "").strip()
             category = source.get("category_name", "").strip()
+            brand = source.get("brand", "").strip()
             
-            names.append(name)
-            descriptions.append(desc if desc else name)
-            
-            # Combined: name + category + description
-            combined_text = f"{name}"
+            # Combined: name + category + brand + description
+            combined_text = name
             if category:
                 combined_text += f" {category}"
+            if brand:
+                combined_text += f" {brand}"
             if desc:
                 combined_text += f" {desc}"
-            combined.append(combined_text)
+            
+            texts.append(combined_text)
         
-        return names, descriptions, combined
+        return texts
     
-    def bulk_index_with_vectors(self, documents: List[Dict], 
-                                name_vectors: List[List[float]],
-                                desc_vectors: List[List[float]],
-                                combined_vectors: List[List[float]]):
-        """Bulk index documents with vector embeddings"""
+    def bulk_index_with_vectors(self, documents: List[Dict], item_vectors: List[List[float]]):
+        """Bulk index documents with single item_vector (v3 approach)"""
         bulk_body = []
         
-        for doc, name_vec, desc_vec, comb_vec in zip(documents, name_vectors, desc_vectors, combined_vectors):
+        for doc, item_vec in zip(documents, item_vectors):
             source = doc.get("_source", {})
             doc_id = source.get("id")
             
             # Index action
             bulk_body.append(json.dumps({"index": {"_index": self.target_index, "_id": doc_id}}))
             
-            # Document with vectors
-            doc_with_vectors = {**source}
-            doc_with_vectors["name_vector"] = name_vec
-            doc_with_vectors["description_vector"] = desc_vec
-            doc_with_vectors["combined_vector"] = comb_vec
+            # Document with vector
+            doc_with_vector = {**source}
+            doc_with_vector["item_vector"] = item_vec
             
             # Convert integer veg field (0/1) to boolean
-            if "veg" in doc_with_vectors and isinstance(doc_with_vectors["veg"], int):
-                doc_with_vectors["veg"] = bool(doc_with_vectors["veg"])
+            if "veg" in doc_with_vector and isinstance(doc_with_vector["veg"], int):
+                doc_with_vector["veg"] = bool(doc_with_vector["veg"])
             
-            bulk_body.append(json.dumps(doc_with_vectors))
+            bulk_body.append(json.dumps(doc_with_vector))
         
         # Send bulk request
         bulk_data = "\n".join(bulk_body) + "\n"
@@ -182,42 +177,34 @@ class EmbeddingGenerator:
         if not documents:
             return
         
-        # Prepare texts
-        names, descriptions, combined = self.prepare_texts_for_embedding(documents)
+        # Prepare texts (single combined text per item)
+        texts = self.prepare_text_for_embedding(documents)
         
         # Generate embeddings in sub-batches to avoid overwhelming the service
-        all_name_vecs = []
-        all_desc_vecs = []
-        all_comb_vecs = []
+        all_item_vecs = []
         
-        for i in range(0, len(names), MAX_EMBEDDING_BATCH):
-            batch_names = names[i:i+MAX_EMBEDDING_BATCH]
-            batch_descs = descriptions[i:i+MAX_EMBEDDING_BATCH]
-            batch_combs = combined[i:i+MAX_EMBEDDING_BATCH]
+        for i in range(0, len(texts), MAX_EMBEDDING_BATCH):
+            batch_texts = texts[i:i+MAX_EMBEDDING_BATCH]
             
-            # Get embeddings
-            name_vecs = self.get_embedding(batch_names)
-            desc_vecs = self.get_embedding(batch_descs)
-            comb_vecs = self.get_embedding(batch_combs)
+            # Get embeddings with model_type
+            item_vecs = self.get_embedding(batch_texts)
             
-            if not (name_vecs and desc_vecs and comb_vecs):
+            if not item_vecs:
                 print(f"⚠️  Skipping batch due to embedding error")
-                self.error_count += len(batch_names)
+                self.error_count += len(batch_texts)
                 continue
             
-            all_name_vecs.extend(name_vecs)
-            all_desc_vecs.extend(desc_vecs)
-            all_comb_vecs.extend(comb_vecs)
-            
+            all_item_vecs.extend(item_vecs)
             time.sleep(0.1)  # Small delay to avoid overloading
         
         # Bulk index with vectors
-        if len(all_name_vecs) == len(documents):
-            self.bulk_index_with_vectors(documents, all_name_vecs, all_desc_vecs, all_comb_vecs)
+        if len(all_item_vecs) == len(documents):
+            self.bulk_index_with_vectors(documents, all_item_vecs)
     
     def run(self):
         """Main processing loop"""
         print(f"🚀 Starting embedding generation: {self.source_index} → {self.target_index}")
+        print(f"🤖 Model: {self.model_type} ({'768-dim food' if self.model_type == 'food' else '384/768-dim general'})")
         print(f"⚙️  Batch size: {BATCH_SIZE}, Embedding batch: {MAX_EMBEDDING_BATCH}")
         print("")
         
@@ -269,7 +256,10 @@ def verify_services():
         response = requests.get(f"{EMBEDDING_SERVICE_URL}/health", timeout=5)
         if response.status_code == 200:
             health = response.json()
-            print(f"✅ Embedding Service: {health['model']} ({health['dimensions']} dims)")
+            models_info = health.get('models', {})
+            print(f"✅ Embedding Service:")
+            for model_name, model_data in models_info.items():
+                print(f"   - {model_name}: {model_data.get('dimensions')} dims ({model_data.get('loaded', False) and 'loaded' or 'not loaded'})")
         else:
             print(f"❌ Embedding Service: HTTP {response.status_code}")
             return False
@@ -282,28 +272,44 @@ def verify_services():
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Generate embeddings for OpenSearch documents")
-    parser.add_argument("--module", required=True, 
-                       choices=["food_items", "ecom_items", "rooms", "movies", "services"],
-                       help="Module to process")
-    parser.add_argument("--source-suffix", default="", 
-                       help="Suffix for source index (default: none)")
-    parser.add_argument("--target-suffix", default="_v2", 
-                       help="Suffix for target index (default: _v2)")
+    parser = argparse.ArgumentParser(
+        description="Generate embeddings for OpenSearch documents with dual-model support",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  # Food items with 768-dim food model
+  python generate-embeddings.py --source food_items --target food_items_v3 --model-type food
+  
+  # Ecom items with 384/768-dim general model
+  python generate-embeddings.py --source ecom_items --target ecom_items_v3 --model-type general
+        """
+    )
+    parser.add_argument("--source", required=True, 
+                       help="Source index name (e.g., food_items, ecom_items)")
+    parser.add_argument("--target", required=True, 
+                       help="Target index name (e.g., food_items_v3, ecom_items_v3)")
+    parser.add_argument("--model-type", required=True,
+                       choices=["food", "general"],
+                       help="Model type: food (768-dim) or general (384/768-dim)")
     
     args = parser.parse_args()
-    
-    source_index = f"{args.module}{args.source_suffix}"
-    target_index = f"{args.module}{args.target_suffix}"
     
     # Verify services
     if not verify_services():
         print("❌ Service check failed. Exiting.")
+        print("💡 Make sure services are running:")
+        print("   docker-compose up -d search-opensearch search-embedding-service")
         return 1
     
     # Run generator
-    generator = EmbeddingGenerator(source_index, target_index)
+    generator = EmbeddingGenerator(args.source, args.target, args.model_type)
     generator.run()
+    
+    # Provide next steps
+    print("")
+    print("📝 Next steps:")
+    print(f"1. Verify vectors: curl -s '{OPENSEARCH_URL}/{args.target}/_search?size=1' | jq '.hits.hits[0]._source.item_vector | length'")
+    print(f"2. Update alias: curl -X POST '{OPENSEARCH_URL}/_aliases' -H 'Content-Type: application/json' -d '{{\"actions\":[{{\"add\":{{\"index\":\"{args.target}\",\"alias\":\"{args.source}\"}}}}]}}'")
     
     return 0
 
