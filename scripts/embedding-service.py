@@ -2,7 +2,10 @@
 Embedding Service for Mangwale Search
 Provides text-to-vector embeddings using sentence-transformers
 
-Model: all-MiniLM-L6-v2 (384 dimensions, fast, lightweight)
+Models:
+- general: all-MiniLM-L6-v2 (384 dimensions, fast, lightweight)
+- food: jonny9f/food_embeddings (768 dimensions, food-optimized, 99.1% pearson)
+
 Port: 3101
 """
 
@@ -10,9 +13,10 @@ from sentence_transformers import SentenceTransformer
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from typing import List
+from typing import List, Optional
 import uvicorn
 import logging
+import os
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -21,8 +25,8 @@ logger = logging.getLogger(__name__)
 # Initialize FastAPI
 app = FastAPI(
     title="Mangwale Embedding Service",
-    description="Text-to-vector embeddings for semantic search",
-    version="1.0.0"
+    description="Multi-model text-to-vector embeddings for semantic search",
+    version="2.0.0"
 )
 
 # Add CORS middleware
@@ -34,26 +38,58 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Load embedding model
-logger.info("Loading embedding model: all-MiniLM-L6-v2")
-model = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')
-logger.info("✅ Model loaded successfully")
+# Model configurations
+MODEL_CONFIG = {
+    "general": {
+        "name": "sentence-transformers/all-MiniLM-L6-v2",
+        "dimensions": 384,
+        "description": "General purpose, fast embeddings"
+    },
+    "food": {
+        "name": "jonny9f/food_embeddings",
+        "dimensions": 768,
+        "description": "Food-specific embeddings (99.1% pearson score)"
+    }
+}
+
+# Load models
+models = {}
+logger.info("Loading embedding models...")
+
+# Always load general model
+logger.info("Loading general model: all-MiniLM-L6-v2")
+models["general"] = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')
+logger.info("✅ General model loaded (384 dims)")
+
+# Load food model if enabled
+LOAD_FOOD_MODEL = os.environ.get("LOAD_FOOD_MODEL", "true").lower() == "true"
+if LOAD_FOOD_MODEL:
+    try:
+        logger.info("Loading food model: jonny9f/food_embeddings")
+        models["food"] = SentenceTransformer('jonny9f/food_embeddings')
+        logger.info("✅ Food model loaded (768 dims)")
+    except Exception as e:
+        logger.warning(f"⚠️ Food model not loaded: {e}")
+        LOAD_FOOD_MODEL = False
+
+logger.info(f"✅ {len(models)} models loaded successfully")
 
 # Request/Response models
 class EmbedRequest(BaseModel):
     texts: List[str]
     normalize: bool = True
+    model_type: Optional[str] = "general"  # "general" or "food"
 
 class EmbedResponse(BaseModel):
     embeddings: List[List[float]]
     dimensions: int
     model: str
+    model_type: str
     count: int
 
 class HealthResponse(BaseModel):
     ok: bool
-    model: str
-    dimensions: int
+    models: dict
     device: str
 
 # Endpoints
@@ -65,7 +101,8 @@ async def embed_texts(request: EmbedRequest):
     Example:
         POST /embed
         {
-            "texts": ["pizza margherita", "healthy breakfast"]
+            "texts": ["pizza margherita", "paneer butter masala"],
+            "model_type": "food"
         }
     """
     try:
@@ -75,7 +112,16 @@ async def embed_texts(request: EmbedRequest):
         if len(request.texts) > 1000:
             raise HTTPException(status_code=400, detail="Maximum 1000 texts per request")
         
-        logger.info(f"Embedding {len(request.texts)} texts")
+        # Select model
+        model_type = request.model_type or "general"
+        if model_type not in models:
+            logger.warning(f"Model '{model_type}' not available, falling back to 'general'")
+            model_type = "general"
+        
+        model = models[model_type]
+        model_config = MODEL_CONFIG[model_type]
+        
+        logger.info(f"Embedding {len(request.texts)} texts with {model_type} model")
         
         # Generate embeddings
         embeddings = model.encode(
@@ -87,12 +133,13 @@ async def embed_texts(request: EmbedRequest):
         # Convert to list
         embeddings_list = embeddings.tolist()
         
-        logger.info(f"✅ Generated {len(embeddings_list)} embeddings")
+        logger.info(f"✅ Generated {len(embeddings_list)} embeddings ({model_config['dimensions']} dims)")
         
         return {
             "embeddings": embeddings_list,
             "dimensions": len(embeddings_list[0]) if embeddings_list else 0,
-            "model": "all-MiniLM-L6-v2",
+            "model": model_config["name"],
+            "model_type": model_type,
             "count": len(embeddings_list)
         }
         
@@ -106,10 +153,18 @@ async def health():
     import torch
     device = "cuda" if torch.cuda.is_available() else "cpu"
     
+    available_models = {
+        name: {
+            "dimensions": config["dimensions"],
+            "description": config["description"],
+            "loaded": name in models
+        }
+        for name, config in MODEL_CONFIG.items()
+    }
+    
     return {
         "ok": True,
-        "model": "all-MiniLM-L6-v2",
-        "dimensions": 384,
+        "models": available_models,
         "device": device
     }
 
@@ -118,11 +173,18 @@ async def root():
     """Root endpoint with service info"""
     return {
         "service": "Mangwale Embedding Service",
-        "model": "all-MiniLM-L6-v2",
-        "dimensions": 384,
+        "version": "2.0.0",
+        "models": list(models.keys()),
+        "default_model": "general",
         "endpoints": {
             "embed": "POST /embed",
             "health": "GET /health"
+        },
+        "usage": {
+            "example": {
+                "texts": ["pizza margherita", "paneer butter masala"],
+                "model_type": "food"
+            }
         }
     }
 
