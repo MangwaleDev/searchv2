@@ -937,10 +937,13 @@ export class SearchService {
     // Use the _v3 index with native KNN support
     const vectorIndex = module === 'food' ? 'food_items' : 'ecom_items';
     
-    this.logger.log(`🔍 Semantic search (KNN): "${query}" in ${vectorIndex}`);
+    // Select appropriate model: food model for food module, general for ecom
+    const modelType = module === 'food' ? 'food' : 'general';
+    
+    this.logger.log(`🔍 Semantic search (KNN): "${query}" in ${vectorIndex} using ${modelType} model`);
 
-    // Generate embedding for the query
-    const embedding = await this.embeddingService.generateEmbedding(query);
+    // Generate embedding for the query with appropriate model
+    const embedding = await this.embeddingService.generateEmbedding(query, modelType);
     if (!embedding) {
       this.logger.warn('Failed to generate embedding, falling back to keyword search');
       return this.search(module, query, filters);

@@ -17,16 +17,19 @@ export class EmbeddingService {
 
   /**
    * Generate embedding for a single text
+   * @param text Text to embed
+   * @param modelType 'food' for food items, 'general' for ecom (default: 'general')
    */
-  async generateEmbedding(text: string): Promise<number[] | null> {
+  async generateEmbedding(text: string, modelType: 'food' | 'general' = 'general'): Promise<number[] | null> {
     try {
       const response = await axios.post(
         `${this.embeddingUrl}/embed`,
-        { texts: [text] },
+        { texts: [text], model_type: modelType },
         { timeout: 5000 }
       );
 
       if (response.data && response.data.embeddings && response.data.embeddings.length > 0) {
+        this.logger.log(`Generated ${response.data.dimensions}-dim embedding using ${modelType} model`);
         return response.data.embeddings[0];
       }
 
@@ -40,16 +43,19 @@ export class EmbeddingService {
 
   /**
    * Generate embeddings for multiple texts
+   * @param texts Texts to embed
+   * @param modelType 'food' for food items, 'general' for ecom (default: 'general')
    */
-  async generateEmbeddings(texts: string[]): Promise<number[][] | null> {
+  async generateEmbeddings(texts: string[], modelType: 'food' | 'general' = 'general'): Promise<number[][] | null> {
     try {
       const response = await axios.post(
         `${this.embeddingUrl}/embed`,
-        { texts },
+        { texts, model_type: modelType },
         { timeout: 10000 }
       );
 
       if (response.data && response.data.embeddings) {
+        this.logger.log(`Generated ${response.data.count} embeddings (${response.data.dimensions} dims) using ${modelType} model`);
         return response.data.embeddings;
       }
 

@@ -1,14 +1,16 @@
 #!/bin/bash
 # Create OpenSearch indices with k-NN vector fields for semantic search
+# Updated for dual-model architecture: 768-dim for both food and ecom
 
 OPENSEARCH_URL="http://localhost:9200"
 
 echo "🔧 Creating vector indices for semantic search..."
+echo "📦 Using 768-dimensional vectors (food: jonny9f/food_embeddings, ecom: all-mpnet-base-v2)"
 echo ""
 
-# Food Items V2
-echo "📦 Creating food_items_v2 index..."
-curl -X PUT "${OPENSEARCH_URL}/food_items_v2" -H 'Content-Type: application/json' -d'
+# Food Items V3 (768 dimensions with food model)
+echo "📦 Creating food_items_v3 index with 768-dim vectors..."
+curl -X PUT "${OPENSEARCH_URL}/food_items_v3" -H 'Content-Type: application/json' -d'
 {
   "settings": {
     "index": {
@@ -70,35 +72,9 @@ curl -X PUT "${OPENSEARCH_URL}/food_items_v2" -H 'Content-Type: application/json
       "created_at": {"type": "date"},
       "available_time_starts": {"type": "keyword"},
       "available_time_ends": {"type": "keyword"},
-      "name_vector": {
+      "item_vector": {
         "type": "knn_vector",
-        "dimension": 384,
-        "method": {
-          "name": "hnsw",
-          "space_type": "cosinesimil",
-          "engine": "nmslib",
-          "parameters": {
-            "ef_construction": 128,
-            "m": 16
-          }
-        }
-      },
-      "description_vector": {
-        "type": "knn_vector",
-        "dimension": 384,
-        "method": {
-          "name": "hnsw",
-          "space_type": "cosinesimil",
-          "engine": "nmslib",
-          "parameters": {
-            "ef_construction": 128,
-            "m": 16
-          }
-        }
-      },
-      "combined_vector": {
-        "type": "knn_vector",
-        "dimension": 384,
+        "dimension": 768,
         "method": {
           "name": "hnsw",
           "space_type": "cosinesimil",
@@ -114,9 +90,9 @@ curl -X PUT "${OPENSEARCH_URL}/food_items_v2" -H 'Content-Type: application/json
 }
 ' 2>&1 | grep -E 'acknowledged|error' && echo ""
 
-# Ecom Items V2
-echo "📦 Creating ecom_items_v2 index..."
-curl -X PUT "${OPENSEARCH_URL}/ecom_items_v2" -H 'Content-Type: application/json' -d'
+# Ecom Items V3 (768 dimensions with general model)
+echo "📦 Creating ecom_items_v3 index with 768-dim vectors..."
+curl -X PUT "${OPENSEARCH_URL}/ecom_items_v3" -H 'Content-Type: application/json' -d'
 {
   "settings": {
     "index": {
@@ -138,9 +114,19 @@ curl -X PUT "${OPENSEARCH_URL}/ecom_items_v2" -H 'Content-Type: application/json
       "avg_rating": {"type": "double"},
       "store_name": {"type": "text"},
       "store_location": {"type": "geo_point"},
-      "name_vector": {"type": "knn_vector", "dimension": 384, "method": {"name": "hnsw", "space_type": "cosinesimil", "engine": "nmslib", "parameters": {"ef_construction": 128, "m": 16}}},
-      "description_vector": {"type": "knn_vector", "dimension": 384, "method": {"name": "hnsw", "space_type": "cosinesimil", "engine": "nmslib", "parameters": {"ef_construction": 128, "m": 16}}},
-      "combined_vector": {"type": "knn_vector", "dimension": 384, "method": {"name": "hnsw", "space_type": "cosinesimil", "engine": "nmslib", "parameters": {"ef_construction": 128, "m": 16}}}
+      "item_vector": {
+        "type": "knn_vector",
+        "dimension": 768,
+        "method": {
+          "name": "hnsw",
+          "space_type": "cosinesimil",
+          "engine": "nmslib",
+          "parameters": {
+            "ef_construction": 128,
+            "m": 16
+          }
+        }
+      }
     }
   }
 }
@@ -149,6 +135,8 @@ curl -X PUT "${OPENSEARCH_URL}/ecom_items_v2" -H 'Content-Type: application/json
 echo "✅ Vector indices created successfully!"
 echo ""
 echo "📊 Verify indices:"
-curl -s "${OPENSEARCH_URL}/_cat/indices/food_items_v2,ecom_items_v2?v&h=index,docs.count,store.size" && echo ""
+curl -s "${OPENSEARCH_URL}/_cat/indices/food_items_v3,ecom_items_v3?v&h=index,docs.count,store.size" && echo ""
 echo ""
-echo "Next: Run generate-embeddings.py to populate with data"
+echo "Next steps:"
+echo "1. Generate embeddings: python scripts/generate-embeddings.py --source food_items --target food_items_v3 --model-type food"
+echo "2. Update aliases: curl -X POST '${OPENSEARCH_URL}/_aliases' -H 'Content-Type: application/json' -d '{\"actions\":[{\"add\":{\"index\":\"food_items_v3\",\"alias\":\"food_items\"}}]}'"
