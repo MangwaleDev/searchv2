@@ -7,8 +7,49 @@ import { ModuleService } from './module.service';
 import { SearchCacheService } from '../modules/cache.service';
 import { ZoneService } from '../modules/zone.service';
 import { ImageService } from '../modules/image.service';
+import { QueryParserService } from './query-parser.service';
 
 @Injectable()
+  /**
+   * Intent-aware item search that routes queries based on detected intent.
+   * - specific_item_specific_store: find store by name, then search items within that store
+   * - store_first: find store by name and return its menu
+   * - generic: fallback to existing module-aware search
+   */
+  async searchItemsByIntent(q: string, filters: Record<string, any>) {
+    // Respect explicit store filter from caller; no intent parsing needed
+    if (filters?.store_id) {
+      return this.searchItemsByModule(q, filters);
+    }
+
+    const parsed = this.queryParser.parse(q);
+
+    if (parsed.intent === 'specific_item_specific_store') {
+      const storeMatch = await this.findTopStoreMatch(parsed.storeQuery || '', filters);
+      if (storeMatch.storeId) {
+        const nextFilters = { ...filters, store_id: storeMatch.storeId };
+        const itemQuery = parsed.itemQuery || q;
+        return this.searchItemsByModule(itemQuery, nextFilters);
+      }
+      // If store not found, fallback to generic search with original query
+      return this.searchItemsByModule(q, filters);
+    }
+
+    if (parsed.intent === 'store_first') {
+      const storeMatch = await this.findTopStoreMatch(parsed.storeQuery || parsed.raw, filters);
+      if (storeMatch.storeId) {
+        const nextFilters = { ...filters, store_id: storeMatch.storeId };
+        // Empty query returns menu items for the matched store
+        return this.searchItemsByModule('', nextFilters);
+      }
+      // Fallback to generic search if store not found
+      return this.searchItemsByModule(q, filters);
+    }
+
+    // Generic
+    return this.searchItemsByModule(q, filters);
+  }
+
 export class SearchService {
   private client: Client;
   private readonly logger = new Logger(SearchService.name);
@@ -27,7 +68,8 @@ export class SearchService {
     private readonly moduleService: ModuleService,
     private readonly cacheService: SearchCacheService,
     private readonly zoneService: ZoneService,
-    private readonly imageService: ImageService
+    private readonly imageService: ImageService,
+    private readonly queryParser: QueryParserService
   ) {
     this.cacheEnabled = this.config.get<string>('ENABLE_SEARCH_CACHE') !== 'false';
     const node = this.config.get<string>('OPENSEARCH_HOST') || 'http://localhost:9200';
@@ -3269,6 +3311,91 @@ export class SearchService {
   }
 
   /**
+   * Find the best matching store for a given free-text query.
+   * Returns top store_id (numeric) with its score if found, else null.
+   */
+  private async findTopStoreMatch(query: string, filters: Record<string, any>): Promise<{ storeId: number | null; storeName?: string; score?: number }> {
+    const trimmed = (query || '').trim();
+    if (!trimmed) {
+      return { storeId: null };
+    }
+
+    const storeIndices = this.getAllStoreIndices();
+    const lat = filters?.lat;
+    const lon = filters?.lon;
+    const radiusKm = filters?.radius_km ? Number(filters.radius_km) : undefined;
+    const hasGeo = lat !== undefined && lon !== undefined && !Number.isNaN(lat) && !Number.isNaN(lon);
+
+    const storeBody: any = {
+      query: {
+        bool: {
+          should: [
+            { match: { name: { query: trimmed, boost: 10, operator: 'and' } } },
+            { match: { slug: { query: trimmed.toLowerCase(), boost: 8, operator: 'and' } } },
+            { match_phrase: { name: { query: trimmed, boost: 6 } } },
+            { match_phrase: { slug: { query: trimmed.toLowerCase(), boost: 5 } } },
+            { multi_match: {
+              query: trimmed,
+              fields: ['name^3', 'slug^2', 'address'],
+              type: 'best_fields',
+              operator: 'or',
+              fuzziness: 'AUTO',
+            }},
+            { wildcard: { name: { value: `*${trimmed.toLowerCase()}*`, boost: 2 } } },
+            { wildcard: { slug: { value: `*${trimmed.toLowerCase()}*`, boost: 1.5 } } },
+          ],
+          minimum_should_match: 1,
+        },
+      },
+      size: 5,
+      _source: ['id', 'name'],
+    };
+
+    if (filters?.module_id) {
+      storeBody.query.bool.filter = [{ term: { module_id: Number(filters.module_id) } }];
+    }
+
+    if (hasGeo && radiusKm !== undefined && !Number.isNaN(radiusKm)) {
+      if (!storeBody.query.bool.filter) storeBody.query.bool.filter = [];
+      storeBody.query.bool.filter.push({
+        geo_distance: {
+          distance: `${radiusKm}km`,
+          location: { lat, lon },
+        },
+      });
+    }
+
+    try {
+      const storeResults = await Promise.all(
+        storeIndices.map(index =>
+          this.client.search({ index, body: storeBody }).catch(() => ({ body: { hits: { hits: [] } } }))
+        )
+      );
+
+      let best: { storeId: number | null; storeName?: string; score?: number } = { storeId: null };
+      for (const res of storeResults) {
+        for (const hit of res.body.hits?.hits || []) {
+          const id = hit._source?.id ?? hit._id;
+          const numericId = id !== undefined ? Number(id) : NaN;
+          if (!Number.isNaN(numericId)) {
+            if (!best.score || (hit._score || 0) > (best.score || 0)) {
+              best = {
+                storeId: numericId,
+                storeName: hit._source?.name,
+                score: hit._score,
+              };
+            }
+          }
+        }
+      }
+      return best;
+    } catch (error: any) {
+      this.logger.warn(`[findTopStoreMatch] Failed to search stores: ${error?.message || String(error)}`);
+      return { storeId: null };
+    }
+  }
+
+  /**
    * Get all category indices that may contain data
    */
   private getAllCategoryIndices(): string[] {
@@ -4099,9 +4226,10 @@ export class SearchService {
             { term: { slug: { value: q.toLowerCase(), boost: 8 } } },
             { match_phrase: { name: { query: q, boost: 6 } } },
             { match_phrase: { slug: { query: q.toLowerCase(), boost: 5 } } },
+            { match: { store_name: { query: q, boost: 7, operator: 'and' } } },
             { multi_match: {
               query: q,
-              fields: ['name^3', 'description^1', 'category_name^2'],
+              fields: ['name^3', 'description^1', 'category_name^2', 'store_name^2'],
               type: 'best_fields',
               operator: 'and',
               fuzziness: 'AUTO',
@@ -4618,11 +4746,37 @@ export class SearchService {
           // Get items from these stores (but exclude items already found by name)
           const storeFilterClauses = [...filterClauses];
           storeFilterClauses.push({ terms: { store_id: Array.from(matchingStoreIds).map(id => Number(id)) } });
+
+          const storeItemMustClauses: any[] = [];
+          if (q && q.trim()) {
+            storeItemMustClauses.push({
+              bool: {
+                should: [
+                  { match: { name: { query: q, boost: 10, operator: 'and' } } },
+                  { match: { slug: { query: q.toLowerCase(), boost: 8, operator: 'and' } } },
+                  { match_phrase: { name: { query: q, boost: 6 } } },
+                  { match_phrase: { slug: { query: q.toLowerCase(), boost: 5 } } },
+                  { match: { store_name: { query: q, boost: 7, operator: 'and' } } },
+                  { multi_match: {
+                    query: q,
+                    fields: ['name^3', 'description^1', 'category_name^2', 'store_name^2'],
+                    type: 'best_fields',
+                    operator: 'and',
+                    fuzziness: 'AUTO',
+                    lenient: true,
+                  }},
+                  { wildcard: { name: { value: `*${q.toLowerCase()}*`, boost: 2 } } },
+                  { wildcard: { slug: { value: `*${q.toLowerCase()}*`, boost: 1.5 } } },
+                ],
+                minimum_should_match: 1,
+              },
+            });
+          }
           
           const itemsFromStoresBody: any = {
             query: {
               bool: {
-                must: [{ match_all: {} }],
+                must: storeItemMustClauses.length > 0 ? storeItemMustClauses : [{ match_all: {} }],
                 filter: storeFilterClauses,
               },
             },

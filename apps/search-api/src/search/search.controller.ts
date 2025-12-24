@@ -667,7 +667,7 @@ export class SearchController {
     if (size) filters.size = Number(size);
     if (sort) filters.sort = sort;
 
-    return this.searchService.searchItemsByModule(q, filters);
+    return this.searchService.searchItemsByIntent(q, filters);
   }
 
   @Get('/v2/search/stores')
