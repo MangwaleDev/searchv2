@@ -207,8 +207,34 @@ INDEX_MAPPING = {
             "gst_status": {"type": "keyword"},
             "fssai_license_number": {"type": "keyword"},
             
-            # === VECTOR FIELD FOR SEMANTIC SEARCH (768-dim) ===
+            # === VECTOR FIELDS FOR SEMANTIC SEARCH (768-dim) ===
             "item_vector": {
+                "type": "knn_vector",
+                "dimension": 768,
+                "method": {
+                    "name": "hnsw",
+                    "space_type": "cosinesimil",
+                    "engine": "nmslib",
+                    "parameters": {
+                        "ef_construction": 128,
+                        "m": 16
+                    }
+                }
+            },
+            "store_item_vector": {
+                "type": "knn_vector",
+                "dimension": 768,
+                "method": {
+                    "name": "hnsw",
+                    "space_type": "cosinesimil",
+                    "engine": "nmslib",
+                    "parameters": {
+                        "ef_construction": 128,
+                        "m": 16
+                    }
+                }
+            },
+            "store_vector": {
                 "type": "knn_vector",
                 "dimension": 768,
                 "method": {
@@ -415,12 +441,12 @@ class MangwaleAISync:
             print(f"❌ Failed to create index: {response.text}")
             return False
     
-    def get_embeddings(self, texts: List[str]) -> Optional[List[List[float]]]:
-        """Get embeddings from the food model (768-dim)"""
+    def get_embeddings(self, texts: List[str], model_type: str = "food") -> Optional[List[List[float]]]:
+        """Get embeddings from the embedding service (768-dim for food model)"""
         try:
             response = requests.post(
                 f"{EMBEDDING_SERVICE_URL}/embed",
-                json={"texts": texts, "model_type": MODEL_TYPE},
+                json={"texts": texts, "model_type": model_type},
                 timeout=30
             )
             response.raise_for_status()
@@ -774,14 +800,16 @@ class MangwaleAISync:
         
         return text
     
-    def bulk_index(self, docs: List[Dict], vectors: List[List[float]]):
-        """Bulk index documents with vectors"""
+    def bulk_index(self, docs: List[Dict], item_vectors: List[List[float]], store_item_vectors: List[List[float]], store_vectors: List[List[float]]):
+        """Bulk index documents with three types of vectors"""
         bulk_body = []
         
-        for doc, vector in zip(docs, vectors):
+        for doc, item_vec, store_item_vec, store_vec in zip(docs, item_vectors, store_item_vectors, store_vectors):
             doc_id = doc.get('id')
             bulk_body.append(json.dumps({"index": {"_index": TARGET_INDEX, "_id": doc_id}}))
-            doc["item_vector"] = vector
+            doc["item_vector"] = item_vec
+            doc["store_item_vector"] = store_item_vec
+            doc["store_vector"] = store_vec
             bulk_body.append(json.dumps(doc))
         
         bulk_data = "\n".join(bulk_body) + "\n"
@@ -810,7 +838,7 @@ class MangwaleAISync:
             self.error_count += len(docs)
     
     def process_items(self, items: List[Dict]):
-        """Process all items: transform, generate embeddings, and index"""
+        """Process all items: transform, generate three types of embeddings, and index"""
         total = len(items)
         
         for i in range(0, total, BATCH_SIZE):
@@ -819,23 +847,46 @@ class MangwaleAISync:
             # Transform items
             docs = [self.transform_item(item) for item in batch]
             
-            # Prepare embedding texts
-            texts = [self.prepare_embedding_text(doc) for doc in docs]
+            # Prepare three types of embedding texts
+            item_texts = [self.prepare_embedding_text(doc) for doc in docs]
+            store_item_texts = [self.prepare_store_item_embedding_text(doc) for doc in docs]
+            store_texts = [self.prepare_store_embedding_text(doc) for doc in docs]
             
-            # Generate embeddings in sub-batches
-            all_vectors = []
-            for j in range(0, len(texts), MAX_EMBEDDING_BATCH):
-                batch_texts = texts[j:j + MAX_EMBEDDING_BATCH]
-                vectors = self.get_embeddings(batch_texts)
-                if vectors:
-                    all_vectors.extend(vectors)
+            # Generate embeddings for all three types in sub-batches
+            all_item_vectors = []
+            all_store_item_vectors = []
+            all_store_vectors = []
+            
+            for j in range(0, len(item_texts), MAX_EMBEDDING_BATCH):
+                batch_indices = range(j, min(j + MAX_EMBEDDING_BATCH, len(item_texts)))
+                batch_item_texts = [item_texts[k] for k in batch_indices]
+                batch_store_item_texts = [store_item_texts[k] for k in batch_indices]
+                batch_store_texts = [store_texts[k] for k in batch_indices]
+                
+                # Get item embeddings
+                item_vecs = self.get_embeddings(batch_item_texts, "food")
+                if item_vecs:
+                    all_item_vectors.extend(item_vecs)
                 else:
-                    # Fallback to zero vectors
-                    all_vectors.extend([[0.0] * 768] * len(batch_texts))
+                    all_item_vectors.extend([[0.0] * 768] * len(batch_item_texts))
+                
+                # Get store+item embeddings
+                store_item_vecs = self.get_embeddings(batch_store_item_texts, "food")
+                if store_item_vecs:
+                    all_store_item_vectors.extend(store_item_vecs)
+                else:
+                    all_store_item_vectors.extend([[0.0] * 768] * len(batch_store_item_texts))
+                
+                # Get store embeddings
+                store_vecs = self.get_embeddings(batch_store_texts, "food")
+                if store_vecs:
+                    all_store_vectors.extend(store_vecs)
+                else:
+                    all_store_vectors.extend([[0.0] * 768] * len(batch_store_texts))
             
-            # Bulk index
-            if len(all_vectors) == len(docs):
-                self.bulk_index(docs, all_vectors)
+            # Bulk index with all vectors
+            if len(all_item_vectors) == len(docs) and len(all_store_item_vectors) == len(docs) and len(all_store_vectors) == len(docs):
+                self.bulk_index(docs, all_item_vectors, all_store_item_vectors, all_store_vectors)
             
             # Progress
             elapsed = time.time() - self.start_time

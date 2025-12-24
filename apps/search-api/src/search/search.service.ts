@@ -11,7 +11,13 @@ import { QueryParserService } from './query-parser.service';
 
 @Injectable()
   /**
-   * Intent-aware item search that routes queries based on detected intent.
+   * Public wrapper for findTopStoreMatch (for controller access)
+   */
+  async findStoreByNamePublic(query: string, filters: Record<string, any> = {}): Promise<{ storeId: number | null; storeName?: string; score?: number }> {
+    return this.findTopStoreMatch(query, filters);
+  }
+
+  /**
    * - specific_item_specific_store: find store by name, then search items within that store
    * - store_first: find store by name and return its menu
    * - generic: fallback to existing module-aware search

@@ -670,6 +670,58 @@ export class SearchController {
     return this.searchService.searchItemsByIntent(q, filters);
   }
 
+  @Post('/v2/search/items/structured')
+  @ApiTags('Module ID Search')
+  @ApiOperation({ 
+    summary: 'Structured Items Search (for LLM Integration)', 
+    description: 'Search items using pre-parsed intent, item name, and store name from LLM. Enables precise item+store queries with zero ambiguity.' 
+  })
+  @ApiResponse({ 
+    status: 200, 
+    description: 'Search results based on structured intent',
+    schema: {
+      example: {
+        intent: 'specific_item_specific_store',
+        item: 'butter chicken',
+        store: 'Inayat Cafe',
+        items: [{ id: '123', name: 'Butter Chicken Biryani', store_name: 'Inayat Cafe', price: 299 }],
+        meta: { total: 1, source: 'structured_llm' }
+      }
+    }
+  })
+  async searchItemsStructured(@Body() body: any) {
+    const intent = body?.intent || 'generic';
+    const itemQuery = body?.item || '';
+    const storeQuery = body?.store || '';
+    const rawQuery = body?.raw_query || '';
+
+    const filters: any = body?.filters || {};
+    
+    if (intent === 'specific_item_specific_store' && storeQuery) {
+      // LLM detected: "item from store" pattern
+      // Find store by name and filter items within it
+      const foundStore = await this.searchService['findTopStoreMatch'](storeQuery, filters);
+      if (foundStore?.storeId) {
+        filters.store_id = foundStore.storeId;
+      }
+      return this.searchService.searchItemsByModule(itemQuery, filters);
+    }
+
+    if (intent === 'store_first' && storeQuery) {
+      // LLM detected: store-first intent
+      // Find store and return its menu
+      const foundStore = await this.searchService['findTopStoreMatch'](storeQuery, filters);
+      if (foundStore?.storeId) {
+        filters.store_id = foundStore.storeId;
+      }
+      return this.searchService.searchItemsByModule('', filters);
+    }
+
+    // Generic intent: use raw query or item
+    const queryToUse = itemQuery || rawQuery || '';
+    return this.searchService.searchItemsByModule(queryToUse, filters);
+  }
+
   @Get('/v2/search/stores')
   @ApiTags('Module ID Search')
   @ApiOperation({ 
