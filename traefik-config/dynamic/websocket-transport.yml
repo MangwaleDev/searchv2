@@ -5,3 +5,10 @@ http:
         dialTimeout: 60s
         responseHeaderTimeout: 0s
         idleConnTimeout: 0s
+  middlewares:
+    websocket-headers:
+      headers:
+        customRequestHeaders:
+          X-Forwarded-Proto: "https"
+        customResponseHeaders:
+          X-WebSocket-Support: "true"

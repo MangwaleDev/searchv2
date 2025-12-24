@@ -14,6 +14,12 @@ export class SearchService {
   private readonly logger = new Logger(SearchService.name);
   private cacheEnabled: boolean;
 
+  // Index names - food_items_v4 has 768-dim vectors + complete store data
+  private readonly FOOD_ITEMS_INDEX = 'food_items_v4';
+  private readonly ECOM_ITEMS_INDEX = 'ecom_items';
+  private readonly FOOD_STORES_INDEX = 'food_stores';
+  private readonly ECOM_STORES_INDEX = 'ecom_stores';
+
   constructor(
     private readonly config: ConfigService, 
     private readonly analytics: AnalyticsService,
@@ -220,14 +226,19 @@ export class SearchService {
     return storeDetails;
   }
 
+  // Helper method to get item index for a module
+  private getItemIndex(module: 'food' | 'ecom'): string {
+    return module === 'food' ? this.FOOD_ITEMS_INDEX : this.ECOM_ITEMS_INDEX;
+  }
+
+  // Helper method to get store index for a module
+  private getStoreIndex(module: 'food' | 'ecom'): string {
+    return module === 'food' ? this.FOOD_STORES_INDEX : this.ECOM_STORES_INDEX;
+  }
+
   // Optimized category search for fast loading and scroll pagination
   async searchCategory(module: 'food' | 'ecom', filters: Record<string, string>) {
-    let alias: string;
-    switch (module) {
-      case 'food': alias = 'food_items'; break;
-      case 'ecom': alias = 'ecom_items'; break;
-      default: alias = 'food_items';
-    }
+    const alias = this.getItemIndex(module);
 
     const categoryId = filters?.category_id;
     if (!categoryId) {
@@ -492,26 +503,9 @@ export class SearchService {
 
   // Optimized category-based store search for fast loading and scroll pagination
   async searchStoresCategory(module: 'food' | 'ecom', filters: Record<string, string>) {
-    let storeAlias: string;
-    let itemAlias: string;
-    let catAlias: string;
-    
-    switch (module) {
-      case 'food': 
-        storeAlias = 'food_stores';
-        itemAlias = 'food_items';
-        catAlias = 'food_categories';
-        break;
-      case 'ecom': 
-        storeAlias = 'ecom_stores';
-        itemAlias = 'ecom_items';
-        catAlias = 'ecom_categories';
-        break;
-      default: 
-        storeAlias = 'food_stores';
-        itemAlias = 'food_items';
-        catAlias = 'food_categories';
-    }
+    const storeAlias = this.getStoreIndex(module);
+    const itemAlias = this.getItemIndex(module);
+    const catAlias = module === 'food' ? 'food_categories' : 'ecom_categories';
 
     const categoryId = filters?.category_id;
     if (!categoryId) {
@@ -798,8 +792,8 @@ export class SearchService {
     this.logger.log(`Getting recommendations for item ${itemId} in module ${moduleId}${storeId ? ` (store ${storeId})` : ''}`);
 
     try {
-      // Get the index alias for this module (uses aliases that point to versioned indices)
-      const indexName = moduleId === 4 ? 'food_items' : moduleId === 5 ? 'ecom_items' : null;
+      // Get the index for this module
+      const indexName = moduleId === 4 ? this.FOOD_ITEMS_INDEX : moduleId === 5 ? this.ECOM_ITEMS_INDEX : null;
       if (!indexName) {
         throw new BadRequestException('Invalid module_id. Only modules 4 (food) and 5 (ecom) supported.');
       }
@@ -927,15 +921,16 @@ export class SearchService {
 
   /**
    * Semantic search using vector embeddings with native KNN
-   * Uses the *_v3 indices with proper knn_vector fields
+   * Uses food_items_v4 (768-dim vectors + complete store data) for food
+   * Uses ecom_items for e-commerce
    */
   async semanticSearch(
     module: 'food' | 'ecom',
     query: string,
     filters: Record<string, string>
   ) {
-    // Use the _v3 index with native KNN support
-    const vectorIndex = module === 'food' ? 'food_items' : 'ecom_items';
+    // Use food_items_v4 with 768-dim vectors and complete store data
+    const vectorIndex = module === 'food' ? 'food_items_v4' : 'ecom_items';
     
     // Select appropriate model: food model for food module, general for ecom
     const modelType = module === 'food' ? 'food' : 'general';
@@ -1127,12 +1122,12 @@ export class SearchService {
   private async executeSearch(module: 'food' | 'ecom' | 'rooms' | 'services' | 'movies', q: string, filters: Record<string, string>, startTime: number) {
     let alias: string;
     switch (module) {
-      case 'food': alias = 'food_items'; break;
-      case 'ecom': alias = 'ecom_items'; break;
+      case 'food': alias = this.FOOD_ITEMS_INDEX; break;
+      case 'ecom': alias = this.ECOM_ITEMS_INDEX; break;
       case 'rooms': alias = 'rooms_index'; break;
       case 'services': alias = 'services_index'; break;
       case 'movies': alias = 'movies_catalog'; break;
-      default: alias = 'food_items';
+      default: alias = this.FOOD_ITEMS_INDEX;
     }
     const must: any[] = [];
     const filterClauses: any[] = [];
@@ -2447,7 +2442,7 @@ export class SearchService {
     
     if (q && q.trim()) {
       let allStores: Array<{ _id: string; _source: any; fields?: any; sort?: any[]; _score?: number; matchType: string }> = [];
-      const itemAlias = module === 'food' ? 'food_items' : module === 'ecom' ? 'ecom_items' : 'food_items';
+      const itemAlias = this.getItemIndex(module as 'food' | 'ecom');
       const catAlias = module === 'food' ? 'food_categories' : module === 'ecom' ? 'ecom_categories' : 'food_categories';
       
       try {
@@ -2754,10 +2749,10 @@ export class SearchService {
     let itemAlias: string, storeAlias: string, catAlias: string;
     switch (module) {
       case 'food': 
-        itemAlias = 'food_items'; storeAlias = 'food_stores'; catAlias = 'food_categories'; 
+        itemAlias = this.FOOD_ITEMS_INDEX; storeAlias = this.FOOD_STORES_INDEX; catAlias = 'food_categories'; 
         break;
       case 'ecom': 
-        itemAlias = 'ecom_items'; storeAlias = 'ecom_stores'; catAlias = 'ecom_categories'; 
+        itemAlias = this.ECOM_ITEMS_INDEX; storeAlias = this.ECOM_STORES_INDEX; catAlias = 'ecom_categories'; 
         break;
       case 'rooms': 
         itemAlias = 'rooms_index'; storeAlias = 'rooms_stores'; catAlias = 'rooms_categories'; 
@@ -2769,7 +2764,7 @@ export class SearchService {
         itemAlias = 'movies_catalog'; storeAlias = 'movies_showtimes'; catAlias = 'movies_categories';
         break;
       default: 
-        itemAlias = 'food_items'; storeAlias = 'food_stores'; catAlias = 'food_categories';
+        itemAlias = this.FOOD_ITEMS_INDEX; storeAlias = this.FOOD_STORES_INDEX; catAlias = 'food_categories';
     }
 
     const itemQuery: any = module === 'movies' ? {
@@ -2807,7 +2802,7 @@ export class SearchService {
         },
       } : itemQuery,
       size,
-      _source: ['name','title', 'slug', 'image', 'images', 'price', 'base_price', 'veg', 'category_id', 'category_name', 'category', 'store_id', 'store_location', 'genre','cast', 'module_id', 'description', 'available_time_starts', 'available_time_ends', 'rating_count', 'avg_rating', 'order_count', 'discount', 'discount_type', 'status', 'tax', 'tax_type', 'stock', 'recommended', 'is_approved', 'is_halal', 'organic'],
+      _source: ['id', 'name', 'title', 'slug', 'image', 'images', 'price', 'base_price', 'veg', 'category_id', 'category_name', 'category', 'store_id', 'store_name', 'store_location', 'genre', 'cast', 'module_id', 'description', 'available_time_starts', 'available_time_ends', 'rating_count', 'avg_rating', 'order_count', 'discount', 'discount_type', 'status', 'tax', 'tax_type', 'stock', 'recommended', 'is_approved', 'is_halal', 'is_visible', 'organic', 'zone_id', 'unit_id', 'maximum_cart_quantity', 'attributes'],
       script_fields: (module !== 'movies' && hasGeo) ? {
         distance_km: { script: { source: "if (doc['store_location'].size() == 0) return null; doc['store_location'].arcDistance(params.lat, params.lon) / 1000.0", params: { lat, lon } } },
       } : undefined,
@@ -3263,14 +3258,14 @@ export class SearchService {
    * Returns list of all item indices to search
    */
   private getAllItemIndices(): string[] {
-    return ['food_items', 'ecom_items', 'rooms_index', 'services_index', 'movies_catalog'];
+    return [this.FOOD_ITEMS_INDEX, this.ECOM_ITEMS_INDEX, 'rooms_index', 'services_index', 'movies_catalog'];
   }
 
   /**
    * Get all store indices that may contain data
    */
   private getAllStoreIndices(): string[] {
-    return ['food_stores', 'ecom_stores', 'rooms_stores', 'services_stores', 'movies_showtimes'];
+    return [this.FOOD_STORES_INDEX, this.ECOM_STORES_INDEX, 'rooms_stores', 'services_stores', 'movies_showtimes'];
   }
 
   /**
@@ -3366,7 +3361,7 @@ export class SearchService {
         },
       },
       size,
-      _source: ['name', 'slug', 'image', 'images', 'price', 'base_price', 'veg', 'category_id', 'category_name', 'store_id', 'store_location', 'module_id', 'description', 'available_time_starts', 'available_time_ends', 'rating_count', 'avg_rating', 'order_count', 'discount', 'discount_type', 'status', 'tax', 'tax_type', 'stock', 'recommended', 'is_approved', 'is_halal', 'organic'],
+      _source: ['id', 'name', 'slug', 'image', 'images', 'price', 'base_price', 'veg', 'category_id', 'category_name', 'store_id', 'store_name', 'store_location', 'module_id', 'description', 'available_time_starts', 'available_time_ends', 'rating_count', 'avg_rating', 'order_count', 'discount', 'discount_type', 'status', 'tax', 'tax_type', 'stock', 'recommended', 'is_approved', 'is_halal', 'is_visible', 'organic', 'zone_id', 'unit_id', 'maximum_cart_quantity', 'attributes'],
       script_fields: hasGeo ? {
         distance_km: { script: { source: "if (doc['store_location'].size() == 0) return null; doc['store_location'].arcDistance(params.lat, params.lon) / 1000.0", params: { lat, lon } } },
       } : undefined,
@@ -4251,8 +4246,8 @@ export class SearchService {
         const itemIndices = this.getAllItemIndices();
         const results = await Promise.all(
           itemIndices.map(index => {
-            // Check if index supports geo features (currently only food_items)
-            const supportsGeo = index === 'food_items';
+            // Check if index supports geo features (food_items_v4 has complete store data with geo)
+            const supportsGeo = index === this.FOOD_ITEMS_INDEX;
             let indexBody = body;
             
             if (!supportsGeo && hasGeo) {
@@ -4356,10 +4351,10 @@ export class SearchService {
     const results = await Promise.all(
       itemIndices.map(async (index) => {
         try {
-          // Check if index supports geo features (currently only food_items)
-          const supportsGeo = index === 'food_items';
-          // Check if index supports order_count (food_items and ecom_items)
-          const supportsOrderCount = index === 'food_items' || index === 'ecom_items';
+          // Check if index supports geo features (food_items_v4 has complete store data with geo)
+          const supportsGeo = index === this.FOOD_ITEMS_INDEX;
+          // Check if index supports order_count (food_items_v4 and ecom_items)
+          const supportsOrderCount = index === this.FOOD_ITEMS_INDEX || index === this.ECOM_ITEMS_INDEX;
           
           let indexBody = body;
           
@@ -4463,9 +4458,9 @@ export class SearchService {
         itemIndices.map(async (index) => {
           try {
             // Determine if this index supports geo features
-            // Currently only food_items is guaranteed to have store_location properly mapped for all items
-            const supportsGeo = index === 'food_items'; 
-            const supportsOrderCount = index === 'food_items' || index === 'ecom_items';
+            // food_items_v4 has complete store data with store_location properly mapped
+            const supportsGeo = index === this.FOOD_ITEMS_INDEX; 
+            const supportsOrderCount = index === this.FOOD_ITEMS_INDEX || index === this.ECOM_ITEMS_INDEX;
             this.logger.debug(`[searchItemsByModule] Fallback for index ${index}. Supports geo: ${supportsGeo}`);
             
             const indexBody = {
@@ -4633,10 +4628,11 @@ export class SearchService {
             },
             size: size * 2,
             _source: [
-              'name', 'description', 'image', 'images', 'slug', 'price', 'base_price', 'veg', 'brand',
-              'category_id', 'category_name', 'store_id', 'avg_rating', 'order_count', 'store_location',
+              'id', 'name', 'description', 'image', 'images', 'slug', 'price', 'base_price', 'veg', 'brand',
+              'category_id', 'category_name', 'store_id', 'store_name', 'avg_rating', 'order_count', 'store_location',
               'module_id', 'rating_count', 'available_time_starts', 'available_time_ends',
-              'discount', 'discount_type', 'status', 'tax', 'tax_type', 'stock', 'recommended', 'is_approved', 'is_halal', 'organic',
+              'discount', 'discount_type', 'status', 'tax', 'tax_type', 'stock', 'recommended', 'is_approved', 
+              'is_halal', 'is_visible', 'organic', 'maximum_cart_quantity', 'unit_id', 'zone_id', 'attributes',
             ],
             script_fields: hasGeo ? {
               distance_km: {
@@ -5141,10 +5137,13 @@ export class SearchService {
         }
       }
       
+      // Use existing store_name from item, only use lookup as fallback
+      const storeName = item.store_name || (item.store_id ? storeNames[String(item.store_id)] : null);
+      
       return {
         ...item,
         distance_km: distanceKm,
-        store_name: item.store_id ? storeNames[String(item.store_id)] : null,
+        store_name: storeName,
       };
     });
 
