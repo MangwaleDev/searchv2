@@ -720,23 +720,57 @@ class MangwaleAISync:
         return doc
     
     def prepare_embedding_text(self, doc: Dict) -> str:
-        """Prepare text for embedding generation"""
+        """Prepare text for item_vector: item-focused embedding"""
         name = doc.get('name', '')
         category = doc.get('category_name', '')
-        store = doc.get('store_name', '')
         description = doc.get('description', '')
         cuisine = doc.get('cuisine_type', '')
         
-        # Rich text for semantic understanding
+        # Item-focused text (without store context)
         text = name
         if category:
             text += f" {category}"
         if cuisine:
             text += f" {cuisine} cuisine"
-        if store:
-            text += f" from {store}"
         if description:
             text += f" {description[:200]}"  # Limit description length
+        
+        return text
+    
+    def prepare_store_item_embedding_text(self, doc: Dict) -> str:
+        """Prepare text for store_item_vector: item+store context embedding"""
+        name = doc.get('name', '')
+        store = doc.get('store_name', '')
+        category = doc.get('category_name', '')
+        description = doc.get('description', '')
+        cuisine = doc.get('cuisine_type', '')
+        
+        # Store+item context text
+        text = f"{store} serves {name}" if store else name
+        if category:
+            text += f" {category}"
+        if cuisine:
+            text += f" {cuisine} cuisine"
+        if description:
+            text += f" {description[:200]}"
+        
+        return text
+    
+    def prepare_store_embedding_text(self, doc: Dict) -> str:
+        """Prepare text for store_vector: store-focused embedding"""
+        store = doc.get('store_name', '')
+        address = doc.get('store_address', '')
+        cuisine = doc.get('cuisine_type', '')
+        category = doc.get('category_name', '')
+        
+        # Store-focused text
+        text = store or 'Restaurant'
+        if cuisine:
+            text += f" {cuisine} cuisine"
+        if category:
+            text += f" {category}"
+        if address:
+            text += f" {address[:100]}"
         
         return text
     
