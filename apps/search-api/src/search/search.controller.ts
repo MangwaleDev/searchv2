@@ -1,12 +1,14 @@
-import { Controller, Get, Post, Query, UploadedFile, UseInterceptors, BadRequestException, HttpCode, Param } from '@nestjs/common';
+import { Body, Controller, Get, Post, Query, UploadedFile, UseInterceptors, BadRequestException, HttpCode, Param, Logger } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { SearchService } from './search.service';
 import { ConfigService } from '@nestjs/config';
 import { ApiConsumes, ApiOperation, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
+import axios from 'axios';
 
 @Controller()
 @ApiTags('Search API')
 export class SearchController {
+  private readonly logger = new Logger(SearchController.name);
   constructor(private readonly searchService: SearchService, private readonly config: ConfigService) {}
 
   @Get('/')
@@ -424,10 +426,16 @@ export class SearchController {
   @ApiTags('Analytics')
   @ApiOperation({ summary: 'Trending queries', description: 'Top queries aggregated from analytics.search_events in ClickHouse over the configured window.' })
   @ApiQuery({ name: 'window', required: false, description: "Time window in days, e.g., '7d' (default).", example: '7d' })
-  @ApiQuery({ name: 'module', required: false, description: "Module to filter: 'food'|'ecom'|'rooms'|'services'|'movies'", example: 'food' })
+  @ApiQuery({ name: 'module', required: false, description: "Module to filter (string stored in analytics.search_events.module). For v2 module_id-based UI, prefer module_id.", example: '4' })
+  @ApiQuery({ name: 'module_id', required: false, description: 'Module ID to filter (matches analytics.search_events.module as stored by this API)', example: 4 })
   @ApiQuery({ name: 'time_of_day', required: false, description: "Time of day bucket: 'morning'|'afternoon'|'evening'|'night'", example: 'evening' })
   @ApiResponse({ status: 200, description: 'Trending rows grouped by module, time_of_day, and q.', schema: { example: { window: '7d', module: 'all', time_of_day: 'all', rows: [{ module: 'food', time_of_day: 'evening', q: 'pizza', count: 120, total_results: 350 }] } } })
-  async trending(@Query('window') window = '7d', @Query('module') module?: string, @Query('time_of_day') tod?: string) {
+  async trending(
+    @Query('window') window = '7d',
+    @Query('module') module?: string,
+    @Query('module_id') moduleId?: string,
+    @Query('time_of_day') tod?: string,
+  ) {
     const chUrl = this.config.get<string>('CLICKHOUSE_URL') || 'http://localhost:8123';
     
     // Parse URL to extract credentials
@@ -444,9 +452,10 @@ export class SearchController {
     const cleanUrl = parsedUrl.toString();
     
     const days = /^\d+d$/.test(window) ? Number(window.replace('d','')) : 7;
+    const moduleFilter = (moduleId && String(moduleId).trim().length) ? String(moduleId).trim() : (module ? String(module).trim() : undefined);
     const where = [
       `day >= today() - ${days}`,
-      module ? `module = '${module}'` : undefined,
+      moduleFilter ? `module = '${moduleFilter.replace(/'/g, "''")}'` : undefined,
       tod ? `time_of_day = '${tod}'` : undefined,
     ].filter(Boolean).join(' AND ');
     const sql = `SELECT module, time_of_day, q, count() AS n, sum(total) AS total_results\n` +
@@ -461,15 +470,38 @@ export class SearchController {
       headers['Authorization'] = 'Basic ' + Buffer.from(`${username}:${password}`).toString('base64');
     }
     
-    const resp = await fetch(`${cleanUrl}?query=${encodeURIComponent(sql)}`, { method: 'GET', headers });
-    const text = await resp.text();
-    // naive TSV/CSV parse if needed; ClickHouse default returns tab-separated
-  const lines = text.trim().split(/\n+/).filter(Boolean);
-  const rows = lines.map((l: string) => {
-      const parts = l.split(/\t/);
-      return { module: parts[0], time_of_day: parts[1], q: parts[2], count: Number(parts[3]), total_results: Number(parts[4]) };
-    });
-    return { window, module: module || 'all', time_of_day: tod || 'all', rows };
+    try {
+      const resp = await axios.get(cleanUrl, {
+        params: { query: sql },
+        headers,
+        timeout: 8000,
+        validateStatus: () => true,
+        responseType: 'text',
+      });
+
+      if (resp.status < 200 || resp.status >= 300) {
+        this.logger.warn(`[analytics/trending] ClickHouse HTTP ${resp.status}; returning empty rows`);
+        return { window, module: moduleFilter || 'all', time_of_day: tod || 'all', rows: [] };
+      }
+
+      const text = typeof resp.data === 'string' ? resp.data : '';
+      const lines = text.trim().split(/\n+/).filter(Boolean);
+      const rows = lines.map((l: string) => {
+        const parts = l.split(/\t/);
+        return {
+          module: parts[0],
+          time_of_day: parts[1],
+          q: parts[2],
+          count: Number(parts[3]),
+          total_results: Number(parts[4]),
+        };
+      }).filter(r => r.q);
+
+      return { window, module: moduleFilter || 'all', time_of_day: tod || 'all', rows };
+    } catch (error: any) {
+      this.logger.warn(`[analytics/trending] ClickHouse request failed: ${error?.message || String(error)}`);
+      return { window, module: moduleFilter || 'all', time_of_day: tod || 'all', rows: [] };
+    }
   }
 
   @Get('/search/agent')

@@ -28,4 +28,4 @@ http:
     minio-service:
       loadBalancer:
         servers:
-          - url: "http://172.25.0.16:9000"
+          - url: "http://mw-minio:9000"

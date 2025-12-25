@@ -10,6 +10,7 @@ import { ImageService } from '../modules/image.service';
 import { QueryParserService } from './query-parser.service';
 
 @Injectable()
+export class SearchService {
   /**
    * Public wrapper for findTopStoreMatch (for controller access)
    */
@@ -55,8 +56,6 @@ import { QueryParserService } from './query-parser.service';
     // Generic
     return this.searchItemsByModule(q, filters);
   }
-
-export class SearchService {
   private client: Client;
   private readonly logger = new Logger(SearchService.name);
   private cacheEnabled: boolean;
@@ -1854,22 +1853,61 @@ export class SearchService {
       );
     }
 
-    // Validate category belongs to module if both provided
+    // Validate category belongs to module if both provided.
+    // IMPORTANT: This uses MySQL; in environments without MySQL connectivity we should not 500.
     if (categoryId && moduleId) {
-      const isValid = await this.moduleService.validateCategoryModule(Number(categoryId), moduleId);
-      if (!isValid) {
-        throw new BadRequestException(
-          `Category ${categoryId} does not exist in module ${moduleId}`
-        );
+      try {
+        const isValid = await this.moduleService.validateCategoryModule(Number(categoryId), moduleId);
+        if (!isValid) {
+          throw new BadRequestException(
+            `Category ${categoryId} does not exist in module ${moduleId}`
+          );
+        }
+      } catch (error: any) {
+        // If it's a BadRequestException, rethrow. Otherwise, skip validation to avoid 500.
+        if (error instanceof BadRequestException) throw error;
+        this.logger.warn(`[unifiedSearch] Category validation skipped (MySQL unavailable): ${error?.message || String(error)}`);
       }
     }
 
-    // Resolve which modules to search
-    const modules = await this.moduleService.resolveModules({
-      module_id: moduleId,
-      module_ids: moduleIds,
-      module_type: moduleType,
-    });
+    // Resolve which modules to search (MySQL-backed). Fall back to common mappings if DB is unavailable.
+    let modules: any[] = [];
+    try {
+      modules = await this.moduleService.resolveModules({
+        module_id: moduleId,
+        module_ids: moduleIds,
+        module_type: moduleType,
+      });
+    } catch (error: any) {
+      this.logger.warn(`[unifiedSearch] Module resolution failed (MySQL unavailable): ${error?.message || String(error)}; using fallback modules`);
+
+      const typeMap: Record<number, string> = {
+        4: 'food',
+        5: 'ecommerce',
+        6: 'grocery',
+      };
+      const nameMap: Record<number, string> = {
+        4: 'Food',
+        5: 'Shop',
+        6: 'Grocery',
+      };
+
+      const ids = moduleId ? [moduleId] : (moduleIds && moduleIds.length ? moduleIds : undefined);
+      const fallbackIds = ids && ids.length ? ids : [4, 5];
+      const now = new Date();
+      modules = fallbackIds.map((id) => ({
+        id,
+        module_type: typeMap[id] || 'food',
+        name: nameMap[id] || `Module ${id}`,
+        slug: `module-${id}`,
+        description: null,
+        icon: null,
+        status: 1,
+        opensearch_index: null,
+        created_at: now,
+        updated_at: now,
+      }));
+    }
 
     if (modules.length === 0) {
       return {
@@ -2020,16 +2058,18 @@ export class SearchService {
       filterClauses.push({ geo_distance: { distance: `${radiusKm}km`, store_location: { lat, lon } } });
     }
 
-    // Zone validation
+    // Zone handling
+    // IMPORTANT: Do NOT hard-filter items by derived zone_id from lat/lon.
+    // Zone metadata may be missing/inconsistent in some indices and would hide results.
+    // If strict zone filtering is desired, it should be passed explicitly as a filter.
     if (hasGeo) {
       try {
-        const zoneId = await this.zoneService.getZoneId(lat, lon);
-        if (zoneId) {
-          filterClauses.push({ term: { zone_id: zoneId } });
-          this.logger.debug(`[unifiedSearch] Applied zone filter: zone_id=${zoneId}`);
+        const derivedZoneId = await this.zoneService.getZoneId(lat, lon);
+        if (derivedZoneId) {
+          this.logger.debug(`[unifiedSearch] Derived zone_id=${derivedZoneId} from (${lat}, ${lon}) (not applied as hard filter)`);
         }
       } catch (error) {
-        this.logger.warn(`[unifiedSearch] Failed to get zone ID: ${(error as any)?.message || String(error)}`);
+        this.logger.warn(`[unifiedSearch] Failed to derive zone ID: ${(error as any)?.message || String(error)}`);
       }
     }
 
@@ -2137,10 +2177,12 @@ export class SearchService {
     let stores: any[] = [];
 
     // Search for stores directly if query is present
-    if (q && q.trim()) {
-      const storeIndices: string[] = [];
-      if (modules.some(m => m.module_type === 'food')) storeIndices.push('food_stores');
-      if (modules.some(m => m.module_type === 'ecom')) storeIndices.push('ecom_stores');
+      if (q && q.trim()) {
+        const storeIndices: string[] = [];
+        if (modules.some(m => m.module_type === 'food')) storeIndices.push('food_stores');
+        if (modules.some(m => m.module_type === 'ecommerce' || m.module_type === 'ecom' || m.module_type === 'grocery')) {
+          storeIndices.push('ecom_stores');
+        }
       
       if (storeIndices.length > 0) {
         const storeSearchBody: any = {
@@ -2334,10 +2376,40 @@ export class SearchService {
           searching_modules: modules.map(m => m.name),
         },
       };
-    } catch (error: any) {
-      this.logger.error(`❌ Unified search error: ${error.message}`, error.stack);
-      throw error;
-    }
+      } catch (error: any) {
+        this.logger.error(`❌ Unified search error (returning empty response): ${error?.message || String(error)}`, error?.stack);
+
+        // Never 500 for unified search; return empty payload so the UI can still function.
+        // Keep the response shape stable.
+        const safeSize = Math.max(1, Math.min(Number(filters?.size ?? 20) || 20, 100));
+        const safePage = Math.max(1, Number(filters?.page ?? 1) || 1);
+
+        return {
+          q,
+          filters: {
+            ...filters,
+            module_ids: (Array.isArray((filters as any)?.module_ids) ? (filters as any).module_ids : undefined),
+            searching_modules: [],
+          },
+          modules: (Array.isArray(modules) ? modules : []).map((m: any) => ({
+            id: m?.id,
+            name: m?.name,
+            type: m?.module_type,
+            slug: m?.slug,
+          })),
+          stores: [],
+          items: [],
+          meta: {
+            total: 0,
+            page: safePage,
+            size: safeSize,
+            total_pages: 0,
+            has_more: false,
+            searched_indices: [],
+            searching_modules: [],
+          },
+        };
+      }
   }
 
   async searchStores(module: 'food' | 'ecom' | 'rooms' | 'services' | 'movies', q: string, filters: Record<string, string>) {
@@ -5353,7 +5425,18 @@ export class SearchService {
       size?: number;
       sort?: string;
     }
-  ) {
+  ): Promise<{
+    q: string;
+    filters: any;
+    stores: any[];
+    meta: {
+      total: number;
+      page: number;
+      size: number;
+      total_pages: number;
+      has_more: boolean;
+    };
+  }> {
     this.logger.log(`🔍 [searchStoresByModule] START: q="${q}", filters=${JSON.stringify(filters)}`);
 
     // Validate category belongs to module if both provided
@@ -5464,6 +5547,8 @@ export class SearchService {
             { term: { slug: { value: q.toLowerCase(), boost: 8 } } },
             { match_phrase: { name: { query: q, boost: 6 } } },
             { match_phrase: { slug: { query: q.toLowerCase(), boost: 5 } } },
+            // Extra typo tolerance for short store-name queries (keeps low boost to avoid noisy matches)
+            { match: { name: { query: q, boost: 2, fuzziness: 2 } } },
             { multi_match: {
               query: q,
               fields: ['name^3', 'slug^2', 'address'],
@@ -5485,16 +5570,19 @@ export class SearchService {
     const radiusKm = filters?.radius_km;
     const hasGeo = lat !== undefined && !Number.isNaN(lat) && lon !== undefined && !Number.isNaN(lon);
 
-    // Zone validation
+    // Zone handling
+    // IMPORTANT: Do NOT hard-filter stores by derived zone_id from lat/lon.
+    // In some environments the stores index may not have reliable zone_id values,
+    // which would hide all stores when the user taps "Located".
+    // If a caller wants strict zone filtering, they must pass filters.zone_id explicitly.
     if (hasGeo) {
       try {
-        const zoneId = await this.zoneService.getZoneId(lat, lon);
-        if (zoneId) {
-          filterClauses.push({ term: { zone_id: zoneId } });
-          this.logger.debug(`[searchStoresByModule] Applied zone filter: zone_id=${zoneId}`);
+        const derivedZoneId = await this.zoneService.getZoneId(lat, lon);
+        if (derivedZoneId) {
+          this.logger.debug(`[searchStoresByModule] Derived zone_id=${derivedZoneId} from (${lat}, ${lon}) (not applied as hard filter)`);
         }
       } catch (error) {
-        this.logger.warn(`[searchStoresByModule] Failed to get zone ID: ${(error as any)?.message || String(error)}`);
+        this.logger.warn(`[searchStoresByModule] Failed to derive zone ID: ${(error as any)?.message || String(error)}`);
       }
     }
 
@@ -6253,20 +6341,32 @@ export class SearchService {
     });
 
     // Sort combined results
-    // When lat/lon are provided, always sort by distance (even if not explicitly requested)
-    // This ensures stores are returned in order of proximity
-    if (hasGeo) {
+    // IMPORTANT UX RULE:
+    // - If the user typed a query (q), keep relevance ordering (name/category/item priority).
+    // - Only sort by distance when explicitly requested via sort=distance, or when browsing (no q).
+    const hasQuery = !!(q && q.trim());
+    const explicitSort = typeof filters?.sort === 'string' && filters.sort.trim().length ? filters.sort.trim() : undefined;
+
+    if (hasGeo && explicitSort === 'distance') {
+      // User explicitly requested distance ordering.
       stores.sort((a, b) => {
         const distA = a.distance_km !== undefined && a.distance_km !== null ? a.distance_km : Infinity;
         const distB = b.distance_km !== undefined && b.distance_km !== null ? b.distance_km : Infinity;
-        if (distA !== distB) {
-          return distA - distB;
-        }
-        // If distances are equal, sort by popularity
+        if (distA !== distB) return distA - distB;
         return (b.order_count || 0) - (a.order_count || 0);
       });
-    } else if (sortOrder === 'popularity') {
-      stores.sort((a, b) => (b.order_count || 0) - (a.order_count || 0));
+    } else if (!hasQuery) {
+      // Browsing mode: sort by proximity if we have geo, otherwise popularity.
+      if (hasGeo) {
+        stores.sort((a, b) => {
+          const distA = a.distance_km !== undefined && a.distance_km !== null ? a.distance_km : Infinity;
+          const distB = b.distance_km !== undefined && b.distance_km !== null ? b.distance_km : Infinity;
+          if (distA !== distB) return distA - distB;
+          return (b.order_count || 0) - (a.order_count || 0);
+        });
+      } else if (sortOrder === 'popularity') {
+        stores.sort((a, b) => (b.order_count || 0) - (a.order_count || 0));
+      }
     }
 
     // Apply strict filtering: if module_id is provided, prioritize stores with matching module_id
@@ -6320,6 +6420,18 @@ export class SearchService {
       this.logger.debug(`[searchStoresByModule] Filtered stores by store_id ${requestedStoreId}: ${beforeFilterCount} -> ${stores.length}`);
     }
 
+
+    // Fallback for geo radius filtering:
+    // If the caller sent radius_km (the UI does by default when "Located"),
+    // and we found zero stores, retry without radius filtering so users still see stores.
+    // Keep distance ordering in the retry.
+    const radiusKmForFallback = typeof (filters as any)?.radius_km === 'number' ? (filters as any).radius_km : undefined;
+    const alreadyRetriedWithoutRadius = Boolean((filters as any)?.__radius_fallback);
+    if (!alreadyRetriedWithoutRadius && stores.length === 0 && hasGeo && radiusKmForFallback !== undefined && !Number.isNaN(radiusKmForFallback) && radiusKmForFallback > 0) {
+      this.logger.warn(`[searchStoresByModule] 0 stores within radius_km=${radiusKmForFallback}; retrying without radius filter (distance sort)`);
+      const { radius_km: _omitRadius, __radius_fallback: _omitFlag, ...rest } = (filters as any);
+      return this.searchStoresByModule(q, { ...rest, sort: 'distance', __radius_fallback: true });
+    }
     // If no stores found and we have a query, try searching for items and categories, then return stores that serve them
     if (stores.length === 0 && q && q.trim()) {
       try {

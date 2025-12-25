@@ -231,8 +231,8 @@ else
   check_pass "No outstanding TODO/FIXME comments"
 fi
 
-# Check TypeScript compilation
-if npm run build --prefix apps/search-api > /dev/null 2>&1; then
+# Check TypeScript compilation (monorepo root)
+if npm run build > /dev/null 2>&1; then
   check_pass "TypeScript compiles without errors"
 else
   check_warn "TypeScript compilation issues - run 'npm run build' to check"

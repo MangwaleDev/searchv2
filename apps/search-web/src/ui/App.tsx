@@ -525,6 +525,9 @@ export default function App() {
   const [history, setHistory] = useLocalStorage<string[]>('mw_history', [])
   const [lat, setLat] = useLocalStorage<number | null>('mw_lat', null)
   const [lon, setLon] = useLocalStorage<number | null>('mw_lon', null)
+  const manualTabSetRef = useRef(false)
+  const lastAutoTabQRef = useRef<string>('')
+  const lastStoreIntentCheckKeyRef = useRef<string>('')
   
   // Clear invalid lat/lon on startup (0,0 is in the Atlantic Ocean)
   useEffect(() => {
@@ -560,6 +563,52 @@ export default function App() {
   const mediaStreamRef = useRef<MediaStream | null>(null)
   const speechRecRef = useRef<any>(null)
   const voiceCanceledRef = useRef(false)
+
+  const normalizeForMatch = (s: string) => (s || '').toLowerCase().replace(/[^a-z0-9]+/g, '')
+
+  const levenshtein = (a: string, b: string) => {
+    if (a === b) return 0
+    const al = a.length
+    const bl = b.length
+    if (al === 0) return bl
+    if (bl === 0) return al
+
+    const prev = new Array(bl + 1)
+    const curr = new Array(bl + 1)
+    for (let j = 0; j <= bl; j++) prev[j] = j
+    for (let i = 1; i <= al; i++) {
+      curr[0] = i
+      const ai = a.charCodeAt(i - 1)
+      for (let j = 1; j <= bl; j++) {
+        const cost = ai === b.charCodeAt(j - 1) ? 0 : 1
+        curr[j] = Math.min(
+          prev[j] + 1,
+          curr[j - 1] + 1,
+          prev[j - 1] + cost
+        )
+      }
+      for (let j = 0; j <= bl; j++) prev[j] = curr[j]
+    }
+    return prev[bl]
+  }
+
+  const isStrongStoreNameMatch = (query: string, storeName: string) => {
+    const qn = normalizeForMatch(query)
+    if (qn.length < 3) return false
+
+    const tokens = (storeName || '').split(/\s+/).filter(Boolean).slice(0, 3)
+    const tokenNorms = tokens.map(t => normalizeForMatch(t)).filter(Boolean)
+
+    for (const tn of tokenNorms) {
+      if (!tn) continue
+      if (tn === qn) return true
+      if (tn.startsWith(qn) && qn.length >= 3) return true
+      const maxDist = qn.length >= 6 ? 2 : 1
+      if (levenshtein(qn, tn) <= maxDist) return true
+    }
+
+    return false
+  }
   
   // Suggestions
   useEffect(() => {
@@ -567,6 +616,52 @@ export default function App() {
       API.suggest(getModuleId(module), qDeb, { lat: lat || undefined, lon: lon || undefined }).then(setSuggest).catch(() => {})
     } else setSuggest(null)
   }, [qDeb, module, lat, lon])
+
+  // Reset manual tab override when query/module changes
+  useEffect(() => {
+    manualTabSetRef.current = false
+    if (!qDeb) lastAutoTabQRef.current = ''
+  }, [qDeb, module])
+
+  // Auto-switch to Stores/Restaurants when query looks like a store name
+  useEffect(() => {
+    let ignore = false
+
+    if (activeTab !== 'items') return
+    if (manualTabSetRef.current) return
+    if (!qDeb || qDeb.trim().length < 3) return
+    if (lastAutoTabQRef.current === qDeb) return
+
+    // Prefer using suggest results (no extra call) when present.
+    const suggestedStore = suggest?.stores?.[0]
+    if (suggestedStore?.name && isStrongStoreNameMatch(qDeb, suggestedStore.name)) {
+      lastAutoTabQRef.current = qDeb
+      setActiveTab('stores')
+      return
+    }
+
+    const key = [module, qDeb, lat ?? '', lon ?? '', (lat != null && lon != null) ? String(filters.radius) : ''].join('|')
+    if (lastStoreIntentCheckKeyRef.current === key) return
+    lastStoreIntentCheckKeyRef.current = key
+
+    const params: Record<string, any> = { q: qDeb, page: 1, size: 1 }
+    if (lat != null && lon != null && lat !== 0 && lon !== 0) {
+      params.lat = lat
+      params.lon = lon
+      params.radius_km = filters.radius
+    }
+
+    API.searchStores(getModuleId(module), params).then((d: any) => {
+      if (ignore) return
+      const topName = d?.stores?.[0]?.name
+      if (topName && isStrongStoreNameMatch(qDeb, String(topName))) {
+        lastAutoTabQRef.current = qDeb
+        setActiveTab('stores')
+      }
+    }).catch(() => {})
+
+    return () => { ignore = true }
+  }, [qDeb, module, activeTab, suggest, lat, lon, filters.radius])
   
   // Reset page
   useEffect(() => { setPage(1) }, [qDeb, module, filters, activeTab])
@@ -851,11 +946,11 @@ export default function App() {
       <main className="main">
         {/* Tabs */}
         <div className="tabs">
-          <button className={activeTab === 'items' ? 'active' : ''} onClick={() => setActiveTab('items')}>
+          <button className={activeTab === 'items' ? 'active' : ''} onClick={() => { manualTabSetRef.current = true; setActiveTab('items') }}>
             {module === 'food' ? '🍔 Dishes' : '📦 Items'}
             {searchResp?.meta?.total != null && <span>({searchResp.meta.total})</span>}
           </button>
-          <button className={activeTab === 'stores' ? 'active' : ''} onClick={() => setActiveTab('stores')}>
+          <button className={activeTab === 'stores' ? 'active' : ''} onClick={() => { manualTabSetRef.current = true; setActiveTab('stores') }}>
             {module === 'food' ? '🏪 Restaurants' : '🏬 Stores'}
           </button>
         </div>
