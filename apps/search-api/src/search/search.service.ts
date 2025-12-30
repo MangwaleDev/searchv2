@@ -3505,7 +3505,7 @@ export class SearchService {
 
   /**
    * NEW: Suggest API with module_id/store_id/category_id support
-   * Returns items, stores, and categories
+   * Returns items, stores, and categories with intent-based prioritization
    */
   async suggestByModule(
     q: string,
@@ -3530,9 +3530,13 @@ export class SearchService {
 
     const minLen = 2;
     if (!q || q.trim().length < minLen) {
-      return { q, items: [], stores: [], categories: [] };
+      return { q, intent: 'generic', items: [], stores: [], categories: [] };
     }
 
+    // Parse query intent using query parser
+    const parsed = this.queryParser.parse(q);
+    this.logger.debug(`[suggestByModule] Query: \"${q}\" | Intent: ${parsed.intent}`);
+    
     const size = Math.max(1, Math.min(Number(filters?.size ?? 5) || 5, 50));
     const lat = filters?.lat;
     const lon = filters?.lon;
@@ -3830,6 +3834,36 @@ export class SearchService {
       seenCategoryNames.add(category.name);
       return true;
     }).slice(0, size);
+
+    // ============================================
+    // INTENT-BASED PRIORITIZATION
+    // ============================================
+    // Adjust result sizes based on detected intent
+    let itemsLimit = size;
+    let storesLimit = size;
+    let categoriesLimit = size;
+
+    if (parsed.intent === 'store_first') {
+      // User likely looking for a store/restaurant
+      this.logger.debug(`[suggestByModule] Store intent detected - prioritizing stores`);
+      storesLimit = Math.min(size * 2, 10); // Show more stores
+      itemsLimit = Math.max(Math.floor(size * 0.6), 3); // Fewer items
+      categoriesLimit = Math.max(Math.floor(size * 0.4), 2); // Fewer categories
+    } else if (parsed.intent === 'specific_item_specific_store') {
+      // User looking for specific item from specific store
+      this.logger.debug(`[suggestByModule] Specific item+store intent detected`);
+      itemsLimit = size;
+      storesLimit = Math.max(Math.floor(size * 0.5), 2);
+      categoriesLimit = 0; // Don't show categories for specific queries
+    } else {
+      // Generic search - balanced results
+      this.logger.debug(`[suggestByModule] Generic intent - balanced results`);
+    }
+
+    // Apply intent-based limits
+    items = items.slice(0, itemsLimit);
+    stores = stores.slice(0, storesLimit);
+    categories = categories.slice(0, categoriesLimit);
 
     // ============================================
     // FALLBACK LOGIC: Cross-entity search
@@ -4233,8 +4267,11 @@ export class SearchService {
       }
     }
 
+    this.logger.debug(`[suggestByModule] Final results: ${items.length} items, ${stores.length} stores, ${categories.length} categories (intent: ${parsed.intent})`);
+
     return { 
       q, 
+      intent: parsed.intent,
       items: this.imageService.transformItemsWithImages(items), 
       stores: this.imageService.transformStoresWithImages(stores), 
       categories: this.imageService.transformCategoriesWithImages(categories) 

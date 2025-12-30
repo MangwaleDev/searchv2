@@ -88,6 +88,8 @@ type Store = {
 }
 
 type SuggestResp = {
+  q?: string
+  intent?: 'store_first' | 'generic' | 'specific_item_specific_store'
   items: Array<{ id: string | number; name: string; price?: number | string; store_name?: string; image?: string }>
   stores: Array<{ id: string | number; name: string; logo?: string }>
   categories: Array<{ id: string | number; name: string }>
@@ -882,10 +884,22 @@ export default function App() {
                 </div>
               )}
               
+              {/* Show stores FIRST if store intent detected */}
+              {suggest?.intent === 'store_first' && (suggest?.stores?.length ?? 0) > 0 && (
+                <div className="suggest-group">
+                  <div className="suggest-header">🏪 Restaurants & Stores (Top Match)</div>
+                  {suggest?.stores?.slice(0, 6).map(st => (
+                    <div key={st.id} className="suggest-item" onClick={() => onSelectSuggestion(st.name)}>🏪 {st.name}</div>
+                  ))}
+                </div>
+              )}
+              
               {(suggest?.items?.length ?? 0) > 0 && (
                 <div className="suggest-group">
-                  <div className="suggest-header">Items</div>
-                  {suggest?.items?.slice(0, 5).map(it => (
+                  <div className="suggest-header">
+                    {suggest?.intent === 'store_first' ? 'Menu Items' : 'Items'}
+                  </div>
+                  {suggest?.items?.slice(0, suggest?.intent === 'store_first' ? 3 : 5).map(it => (
                     <div key={it.id} className="suggest-item with-image" onClick={() => onSelectSuggestion(it.name)}>
                       {it.image && <img src={`${IMAGE_BASE_URL}${it.image}`} alt="" onError={e => (e.target as HTMLImageElement).style.display = 'none'} />}
                       <div className="suggest-info">
@@ -898,7 +912,8 @@ export default function App() {
                 </div>
               )}
               
-              {(suggest?.stores?.length ?? 0) > 0 && (
+              {/* Show stores in regular position if NOT store intent */}
+              {suggest?.intent !== 'store_first' && (suggest?.stores?.length ?? 0) > 0 && (
                 <div className="suggest-group">
                   <div className="suggest-header">Stores</div>
                   {suggest?.stores?.slice(0, 4).map(st => (
@@ -907,7 +922,8 @@ export default function App() {
                 </div>
               )}
               
-              {(suggest?.categories?.length ?? 0) > 0 && (
+              {/* Don't show categories if specific_item_specific_store intent */}
+              {suggest?.intent !== 'specific_item_specific_store' && (suggest?.categories?.length ?? 0) > 0 && (
                 <div className="suggest-group">
                   <div className="suggest-header">Categories</div>
                   {suggest?.categories?.slice(0, 4).map(c => (
