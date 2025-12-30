@@ -1,0 +1,53 @@
+http:
+  routers:
+    test-mangwale-api:
+      rule: "Host(`test.mangwale.ai`) && PathPrefix(`/api`)"
+      service: test-mangwale-backend
+      entryPoints:
+        - web
+        - websecure
+      tls:
+        certResolver: letsencrypt
+
+    test-mangwale-websocket:
+      rule: "Host(`test.mangwale.ai`) && PathPrefix(`/socket.io`)"
+      service: test-mangwale-backend
+      entryPoints:
+        - web
+        - websecure
+      tls:
+        certResolver: letsencrypt
+      middlewares:
+        - websocket-headers@file
+
+    test-mangwale-health:
+      rule: "Host(`test.mangwale.ai`) && Path(`/health`)"
+      service: test-mangwale-backend
+      entryPoints:
+        - web
+        - websecure
+      tls:
+        certResolver: letsencrypt
+
+    test-mangwale-frontend:
+      rule: "Host(`test.mangwale.ai`)"
+      service: test-mangwale-frontend
+      entryPoints:
+        - web
+        - websecure
+      tls:
+        certResolver: letsencrypt
+      priority: 1
+
+  services:
+    test-mangwale-frontend:
+      loadBalancer:
+        servers:
+          - url: "http://172.17.0.1:3005"
+
+    test-mangwale-backend:
+      loadBalancer:
+        servers:
+          - url: "http://172.17.0.1:3200"
+        passHostHeader: true
+        serversTransport: websocket-transport@file

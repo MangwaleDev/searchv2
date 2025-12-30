@@ -1,0 +1,15 @@
+http:
+  routers:
+    exotel-router:
+      rule: "Host(`exotel.mangwale.ai`)"
+      service: exotel-service
+      entryPoints:
+        - websecure
+      tls:
+        certResolver: myresolver
+
+  services:
+    exotel-service:
+      loadBalancer:
+        servers:
+          - url: "http://192.168.0.151:8000"

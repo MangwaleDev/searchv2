@@ -2,6 +2,7 @@
 # Exotel Voice API Routing - exotel.mangwale.ai
 # ===========================================================================
 # Routes Exotel callbacks and voice APIs to Mercury services
+# Mercury IP: 192.168.0.151
 # ===========================================================================
 
 http:
@@ -13,25 +14,7 @@ http:
       service: noop@internal
       middlewares: [exotel-redirect-https]
 
-    # Test IVR - Priority 120
-    exotel-test-ivr:
-      rule: Host(`exotel.mangwale.ai`) && PathPrefix(`/test`)
-      entryPoints: [websecure]
-      tls:
-        certResolver: letsencrypt
-      service: test-ivr-service
-      priority: 120
-
-    # Audio Files - Priority 110
-    exotel-audio:
-      rule: Host(`exotel.mangwale.ai`) && PathPrefix(`/audio`)
-      entryPoints: [websecure]
-      tls:
-        certResolver: letsencrypt
-      service: audio-service
-      priority: 110
-
-    # Nerve System API - primary callback
+    # Nerve System API - primary callback (NO prefix stripping - Nerve expects /api/nerve/*)
     exotel-nerve:
       rule: Host(`exotel.mangwale.ai`) && PathPrefix(`/api/nerve`)
       entryPoints: [websecure]
@@ -40,7 +23,7 @@ http:
       service: nerve-service
       priority: 100
 
-    # Simple Exotel Caller Service - Port 3151
+    # Simple Exotel Caller Service (NEW) - Port 3151
     exotel-caller:
       rule: Host(`exotel.mangwale.ai`) && (PathPrefix(`/api/call`) || PathPrefix(`/exoml`) || PathPrefix(`/webhook`))
       entryPoints: [websecure]
@@ -83,12 +66,6 @@ http:
         permanent: true
 
   services:
-    # Audio Server on Jupiter - Port 8888
-    audio-service:
-      loadBalancer:
-        servers:
-          - url: "http://192.168.0.156:8005"
-
     # Nerve System on Mercury - Port 7100
     nerve-service:
       loadBalancer:
@@ -112,9 +89,3 @@ http:
       loadBalancer:
         servers:
           - url: "http://192.168.0.151:3151"
-
-    # Test IVR Service on Mercury - Port 8002
-    test-ivr-service:
-      loadBalancer:
-        servers:
-          - url: "http://192.168.0.156:8005"

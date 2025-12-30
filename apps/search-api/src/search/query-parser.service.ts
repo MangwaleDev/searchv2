@@ -45,10 +45,23 @@ export class QueryParserService {
     }
 
     // Store-first hints: queries ending with menu/restaurant/cafe or very short brand-like tokens
-    const storeKeywords = ['restaurant', 'restro', 'cafe', 'hotel', 'menu'];
+    const storeKeywords = [
+      'restaurant', 'restro', 'cafe', 'hotel', 'menu', 'bakery', 'sweet', 'sweets',
+      'mart', 'shop', 'store', 'kitchen', 'foods', 'bar', 'lounge', 'dhaba', 'corner'
+    ];
     const hasStoreKeyword = storeKeywords.some((kw) => lowered.includes(kw));
+    
+    // Detect brand-like patterns (Title Case, multiple capitals)
+    const hasTitleCase = /[A-Z][a-z]+\s+[A-Z][a-z]+/.test(normalized);
+    const hasMultipleCaps = (normalized.match(/[A-Z]/g) || []).length >= 2;
+    
     const tokenCount = normalized.split(/\s+/).length;
-    if (hasStoreKeyword || tokenCount <= 3) {
+    
+    // Store-first if:
+    // 1. Has store keyword
+    // 2. Short query (1-3 words) that looks like a brand name
+    // 3. Title case pattern (likely a proper noun/brand)
+    if (hasStoreKeyword || (tokenCount <= 3 && (hasTitleCase || hasMultipleCaps))) {
       return {
         intent: 'store_first',
         raw: normalized,

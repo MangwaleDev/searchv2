@@ -104,6 +104,7 @@ type Facets = {
 type SearchResp = {
   items: SearchItem[]
   stores?: Store[]
+  resolved_store?: Store & { type?: string; confidence?: number }
   facets?: Facets
   meta: { total: number; page: number; size: number }
 }
@@ -359,6 +360,7 @@ const StoreCard: React.FC<{ store: Store }> = ({ store }) => {
   const isOpen = store.status !== 0 && store.active !== 0
   const isVegOnly = store.veg === 1
   const isFeatured = store.featured === 1
+  const [logoError, setLogoError] = useState(false)
   
   // Handle avg_rating which might be a JSON string or number
   let avgRating: number | null = null
@@ -377,8 +379,13 @@ const StoreCard: React.FC<{ store: Store }> = ({ store }) => {
   return (
     <div className={`store-card ${!isOpen ? 'closed' : ''}`}>
       <div className="store-logo-wrapper">
-        {logoUrl ? (
-          <img src={logoUrl} alt={store.name} className="store-logo" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }} />
+        {logoUrl && !logoError ? (
+          <img
+            src={logoUrl}
+            alt={store.name}
+            className="store-logo"
+            onError={() => setLogoError(true)}
+          />
         ) : (
           <div className="store-logo-placeholder">🏪</div>
         )}
@@ -957,8 +964,22 @@ export default function App() {
         
         {activeTab === 'items' ? (
           <div className="results">
-            {/* Top Stores */}
-            {(searchResp?.stores?.length ?? 0) > 0 && (
+            {/* Resolved Store - Show prominently when user searches for a specific store */}
+            {(searchResp as any)?.resolved_store && (
+              <div className="resolved-store-banner">
+                <div className="resolved-store-header">
+                  <h2>🏪 {(searchResp as any).resolved_store.name}</h2>
+                  <span className="match-badge">✓ Exact Match</span>
+                </div>
+                <StoreCard store={(searchResp as any).resolved_store} />
+                <div className="resolved-store-meta">
+                  <p>Showing {searchResp?.meta?.total || 0} items from this store</p>
+                </div>
+              </div>
+            )}
+            
+            {/* Top Stores - Only show if no resolved store */}
+            {!(searchResp as any)?.resolved_store && (searchResp?.stores?.length ?? 0) > 0 && (
               <div className="stores-row">
                 <h3>{module === 'food' ? '🏪 Top Restaurants' : '🏬 Featured'}</h3>
                 <div className="stores-scroll">

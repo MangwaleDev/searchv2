@@ -36,7 +36,11 @@ export class SearchService {
       if (storeMatch.storeId) {
         const nextFilters = { ...filters, store_id: storeMatch.storeId };
         const itemQuery = parsed.itemQuery || q;
-        return this.searchItemsByModule(itemQuery, nextFilters);
+        const scoped = await this.searchItemsByModule(itemQuery, nextFilters);
+        if ((scoped?.items?.length ?? 0) > 0 || (scoped?.meta?.total ?? 0) > 0) {
+          return scoped;
+        }
+        return this.searchItemsByModule(q, filters);
       }
       // If store not found, fallback to generic search with original query
       return this.searchItemsByModule(q, filters);
@@ -45,9 +49,14 @@ export class SearchService {
     if (parsed.intent === 'store_first') {
       const storeMatch = await this.findTopStoreMatch(parsed.storeQuery || parsed.raw, filters);
       if (storeMatch.storeId) {
-        const nextFilters = { ...filters, store_id: storeMatch.storeId };
+        const nextFilters = { ...filters, store_id: storeMatch.storeId, _original_query: q } as any;
         // Empty query returns menu items for the matched store
-        return this.searchItemsByModule('', nextFilters);
+        const menu = await this.searchItemsByModule('', nextFilters);
+        if ((menu?.items?.length ?? 0) > 0 || (menu?.meta?.total ?? 0) > 0) {
+          return menu;
+        }
+        // If store match has no menu items indexed, fall back to generic item search
+        return this.searchItemsByModule(q, filters);
       }
       // Fallback to generic search if store not found
       return this.searchItemsByModule(q, filters);
@@ -259,10 +268,24 @@ export class SearchService {
           const storeId = doc._id;
           const numericId = String(doc._source.id);
           const details = {
+            name: doc._source.name,
+            slug: doc._source.slug,
+            logo: doc._source.logo,
+            cover_photo: doc._source.cover_photo,
+            rating: doc._source.rating,
+            avg_rating: doc._source.avg_rating,
             delivery_time: doc._source.delivery_time,
             latitude: doc._source.latitude,
             longitude: doc._source.longitude,
-            location: doc._source.location
+            location: doc._source.location,
+            module_id: doc._source.module_id,
+            active: doc._source.active,
+            status: doc._source.status,
+            veg: doc._source.veg,
+            non_veg: doc._source.non_veg,
+            featured: doc._source.featured,
+            order_count: doc._source.order_count,
+            zone_id: doc._source.zone_id,
           };
           storeDetails[storeId] = details;
           storeDetails[numericId] = details;
@@ -5392,9 +5415,52 @@ export class SearchService {
       section: 'items',
     }).catch(() => {});
 
+    // If store_id filter was applied from query parsing, get store details
+    let resolvedStore = null;
+    const originalQuery = (filters as any)?._original_query || q;
+    
+    // Log for debugging
+    this.logger.log(`[searchItemsByModule] DEBUG: q="${q}", filters._original_query="${(filters as any)?._original_query}", originalQuery="${originalQuery}", store_id=${filters?.store_id}`);
+    
+    if (filters?.store_id && originalQuery && originalQuery.trim()) {
+      this.logger.log(`[searchItemsByModule] ✓ Condition met - attempting to resolve store`);
+      try {
+        const storeDetail = storeDetails[String(filters.store_id)];
+        this.logger.log(`[searchItemsByModule] StoreDetail lookup: found=${!!storeDetail}, name=${storeDetail?.name}`);
+        if (storeDetail) {
+          this.logger.log(`✅ [searchItemsByModule] Resolved store: ${storeDetail.name} (ID: ${filters.store_id})`);
+          resolvedStore = {
+            id: filters.store_id,
+            name: storeDetail.name || storeNames[String(filters.store_id)],
+            type: 'exact_match',
+            confidence: 0.95,
+            logo: storeDetail.logo,
+            logo_full_url: storeDetail.logo ? `https://storage.mangwale.ai/mangwale/store/${storeDetail.logo}` : null,
+            rating: storeDetail.rating,
+            avg_rating: storeDetail.avg_rating,
+            delivery_time: storeDetail.delivery_time,
+            module_id: storeDetail.module_id,
+            active: storeDetail.active,
+            status: storeDetail.status,
+            veg: storeDetail.veg,
+            non_veg: storeDetail.non_veg,
+            featured: storeDetail.featured,
+            location: storeDetail.location,
+            latitude: storeDetail.latitude,
+            longitude: storeDetail.longitude,
+          };
+        } else {
+          this.logger.warn(`[searchItemsByModule] Store details not found for store_id=${filters.store_id}`);
+        }
+      } catch (error: any) {
+        this.logger.debug(`Failed to get resolved store details: ${error.message}`);
+      }
+    }
+
     return {
       q,
-      filters,
+      filters: { ...filters, _original_query: undefined }, // Remove internal flag from response
+      resolved_store: resolvedStore,
       items: this.imageService.transformItemsWithImages(items),
       meta: {
         total: totalHits,
