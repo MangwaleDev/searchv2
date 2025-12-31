@@ -7,6 +7,8 @@ export interface ParsedSearchIntent {
   raw: string;
   itemQuery?: string;
   storeQuery?: string;
+  detectedBrand?: string;  // The international/chain brand name if detected
+  isBrandSearch?: boolean; // True if user searched for a known brand
 }
 
 @Injectable()
@@ -147,6 +149,11 @@ export class QueryParserService {
       hasPartialStoreKeyword || hasMultiWordWithStoreHint
     );
     
+    // Find which brand was detected (if any)
+    const detectedBrand = this.knownBrands.find((brand) => 
+      normalizedLower.includes(brand.replace(/\s+/g, ''))
+    );
+    
     // Store-first if:
     // 1. Has known brand name
     // 2. Has store keyword (exact or partial)
@@ -169,9 +176,29 @@ export class QueryParserService {
         intent: 'store_first',
         raw: normalized,
         storeQuery: normalized,
+        detectedBrand: detectedBrand || undefined,
+        isBrandSearch: !!detectedBrand,
       };
     }
 
     return { intent: 'generic', raw: normalized };
+  }
+  
+  /**
+   * Get the list of known international/chain brands
+   */
+  getKnownBrands(): string[] {
+    return [...this.knownBrands];
+  }
+  
+  /**
+   * Check if a brand name matches any known brand
+   */
+  isKnownBrand(query: string): string | null {
+    const normalizedQuery = query.toLowerCase().replace(/[^a-z0-9\s]/g, '');
+    const match = this.knownBrands.find((brand) => 
+      normalizedQuery.includes(brand.replace(/\s+/g, ''))
+    );
+    return match || null;
   }
 }

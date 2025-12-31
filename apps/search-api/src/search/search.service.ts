@@ -4670,9 +4670,28 @@ export class SearchService {
 
     this.logger.debug(`[suggestByModule] Final results: ${items.length} items, ${stores.length} stores, ${categories.length} categories (intent: ${parsed.intent})`);
 
+    // ============================================
+    // BRAND VALIDATION FOR UNREGISTERED BRANDS
+    // ============================================
+    // If user searched for a known international brand (KFC, Dominos, etc.)
+    // but we found no matching stores, inform them it's not available
+    let brandNotFound: { brand: string; message: string } | undefined;
+    
+    if (parsed.isBrandSearch && parsed.detectedBrand && stores.length === 0) {
+      const brandName = parsed.detectedBrand.charAt(0).toUpperCase() + parsed.detectedBrand.slice(1);
+      brandNotFound = {
+        brand: brandName,
+        message: `${brandName} is not currently available as a Mangwale partner in your area. Try searching for similar local restaurants!`
+      };
+      this.logger.debug(`[suggestByModule] Brand "${parsed.detectedBrand}" detected but not registered as a partner`);
+    }
+
     return { 
       q, 
       intent: parsed.intent,
+      detected_brand: parsed.detectedBrand,
+      is_brand_search: parsed.isBrandSearch || false,
+      brand_not_found: brandNotFound,
       items: this.imageService.transformItemsWithImages(items), 
       stores: this.imageService.transformStoresWithImages(stores), 
       categories: this.imageService.transformCategoriesWithImages(categories) 

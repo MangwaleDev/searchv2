@@ -95,6 +95,12 @@ type Store = {
 type SuggestResp = {
   q?: string
   intent?: 'store_first' | 'generic' | 'specific_item_specific_store'
+  detected_brand?: string
+  is_brand_search?: boolean
+  brand_not_found?: {
+    brand: string
+    message: string
+  }
   items: Array<{ id: string | number; name: string; price?: number | string; store_name?: string; image?: string }>
   stores: Array<{ id: string | number; name: string; logo?: string }>
   categories: Array<{ id: string | number; name: string }>
@@ -920,6 +926,19 @@ export default function App() {
                   <div className="suggest-header">🔥 Trending</div>
                   <div className="trending-chips">
                     {trending.map(t => <button key={t} onClick={() => onSelectSuggestion(t)}>{t}</button>)}
+                  </div>
+                </div>
+              )}
+              
+              {/* Show brand not found message if user searched for unregistered brand */}
+              {suggest?.brand_not_found && (
+                <div className="suggest-group brand-not-found">
+                  <div className="brand-not-found-message">
+                    <span className="brand-icon">🏷️</span>
+                    <div className="brand-text">
+                      <strong>{suggest.brand_not_found.brand}</strong> is not currently available as a Mangwale partner
+                      <span className="brand-hint">Try searching for similar local restaurants!</span>
+                    </div>
                   </div>
                 </div>
               )}
