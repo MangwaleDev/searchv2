@@ -8,9 +8,13 @@ import { SearchCacheService } from '../modules/cache.service';
 import { ZoneService } from '../modules/zone.service';
 import { ImageService } from '../modules/image.service';
 import { QueryParserService } from './query-parser.service';
+import * as mysql from 'mysql2/promise';
 
 @Injectable()
 export class SearchService {
+  private storeScheduleCache: Map<string, any[]> = new Map();
+  private scheduleCacheExpiry: Map<string, number> = new Map();
+
   /**
    * Public wrapper for findTopStoreMatch (for controller access)
    */
@@ -158,6 +162,248 @@ export class SearchService {
     // Assuming average speed of 30 km/h in city traffic
     const averageSpeedKmh = 30;
     return Math.round((distanceKm / averageSpeedKmh) * 60); // Return minutes
+  }
+
+  /**
+   * Fetch store schedules from MySQL database with caching
+   */
+  private async fetchStoreSchedules(storeIds: string[]): Promise<Map<string, any[]>> {
+    const now = Date.now();
+    const CACHE_TTL = 30 * 60 * 1000; // 30 minutes
+    const schedulesByStore = new Map<string, any[]>();
+    const storeIdsToFetch: string[] = [];
+
+    // Check cache first
+    for (const storeId of storeIds) {
+      const cacheExpiry = this.scheduleCacheExpiry.get(storeId);
+      if (cacheExpiry && now < cacheExpiry) {
+        const cached = this.storeScheduleCache.get(storeId);
+        if (cached) {
+          schedulesByStore.set(storeId, cached);
+        }
+      } else {
+        storeIdsToFetch.push(storeId);
+      }
+    }
+
+    // Fetch from database if needed
+    if (storeIdsToFetch.length > 0) {
+      try {
+        const connection = await mysql.createConnection({
+          host: this.config.get<string>('MYSQL_HOST'),
+          user: this.config.get<string>('MYSQL_USER'),
+          password: this.config.get<string>('MYSQL_PASSWORD'),
+          database: this.config.get<string>('MYSQL_DATABASE'),
+        });
+
+        const [rows] = await connection.execute(
+          `SELECT store_id, day, opening_time, closing_time 
+           FROM store_schedule 
+           WHERE store_id IN (${storeIdsToFetch.join(',')})`
+        );
+
+        await connection.end();
+
+        // Group by store_id and cache
+        (rows as any[]).forEach((row: any) => {
+          const storeId = String(row.store_id);
+          if (!schedulesByStore.has(storeId)) {
+            schedulesByStore.set(storeId, []);
+          }
+          schedulesByStore.get(storeId)!.push({
+            day: row.day,
+            opening_time: row.opening_time,
+            closing_time: row.closing_time
+          });
+        });
+
+        // Update cache
+        const expiryTime = now + CACHE_TTL;
+        for (const storeId of storeIdsToFetch) {
+          const schedule = schedulesByStore.get(storeId) || [];
+          this.storeScheduleCache.set(storeId, schedule);
+          this.scheduleCacheExpiry.set(storeId, expiryTime);
+        }
+
+        this.logger.debug(`[fetchStoreSchedules] Fetched schedules for ${storeIdsToFetch.length} stores from MySQL`);
+      } catch (error: any) {
+        this.logger.error(`[fetchStoreSchedules] MySQL error: ${error?.message || String(error)}`);
+      }
+    }
+
+    return schedulesByStore;
+  }
+
+  /**
+   * Calculate store timing status and display message
+   * Returns status: 'open', 'closing_soon', 'closed'
+   * Uses store_schedule from database, falls back to 10 AM - 10 PM
+   * Supports MULTIPLE time slots per day (e.g., lunch 12-4pm, dinner 7-11pm)
+   */
+  private getStoreTimingStatus(store?: any): { status: string; message: string; minutesRemaining?: number; isOpen: boolean } {
+    const now = new Date();
+    
+    // Use IST timezone (UTC+5:30)
+    const istOffset = 5.5 * 60; // minutes
+    const localOffset = now.getTimezoneOffset(); // minutes from UTC
+    const istTime = new Date(now.getTime() + (istOffset + localOffset) * 60 * 1000);
+    
+    const currentHour = istTime.getHours();
+    const currentMinute = istTime.getMinutes();
+    const currentDay = istTime.getDay(); // 0 = Sunday, 1 = Monday, etc.
+    const currentTimeMinutes = currentHour * 60 + currentMinute;
+    
+    // Helper function to parse time string to minutes
+    const parseTimeToMinutes = (timeStr: string): number => {
+      const [h, m] = timeStr.split(':').map(s => parseInt(s, 10));
+      return h * 60 + (m || 0);
+    };
+    
+    // Helper function to format minutes to "HH:MM AM/PM"
+    const formatTime = (minutes: number): string => {
+      const h = Math.floor(minutes / 60);
+      const m = minutes % 60;
+      if (h === 0) return `12:${m.toString().padStart(2, '0')} AM`;
+      if (h < 12) return `${h}:${m.toString().padStart(2, '0')} AM`;
+      if (h === 12) return `12:${m.toString().padStart(2, '0')} PM`;
+      return `${h - 12}:${m.toString().padStart(2, '0')} PM`;
+    };
+    
+    // Use store schedule data if available - can have MULTIPLE time slots per day
+    let timeSlots: Array<{opening: number; closing: number}> = [];
+    
+    if (store?.schedule && Array.isArray(store.schedule) && store.schedule.length > 0) {
+      const todaySchedules = store.schedule.filter((s: any) => s.day === currentDay);
+      
+      if (todaySchedules.length > 0) {
+        // Parse all time slots for today
+        todaySchedules.forEach((schedule: any) => {
+          if (schedule.opening_time && schedule.closing_time) {
+            const openingStr = typeof schedule.opening_time === 'string' 
+              ? schedule.opening_time 
+              : schedule.opening_time.toString();
+            const closingStr = typeof schedule.closing_time === 'string'
+              ? schedule.closing_time
+              : schedule.closing_time.toString();
+            
+            timeSlots.push({
+              opening: parseTimeToMinutes(openingStr),
+              closing: parseTimeToMinutes(closingStr)
+            });
+          }
+        });
+        
+        // Sort by opening time
+        timeSlots.sort((a, b) => a.opening - b.opening);
+        
+        this.logger.debug(`[Timing] Store ${store.id || store.name}: day=${currentDay}, ${timeSlots.length} slots: ${timeSlots.map(s => formatTime(s.opening) + '-' + formatTime(s.closing)).join(', ')}`);
+      }
+    }
+    
+    // Fallback to single slot 10 AM - 10 PM
+    if (timeSlots.length === 0) {
+      timeSlots = [{ opening: 10 * 60, closing: 22 * 60 }];
+    }
+    
+    // Check off_day if available
+    const offDay = store?.off_day?.trim();
+    if (offDay && offDay !== ' ' && offDay !== '') {
+      const offDays = offDay.split(',').map((d: string) => parseInt(d.trim())).filter((d: number) => !isNaN(d));
+      if (offDays.includes(currentDay)) {
+        let nextDay = (currentDay + 1) % 7;
+        let nextOpening = timeSlots[0].opening;
+        
+        if (store?.schedule && Array.isArray(store.schedule)) {
+          const nextSchedules = store.schedule.filter((s: any) => s.day === nextDay);
+          if (nextSchedules.length > 0 && nextSchedules[0].opening_time) {
+            const timeStr = typeof nextSchedules[0].opening_time === 'string'
+              ? nextSchedules[0].opening_time
+              : nextSchedules[0].opening_time.toString();
+            nextOpening = parseTimeToMinutes(timeStr);
+          }
+        }
+        
+        return {
+          status: 'closed',
+          message: `Opens tomorrow at ${formatTime(nextOpening)}`,
+          isOpen: false
+        };
+      }
+    }
+    
+    // Check if currently open in ANY time slot
+    let currentSlot = timeSlots.find((slot: any) => 
+      currentTimeMinutes >= slot.opening && currentTimeMinutes < slot.closing
+    );
+    
+    const isOpen = !!currentSlot;
+    
+    if (!isOpen) {
+      // Find next opening time (today or tomorrow)
+      let nextSlot = timeSlots.find((slot: any) => slot.opening > currentTimeMinutes);
+      
+      if (nextSlot) {
+        // Opens later today
+        return {
+          status: 'closed',
+          message: `Opens at ${formatTime(nextSlot.opening)}`,
+          isOpen: false
+        };
+      } else {
+        // After all time slots today - show tomorrow's first opening
+        let nextDay = (currentDay + 1) % 7;
+        let nextOpening = timeSlots[0].opening;
+        
+        if (store?.schedule && Array.isArray(store.schedule)) {
+          const nextSchedules = store.schedule.filter((s: any) => s.day === nextDay);
+          if (nextSchedules.length > 0 && nextSchedules[0].opening_time) {
+            const timeStr = typeof nextSchedules[0].opening_time === 'string'
+              ? nextSchedules[0].opening_time
+              : nextSchedules[0].opening_time.toString();
+            nextOpening = parseTimeToMinutes(timeStr);
+          }
+        }
+        
+        return {
+          status: 'closed',
+          message: `Opens tomorrow at ${formatTime(nextOpening)}`,
+          isOpen: false
+        };
+      }
+    }
+    
+    // Currently open - calculate minutes until closing
+    const minutesUntilClosing = currentSlot!.closing - currentTimeMinutes;
+    
+    if (minutesUntilClosing <= 10) {
+      return {
+        status: 'closing_very_soon',
+        message: `Closing in ${minutesUntilClosing} min`,
+        minutesRemaining: minutesUntilClosing,
+        isOpen: true
+      };
+    } else if (minutesUntilClosing <= 30) {
+      return {
+        status: 'closing_soon',
+        message: `Closing in ${minutesUntilClosing} min`,
+        minutesRemaining: minutesUntilClosing,
+        isOpen: true
+      };
+    } else if (minutesUntilClosing <= 60) {
+      return {
+        status: 'open',
+        message: `Closes at ${formatTime(currentSlot!.closing)}`,
+        minutesRemaining: minutesUntilClosing,
+        isOpen: true
+      };
+    } else {
+      return {
+        status: 'open',
+        message: `Open until ${formatTime(currentSlot!.closing)}`,
+        minutesRemaining: minutesUntilClosing,
+        isOpen: true
+      };
+    }
   }
 
   // Utility function to recalculate delivery time by adding travel time
@@ -1161,6 +1407,20 @@ export class SearchService {
       if (cached) {
         const latency = Date.now() - startTime;
         this.logger.log(`🚀 Cache HIT: module=${module}, q="${q}", latency=${latency}ms`);
+        
+        // Recalculate timing for cached stores (timing is dynamic based on current time)
+        if (cached.stores && Array.isArray(cached.stores)) {
+          cached.stores.forEach((store: any) => {
+            const timingInfo = this.getStoreTimingStatus(store);
+            store.timing_status = timingInfo.status;
+            store.timing_message = timingInfo.message;
+            store.is_open = timingInfo.isOpen;
+            if (timingInfo.minutesRemaining !== undefined) {
+              store.minutes_until_closing = timingInfo.minutesRemaining;
+            }
+          });
+        }
+        
         return cached;
       }
     }
@@ -1218,12 +1478,18 @@ export class SearchService {
           bool: {
             should: [
               // Exact match gets highest priority
-              { term: { 'name.keyword': { value: q, boost: 10 } } },
-              { term: { slug: { value: q.toLowerCase(), boost: 8 } } },
+              { term: { 'name.keyword': { value: q, boost: 15 } } },
+              { term: { slug: { value: q.toLowerCase(), boost: 12 } } },
+              
+              // Word boundary match (e.g., "pan" as a whole word, not substring)
+              { match: { name: { query: q, operator: 'and', boost: 10 } } },
+              
               // Phrase match gets high priority
-              { match_phrase: { name: { query: q, boost: 6 } } },
-              { match_phrase: { slug: { query: q.toLowerCase(), boost: 5 } } },
-              // Partial matches
+              { match_phrase: { name: { query: q, boost: 8 } } },
+              { match_phrase: { slug: { query: q.toLowerCase(), boost: 6 } } },
+              { match_phrase: { category_name: { query: q, boost: 7 } } },
+              
+              // Partial matches with AND operator (stricter)
               { multi_match: {
                 query: q,
                 fields: ['name^3', 'description^1', 'category_name^2'],
@@ -1232,9 +1498,10 @@ export class SearchService {
                 fuzziness: 'AUTO',
                 lenient: true,
               }},
-              // Wildcard matches for partial text
-              { wildcard: { name: { value: `*${q.toLowerCase()}*`, boost: 2 } } },
-              { wildcard: { slug: { value: `*${q.toLowerCase()}*`, boost: 1.5 } } },
+              
+              // Wildcard matches for partial text (lower boost to prevent substring dominance)
+              { wildcard: { name: { value: `*${q.toLowerCase()}*`, boost: 0.5 } } },
+              { wildcard: { slug: { value: `*${q.toLowerCase()}*`, boost: 0.3 } } },
             ],
             minimum_should_match: 1,
         },
@@ -1966,11 +2233,17 @@ export class SearchService {
     if (q && q.trim()) {
       const shouldClauses: any[] = [
         // Exact match gets highest priority
-        { term: { 'name.keyword': { value: q, boost: 10 } } },
-        { term: { slug: { value: q.toLowerCase(), boost: 8 } } },
+        { term: { 'name.keyword': { value: q, boost: 15 } } },
+        { term: { slug: { value: q.toLowerCase(), boost: 12 } } },
+        
+        // Word boundary match (whole word)
+        { match: { name: { query: q, operator: 'and', boost: 10 } } },
+        
         // Phrase match gets high priority
-        { match_phrase: { name: { query: q, boost: 6 } } },
-        { match_phrase: { slug: { query: q.toLowerCase(), boost: 5 } } },
+        { match_phrase: { name: { query: q, boost: 8 } } },
+        { match_phrase: { slug: { query: q.toLowerCase(), boost: 6 } } },
+        { match_phrase: { category_name: { query: q, boost: 7 } } },
+        
         // Partial matches
         { multi_match: {
           query: q,
@@ -1980,9 +2253,10 @@ export class SearchService {
           fuzziness: 'AUTO',
           lenient: true,
         }},
-        // Wildcard matches for partial text
-        { wildcard: { name: { value: `*${q.toLowerCase()}*`, boost: 2 } } },
-        { wildcard: { slug: { value: `*${q.toLowerCase()}*`, boost: 1.5 } } },
+        
+        // Wildcard matches for partial text (lower boost)
+        { wildcard: { name: { value: `*${q.toLowerCase()}*`, boost: 0.5 } } },
+        { wildcard: { slug: { value: `*${q.toLowerCase()}*`, boost: 0.3 } } },
       ];
 
       // Apply time-based category boosting for food module
@@ -2503,6 +2777,19 @@ export class SearchService {
       }
     }
 
+    // Veg/Non-Veg filter
+    const vegFilter = filters?.veg;
+    if (vegFilter === '1' || vegFilter === 'veg' || vegFilter === 'true') {
+      // Veg only: must have veg=1
+      filterClauses.push({ term: { veg: 1 } });
+      this.logger.debug(`[searchStores] Applied VEG filter`);
+    } else if (vegFilter === '0' || vegFilter === 'non-veg' || vegFilter === 'false') {
+      // Non-veg: must have non_veg=1 (can also have veg=1)
+      filterClauses.push({ term: { non_veg: 1 } });
+      this.logger.debug(`[searchStores] Applied NON-VEG filter`);
+    }
+    // If vegFilter is not set or is 'all', show all stores (no filter)
+
     // delivery_time_max filter - TEMPORARILY DISABLED due to fielddata issue
     // TODO: Re-enable after fixing delivery_time field mapping to use keyword subfield
     const deliveryTimeMax = filters?.delivery_time_max ? Number(filters.delivery_time_max) : undefined;
@@ -2921,16 +3208,24 @@ export class SearchService {
       bool: {
         should: [
           // Exact match gets highest priority
-          { term: { name: { value: q, boost: 10 } } },
-          { term: { slug: { value: q.toLowerCase(), boost: 8 } } },
+          { term: { name: { value: q, boost: 15 } } },
+          { term: { slug: { value: q.toLowerCase(), boost: 12 } } },
+          
+          // Word boundary match (whole word)
+          { match: { name: { query: q, operator: 'and', boost: 10 } } },
+          
           // Phrase match gets high priority
-          { match_phrase: { name: { query: q, boost: 6 } } },
-          { match_phrase: { slug: { query: q.toLowerCase(), boost: 5 } } },
+          { match_phrase: { name: { query: q, boost: 8 } } },
+          { match_phrase: { slug: { query: q.toLowerCase(), boost: 6 } } },
+          { match_phrase: { category_name: { query: q, boost: 7 } } },
+          
           // Partial matches
           { multi_match: { query: q, type: 'best_fields', fields: ['name^4', 'category_name^2'] } },
           // phrase_prefix only on text fields (name, description), not keyword fields (category_name)
           { multi_match: { query: q, type: 'phrase_prefix', fields: ['name^3', 'description'] } },
-          { wildcard: { name: { value: `*${q.toLowerCase()}*`, boost: 1.5 } } },
+          
+          // Wildcard with lower boost
+          { wildcard: { name: { value: `*${q.toLowerCase()}*`, boost: 0.5 } } },
         ],
         minimum_should_match: 1,
       },
@@ -2973,7 +3268,7 @@ export class SearchService {
       query: storeQuery,
       size,
       sort: hasGeo ? [{ _geo_distance: { store_location: { lat, lon }, order: 'asc', unit: 'km', mode: 'min', distance_type: 'arc', ignore_unmapped: true } }] : [{ order_count: { order: 'desc' } }],
-      _source: ['name', 'slug', 'logo', 'cover_photo', 'image', 'images', 'store_location', 'order_count', 'delivery_time', 'rating'],
+      _source: ['name', 'slug', 'logo', 'cover_photo', 'image', 'images', 'store_location', 'order_count', 'delivery_time', 'rating', 'veg', 'non_veg', 'food_type'],
       script_fields: hasGeo ? { distance_km: { script: { source: "if (doc['store_location'].size() == 0) return null; doc['store_location'].arcDistance(params.lat, params.lon) / 1000.0", params: { lat, lon } } } } : undefined,
     };
 
@@ -3097,6 +3392,17 @@ export class SearchService {
       }
       seenCategoryNames.add(category.name);
       return true;
+    });
+
+    // Add timing status to stores
+    stores.forEach((store: any) => {
+      const timingInfo = this.getStoreTimingStatus(store);
+      store.timing_status = timingInfo.status;
+      store.timing_message = timingInfo.message;
+      store.is_open = timingInfo.isOpen;
+      if (timingInfo.minutesRemaining !== undefined) {
+        store.minutes_until_closing = timingInfo.minutesRemaining;
+      }
     });
 
     return { 
@@ -3592,7 +3898,7 @@ export class SearchService {
           filter: filterClauses,
         },
       },
-      size,
+      size: size * 3, // Fetch more items (3x requested) to ensure variety across multiple stores
       _source: ['id', 'name', 'slug', 'image', 'images', 'price', 'base_price', 'veg', 'category_id', 'category_name', 'store_id', 'store_name', 'store_location', 'module_id', 'description', 'available_time_starts', 'available_time_ends', 'rating_count', 'avg_rating', 'order_count', 'discount', 'discount_type', 'status', 'tax', 'tax_type', 'stock', 'recommended', 'is_approved', 'is_halal', 'is_visible', 'organic', 'zone_id', 'unit_id', 'maximum_cart_quantity', 'attributes'],
       script_fields: hasGeo ? {
         distance_km: { script: { source: "if (doc['store_location'].size() == 0) return null; doc['store_location'].arcDistance(params.lat, params.lon) / 1000.0", params: { lat, lon } } },
@@ -3630,7 +3936,7 @@ export class SearchService {
       },
       size: size * 2, // Fetch more stores to ensure we have enough after distance calculation and sorting
       sort: [{ order_count: { order: 'desc' } }], // Always use popularity sort, we'll sort by distance manually
-      _source: ['name', 'slug', 'logo', 'cover_photo', 'image', 'images', 'location', 'latitude', 'longitude', 'order_count', 'delivery_time', 'rating', 'module_id'],
+      _source: ['name', 'slug', 'logo', 'cover_photo', 'image', 'images', 'location', 'latitude', 'longitude', 'order_count', 'delivery_time', 'rating', 'module_id', 'veg', 'non_veg', 'food_type'],
       script_fields: undefined, // Don't use script_fields, calculate distance manually
     };
 
@@ -3778,11 +4084,13 @@ export class SearchService {
       });
     });
 
-    // Deduplicate by name and sort items
-    const seenItemNames = new Set<string>();
+    // Deduplicate by name (but keep items from different stores)
+    const seenItemKeys = new Set<string>();
     let items = allItems.filter((item: any) => {
-      if (seenItemNames.has(item.name)) return false;
-      seenItemNames.add(item.name);
+      // Create unique key: name + store_id to allow same dish from different stores
+      const key = `${item.name?.toLowerCase()}_${item.store_id}`;
+      if (seenItemKeys.has(key)) return false;
+      seenItemKeys.add(key);
       return true;
     });
     
@@ -3794,13 +4102,16 @@ export class SearchService {
         if (distA !== distB) {
           return distA - distB;
         }
-        // If distances are equal, keep original order (already sorted by score)
-        return 0;
+        // If distances are equal, sort by popularity
+        return (b.order_count || 0) - (a.order_count || 0);
       });
+    } else {
+      // Sort by popularity when no geo
+      items.sort((a, b) => (b.order_count || 0) - (a.order_count || 0));
     }
     
-    // Limit to requested size after sorting
-    items = items.slice(0, size);
+    // Keep up to size * 3 items for now, we'll apply intent-based limits later
+    items = items.slice(0, size * 3);
 
     const seenStoreNames = new Set<string>();
     let stores = allStores.filter((store: any) => {
@@ -3825,8 +4136,8 @@ export class SearchService {
       stores.sort((a, b) => (b.order_count || 0) - (a.order_count || 0));
     }
     
-    // Limit to requested size after sorting
-    stores = stores.slice(0, size);
+    // Keep more stores for now, we'll apply intent-based limits later
+    stores = stores.slice(0, size * 3);
 
     const seenCategoryNames = new Set<string>();
     let categories = allCategories.filter((category: any) => {
@@ -3945,7 +4256,7 @@ export class SearchService {
             },
             size: size * 2,
             sort: [{ order_count: { order: 'desc' } }],
-            _source: ['name', 'slug', 'logo', 'cover_photo', 'image', 'images', 'location', 'latitude', 'longitude', 'order_count', 'delivery_time', 'rating', 'module_id'],
+            _source: ['name', 'slug', 'logo', 'cover_photo', 'image', 'images', 'location', 'latitude', 'longitude', 'order_count', 'delivery_time', 'rating', 'module_id', 'veg', 'non_veg', 'food_type'],
           };
           
           this.logger.debug(`[suggestByModule] Fallback store query: ${JSON.stringify(fallbackStoreBody.query).substring(0, 200)}`);
@@ -4267,6 +4578,96 @@ export class SearchService {
       }
     }
 
+    // Fetch store schedules from MySQL database
+    this.logger.debug(`[suggestByModule] About to fetch schedules for ${stores.length} stores`);
+    if (stores.length > 0) {
+      try {
+        const storeIds = stores.map((s: any) => String(s.id)).filter(Boolean);
+        this.logger.debug(`[suggestByModule] Store IDs to fetch: ${storeIds.join(', ')}`);
+        if (storeIds.length > 0) {
+          const schedulesByStore = await this.fetchStoreSchedules(storeIds);
+          
+          // Attach schedule data to stores
+          stores.forEach((store: any) => {
+            const storeId = String(store.id);
+            if (schedulesByStore.has(storeId)) {
+              store.schedule = schedulesByStore.get(storeId);
+              this.logger.debug(`[suggestByModule] Store ${storeId} has ${store.schedule.length} schedule entries`);
+            }
+          });
+          
+          this.logger.debug(`[suggestByModule] Attached schedules to ${schedulesByStore.size} stores`);
+        }
+      } catch (error: any) {
+        this.logger.error(`[suggestByModule] Failed to fetch store schedules: ${error?.message || String(error)}`, error.stack);
+      }
+    }
+
+    // Add timing status to each store BEFORE image transformation
+    stores.forEach((store: any) => {
+      const timingInfo = this.getStoreTimingStatus(store);
+      store.timing_status = timingInfo.status;
+      store.timing_message = timingInfo.message;
+      store.is_open = timingInfo.isOpen;
+      if (timingInfo.minutesRemaining !== undefined) {
+        store.minutes_until_closing = timingInfo.minutesRemaining;
+      }
+    });
+
+    // Populate store_name for items that don't have it (indexing issue - some items missing store_name)
+    const itemStoreIds = [...new Set(items.map((item: any) => String(item.store_id)).filter(Boolean))];
+    if (itemStoreIds.length > 0) {
+      try {
+        // Build a map of store_id -> store_name from the stores we already have
+        const storeNameMap = new Map<string, string>();
+        stores.forEach((store: any) => {
+          if (store.id && store.name) {
+            storeNameMap.set(String(store.id), store.name);
+          }
+        });
+
+        // For items whose stores aren't in the results, fetch store names from OpenSearch
+        const missingStoreIds = itemStoreIds.filter(id => !storeNameMap.has(id));
+        if (missingStoreIds.length > 0) {
+          const storeIndices = this.getAllStoreIndices();
+          const storeNameResults = await Promise.all(
+            storeIndices.map(index =>
+              this.client.search({
+                index,
+                body: {
+                  query: { terms: { id: missingStoreIds } },
+                  size: missingStoreIds.length,
+                  _source: ['name']
+                }
+              }).catch(() => ({ body: { hits: { hits: [] } } }))
+            )
+          );
+
+          storeNameResults.forEach(res => {
+            (res.body.hits?.hits || []).forEach((hit: any) => {
+              if (hit._id && hit._source?.name) {
+                storeNameMap.set(String(hit._id), hit._source.name);
+              }
+            });
+          });
+        }
+
+        // Apply store names to items
+        items.forEach((item: any) => {
+          if (item.store_id && !item.store_name) {
+            const storeName = storeNameMap.get(String(item.store_id));
+            if (storeName) {
+              item.store_name = storeName;
+            }
+          }
+        });
+
+        this.logger.debug(`[suggestByModule] Populated store_name for ${items.filter((i: any) => i.store_name).length}/${items.length} items`);
+      } catch (error: any) {
+        this.logger.warn(`[suggestByModule] Failed to populate store names for items: ${error?.message || String(error)}`);
+      }
+    }
+
     this.logger.debug(`[suggestByModule] Final results: ${items.length} items, ${stores.length} stores, ${categories.length} categories (intent: ${parsed.intent})`);
 
     return { 
@@ -4566,7 +4967,7 @@ export class SearchService {
         return {
           q,
           filters,
-          items,
+          items: this.imageService.transformItemsWithImages(items),
           meta: {
             total: totalHits,
             page,
@@ -5527,6 +5928,7 @@ export class SearchService {
       page?: number;
       size?: number;
       sort?: string;
+      veg?: string;
     }
   ): Promise<{
     q: string;
@@ -5541,6 +5943,49 @@ export class SearchService {
     };
   }> {
     this.logger.log(`🔍 [searchStoresByModule] START: q="${q}", filters=${JSON.stringify(filters)}`);
+
+    // Try cache first if enabled
+    const startTime = Date.now();
+    this.logger.log(`[searchStoresByModule] Cache check: cacheEnabled=${this.cacheEnabled}`);
+    if (this.cacheEnabled) {
+      const cacheKey = this.cacheService.buildCacheKey({ q, ...filters });
+      this.logger.log(`[searchStoresByModule] Checking cache with key: ${cacheKey.substring(0, 100)}...`);
+      const cached = await this.cacheService.get(cacheKey);
+      
+      if (cached) {
+        const latency = Date.now() - startTime;
+        this.logger.log(`🚀 [searchStoresByModule] Cache HIT: q="${q}", latency=${latency}ms`);
+        
+        // CRITICAL: Recalculate timing for cached stores (timing is dynamic based on current time)
+        // We need to fetch schedules for these stores before recalculating
+        if (cached.stores && Array.isArray(cached.stores) && cached.stores.length > 0) {
+          const storeIds = cached.stores.map((s: any) => s.id || s.store_id).filter(Boolean);
+          if (storeIds.length > 0) {
+            try {
+              const schedulesByStore = await this.fetchStoreSchedules(storeIds);
+              cached.stores.forEach((store: any) => {
+                const storeId = String(store.id || store.store_id);
+                const schedule = schedulesByStore.get(storeId);
+                if (schedule) {
+                  store.schedule = schedule;
+                }
+                const timingInfo = this.getStoreTimingStatus(store);
+                store.timing_status = timingInfo.status;
+                store.timing_message = timingInfo.message;
+                store.is_open = timingInfo.isOpen;
+                if (timingInfo.minutesRemaining !== undefined) {
+                  store.minutes_until_closing = timingInfo.minutesRemaining;
+                }
+              });
+            } catch (error) {
+              this.logger.warn(`[searchStoresByModule] Failed to fetch schedules for cached stores: ${(error as any)?.message}`);
+            }
+          }
+        }
+        
+        return cached;
+      }
+    }
 
     // Validate category belongs to module if both provided
     if (filters?.category_id && filters?.module_id) {
@@ -5705,6 +6150,26 @@ export class SearchService {
       this.logger.log(`[searchStoresByModule] Geo coordinates provided but no radius_km, will sort by distance only (no filtering)`);
     }
 
+    // Veg/Non-Veg filter
+    const vegFilter = filters?.veg;
+    const mustNotClauses: any[] = [];
+    
+    if (vegFilter === 'pure_veg' || vegFilter === 'pure-veg') {
+      // Pure Veg ONLY: veg=1 AND non_veg!=1 (excludes restaurants that also serve non-veg)
+      filterClauses.push({ term: { veg: 1 } });
+      mustNotClauses.push({ term: { non_veg: 1 } });
+      this.logger.debug(`[searchStoresByModule] Applied PURE VEG filter (veg=1, non_veg!=1)`);
+    } else if (vegFilter === '1' || vegFilter === 'veg' || vegFilter === 'true') {
+      // Veg: must have veg=1 (includes restaurants that also serve non-veg)
+      filterClauses.push({ term: { veg: 1 } });
+      this.logger.debug(`[searchStoresByModule] Applied VEG filter`);
+    } else if (vegFilter === '0' || vegFilter === 'non-veg' || vegFilter === 'false') {
+      // Non-veg: must have non_veg=1 (can also have veg=1)
+      filterClauses.push({ term: { non_veg: 1 } });
+      this.logger.debug(`[searchStoresByModule] Applied NON-VEG filter`);
+    }
+    // If vegFilter is not set or is 'all', show all stores (no filter)
+
     // Pagination
     const size = Math.max(1, Math.min(Number(filters?.size ?? 20) || 20, 100));
     const page = Math.max(1, Number(filters?.page ?? 1) || 1);
@@ -5752,6 +6217,7 @@ export class SearchService {
         bool: {
           must: must.length ? must : [{ match_all: {} }],
           filter: filterClauses,
+          must_not: mustNotClauses.length > 0 ? mustNotClauses : undefined,
         },
       },
       size,
@@ -5852,6 +6318,7 @@ export class SearchService {
                 { terms: { id: Array.from(storeIdsFromCategory) } }
               ],
               filter: categoryStoreFilterClauses.length > 0 ? categoryStoreFilterClauses : undefined,
+              must_not: mustNotClauses.length > 0 ? mustNotClauses : undefined,
             },
           },
           size: 1000,
@@ -5926,6 +6393,7 @@ export class SearchService {
           bool: {
             must: [],
             filter: filterClauses.length > 0 ? filterClauses : undefined,
+            must_not: mustNotClauses.length > 0 ? mustNotClauses : undefined,
           },
         },
         size: 1000,
@@ -6005,6 +6473,7 @@ export class SearchService {
                   { terms: { id: Array.from(storeIdsFromItems) } }
                 ],
                 filter: filterClauses.filter(f => !(f.term && f.term.module_id)),
+                must_not: mustNotClauses.length > 0 ? mustNotClauses : undefined,
               },
             },
             size: 1000,
@@ -6158,6 +6627,7 @@ export class SearchService {
                     { terms: { id: Array.from(storeIdsFromCategories) } }
                   ],
                   filter: filterClauses,
+                  must_not: mustNotClauses.length > 0 ? mustNotClauses : undefined,
                 },
               },
               size: 100,
@@ -7058,6 +7528,42 @@ export class SearchService {
     // Apply pagination
     const paginatedStores = stores.slice(from, from + size);
 
+    // Fetch store schedules from MySQL for paginated stores
+    const storeIds = paginatedStores.map((s: any) => s.id || s.store_id).filter(Boolean);
+    if (storeIds.length > 0) {
+      try {
+        const schedules = await this.fetchStoreSchedules(storeIds);
+        this.logger.debug(`[searchStoresByModule] Fetched schedules for ${schedules.size} stores, attaching to ${paginatedStores.length} paginated stores`);
+        // Attach schedule data to each store
+        paginatedStores.forEach((store: any) => {
+          const storeId = String(store.id || store.store_id);
+          if (storeId && schedules.has(storeId)) {
+            store.schedule = schedules.get(storeId);
+            this.logger.debug(`[searchStoresByModule] Attached ${store.schedule?.length || 0} schedule entries to store ${storeId}`);
+          } else {
+            this.logger.warn(`[searchStoresByModule] No schedule found for store ${storeId}`);
+          }
+        });
+      } catch (error: any) {
+        this.logger.warn(`[searchStoresByModule] Failed to fetch store schedules: ${error?.message || String(error)}`);
+      }
+    }
+
+    // Add timing status to paginated stores
+    paginatedStores.forEach((store: any) => {
+      const timingInfo = this.getStoreTimingStatus(store);
+      store.timing_status = timingInfo.status;
+      store.timing_message = timingInfo.message;
+      store.is_open = timingInfo.isOpen;
+      if (timingInfo.minutesRemaining !== undefined) {
+        store.minutes_until_closing = timingInfo.minutesRemaining;
+      }
+      // Debug: Log the assignment for store 228
+      if (store.id === 228 || store.store_id === 228) {
+        this.logger.debug(`[AFTER ASSIGNMENT] Store 228 timing_message: "${store.timing_message}"`);
+      }
+    });
+
     // Log analytics
     this.analytics.logSearch({
       module: filters?.module_id ? String(filters.module_id) : 'all',
@@ -7085,6 +7591,25 @@ export class SearchService {
     };
 
     this.logger.log(`[searchStoresByModule] END: Returning ${paginatedStores.length} stores (page ${page}/${Math.ceil(totalHits / size)}, total: ${totalHits})`);
+    
+    // Cache results if enabled
+    if (this.cacheEnabled) {
+      const cacheKey = this.cacheService.buildCacheKey({ q, ...filters });
+      
+      // Dynamic TTL based on query type
+      let ttl = 300; // Default 5 minutes
+      
+      if (!q || q.trim() === '') {
+        ttl = 600; // 10 min for browse queries
+      } else if (totalHits > 100) {
+        ttl = 900; // 15 min for popular queries
+      } else if (filters?.lat && filters?.lon) {
+        ttl = 60; // 1 min for geo queries (location-sensitive)
+      }
+      
+      await this.cacheService.set(cacheKey, response, ttl);
+      this.logger.debug(`[searchStoresByModule] Cached results with TTL: ${ttl}s`);
+    }
     
     return response;
   }

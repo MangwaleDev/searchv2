@@ -80,13 +80,32 @@ export class SearchCacheService {
   }
 
   /**
+   * Remove timing fields from data before caching (timing is dynamic, recalculate on each request)
+   */
+  private stripTimingFields(data: any): any {
+    if (!data) return data;
+    
+    // Strip timing from stores array
+    if (data.stores && Array.isArray(data.stores)) {
+      data.stores = data.stores.map((store: any) => {
+        const { timing_status, timing_message, is_open, minutes_until_closing, ...rest } = store;
+        return rest;
+      });
+    }
+    
+    return data;
+  }
+
+  /**
    * Cache search results
    */
   async set(key: string, value: any, ttl: number = 300): Promise<void> {
     if (!this.redis) return;
     try {
       this.stats.sets++;
-      await this.redis.setex(key, ttl, JSON.stringify(value));
+      // Strip timing fields before caching (they're dynamic and must be recalculated)
+      const valueToCache = this.stripTimingFields(JSON.parse(JSON.stringify(value)));
+      await this.redis.setex(key, ttl, JSON.stringify(valueToCache));
       this.logger.debug(`Cache SET: ${key} (TTL: ${ttl}s)`);
     } catch (error: any) {
       this.logger.warn(`Redis SET error: ${error.message}`);

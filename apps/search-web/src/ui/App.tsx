@@ -82,9 +82,14 @@ type Store = {
   delivery_time?: string
   minimum_order?: number
   veg?: number
+  non_veg?: number
   featured?: number
   active?: number
   status?: number
+  timing_status?: string  // 'open' | 'closing_soon' | 'closing_very_soon' | 'closed'
+  timing_message?: string
+  is_open?: boolean
+  minutes_until_closing?: number
 }
 
 type SuggestResp = {
@@ -231,7 +236,8 @@ const ItemCard: React.FC<{
   item: SearchItem; 
   module: ModuleKey;
   onRecommend?: () => void;
-}> = ({ item, module, onRecommend }) => {
+  onClick?: () => void;
+}> = ({ item, module, onRecommend, onClick }) => {
   const isVeg = item.veg === 1 || item.veg === true
   const isNonVeg = item.veg === 0 || item.veg === false
   const isAvailable = item.status !== 0
@@ -263,7 +269,7 @@ const ItemCard: React.FC<{
     (item.image ? `https://mangwale.s3.ap-south-1.amazonaws.com/product/${item.image}` : undefined)
   
   return (
-    <div className={`item-card ${!isAvailable || !inStock ? 'unavailable' : ''}`}>
+    <div className={`item-card ${!isAvailable || !inStock ? 'unavailable' : ''}`} onClick={onClick} style={{ cursor: onClick ? 'pointer' : 'default' }}>
       {/* Image Section */}
       <div className="item-card-image">
         <ItemImage src={primaryImage} fallback={fallbackImage} alt={item.name} />
@@ -358,9 +364,9 @@ const ItemCard: React.FC<{
 // STORE CARD COMPONENT
 // ============================================================================
 
-const StoreCard: React.FC<{ store: Store }> = ({ store }) => {
+const StoreCard: React.FC<{ store: Store; onClick?: () => void }> = ({ store, onClick }) => {
   const isOpen = store.status !== 0 && store.active !== 0
-  const isVegOnly = store.veg === 1
+  const isVegOnly = store.veg === 1 && store.non_veg === 0
   const isFeatured = store.featured === 1
   const [logoError, setLogoError] = useState(false)
   
@@ -379,7 +385,7 @@ const StoreCard: React.FC<{ store: Store }> = ({ store }) => {
   const logoUrl = store.logo_full_url || (store.logo ? (store.logo.startsWith('http') ? store.logo : `${STORE_IMAGE_URL}${store.logo}`) : null)
   
   return (
-    <div className={`store-card ${!isOpen ? 'closed' : ''}`}>
+    <div className={`store-card ${!isOpen ? 'closed' : ''}`} onClick={onClick} style={{ cursor: onClick ? 'pointer' : 'default' }}>
       <div className="store-logo-wrapper">
         {logoUrl && !logoError ? (
           <img
@@ -407,6 +413,17 @@ const StoreCard: React.FC<{ store: Store }> = ({ store }) => {
           {store.distance_km != null && <span>📍 {Number(store.distance_km).toFixed(1)} km</span>}
           {store.delivery_time && <span>🕐 {store.delivery_time}</span>}
         </div>
+        
+        {/* Timing Status Badge */}
+        {store.timing_status && (
+          <div className={`timing-badge ${store.timing_status}`}>
+            {store.timing_status === 'closing_very_soon' && '⚠️ '}
+            {store.timing_status === 'closing_soon' && '⏰ '}
+            {store.timing_status === 'open' && '✅ '}
+            {store.timing_status === 'closed' && '🔒 '}
+            {store.timing_message}
+          </div>
+        )}
         
         {store.minimum_order != null && store.minimum_order > 0 && (
           <div className="min-order">Min ₹{store.minimum_order}</div>
@@ -672,8 +689,17 @@ export default function App() {
     return () => { ignore = true }
   }, [qDeb, module, activeTab, suggest, lat, lon, filters.radius])
   
-  // Reset page
-  useEffect(() => { setPage(1) }, [qDeb, module, filters, activeTab])
+  // Reset page and clear storeId filter when query changes
+  useEffect(() => { 
+    setPage(1)
+    // Clear storeId filter when user types a new query
+    if (filters.storeId) {
+      setFilters(prev => ({ ...prev, storeId: '' }))
+    }
+  }, [qDeb, module])
+  
+  // Reset page when other filters change
+  useEffect(() => { setPage(1) }, [filters, activeTab])
   
   // Search
   useEffect(() => {
@@ -743,11 +769,25 @@ export default function App() {
     return () => clearInterval(t)
   }, [voiceState])
   
-  const onSelectSuggestion = (text: string) => {
+  const onSelectSuggestion = (text: string, type?: 'item' | 'store' | 'category', storeId?: string | number) => {
     setQ(text)
     setShowSuggest(false)
     const newHistory = [text, ...history.filter((x: string) => x !== text)].slice(0, 8)
     setHistory(newHistory)
+    
+    // Auto-switch tab based on suggestion type
+    if (type === 'store') {
+      // When clicking a store, go inside it (show items from that store)
+      manualTabSetRef.current = true
+      setActiveTab('items')
+      if (storeId) {
+        setFilters({...filters, storeId: String(storeId)})
+        setPage(1)
+      }
+    } else if (type === 'item' || type === 'category') {
+      manualTabSetRef.current = true
+      setActiveTab('items')
+    }
   }
   
   const handleVoice = async () => {
@@ -889,7 +929,7 @@ export default function App() {
                 <div className="suggest-group">
                   <div className="suggest-header">🏪 Restaurants & Stores (Top Match)</div>
                   {suggest?.stores?.slice(0, 6).map(st => (
-                    <div key={st.id} className="suggest-item" onClick={() => onSelectSuggestion(st.name)}>🏪 {st.name}</div>
+                    <div key={st.id} className="suggest-item" onClick={() => onSelectSuggestion(st.name, 'store', st.id)}>🏪 {st.name}</div>
                   ))}
                 </div>
               )}
@@ -900,7 +940,7 @@ export default function App() {
                     {suggest?.intent === 'store_first' ? 'Menu Items' : 'Items'}
                   </div>
                   {suggest?.items?.slice(0, suggest?.intent === 'store_first' ? 3 : 5).map(it => (
-                    <div key={it.id} className="suggest-item with-image" onClick={() => onSelectSuggestion(it.name)}>
+                    <div key={it.id} className="suggest-item with-image" onClick={() => onSelectSuggestion(it.name, 'item')}>
                       {it.image && <img src={`${IMAGE_BASE_URL}${it.image}`} alt="" onError={e => (e.target as HTMLImageElement).style.display = 'none'} />}
                       <div className="suggest-info">
                         <span className="suggest-name">{it.name}</span>
@@ -917,7 +957,7 @@ export default function App() {
                 <div className="suggest-group">
                   <div className="suggest-header">Stores</div>
                   {suggest?.stores?.slice(0, 4).map(st => (
-                    <div key={st.id} className="suggest-item" onClick={() => onSelectSuggestion(st.name)}>🏪 {st.name}</div>
+                    <div key={st.id} className="suggest-item" onClick={() => onSelectSuggestion(st.name, 'store')}>🏪 {st.name}</div>
                   ))}
                 </div>
               )}
@@ -927,7 +967,13 @@ export default function App() {
                 <div className="suggest-group">
                   <div className="suggest-header">Categories</div>
                   {suggest?.categories?.slice(0, 4).map(c => (
-                    <div key={c.id} className="suggest-item" onClick={() => onSelectSuggestion(c.name)}>📂 {c.name}</div>
+                    <div key={c.id} className="suggest-item" onClick={() => {
+                      setQ(c.name)
+                      setShowSuggest(false)
+                      setFilters({...filters, categoryId: String(c.id)})
+                      manualTabSetRef.current = true
+                      setActiveTab('items')
+                    }}>📂 {c.name}</div>
                   ))}
                 </div>
               )}
@@ -987,7 +1033,17 @@ export default function App() {
                   <h2>🏪 {(searchResp as any).resolved_store.name}</h2>
                   <span className="match-badge">✓ Exact Match</span>
                 </div>
-                <StoreCard store={(searchResp as any).resolved_store} />
+                <StoreCard 
+                  store={(searchResp as any).resolved_store}
+                  onClick={() => {
+                    const resolvedStore = (searchResp as any).resolved_store
+                    if (resolvedStore) {
+                      setQ(resolvedStore.name)
+                      setFilters({...filters, storeId: String(resolvedStore.id)})
+                      setPage(1)
+                    }
+                  }}
+                />
                 <div className="resolved-store-meta">
                   <p>Showing {searchResp?.meta?.total || 0} items from this store</p>
                 </div>
@@ -999,7 +1055,17 @@ export default function App() {
               <div className="stores-row">
                 <h3>{module === 'food' ? '🏪 Top Restaurants' : '🏬 Featured'}</h3>
                 <div className="stores-scroll">
-                  {searchResp?.stores?.map(st => <StoreCard key={st.id} store={st} />)}
+                  {searchResp?.stores?.map(st => (
+                    <StoreCard 
+                      key={st.id} 
+                      store={st}
+                      onClick={() => {
+                        setQ(st.name)
+                        setFilters({...filters, storeId: String(st.id)})
+                        setPage(1)
+                      }}
+                    />
+                  ))}
                 </div>
               </div>
             )}
@@ -1018,7 +1084,19 @@ export default function App() {
               ))}
               
               {!loading && searchResp?.items?.map(item => (
-                <ItemCard key={item.id} item={item} module={module} onRecommend={() => handleRecommendation(item)} />
+                <ItemCard 
+                  key={item.id} 
+                  item={item} 
+                  module={module} 
+                  onRecommend={() => handleRecommendation(item)}
+                  onClick={() => {
+                    if (item.store_name && item.store_id) {
+                      setQ(item.store_name)
+                      setFilters({...filters, storeId: String(item.store_id)})
+                      setPage(1)
+                    }
+                  }}
+                />
               ))}
             </div>
             
@@ -1048,7 +1126,19 @@ export default function App() {
               </div>
             ))}
             
-            {!loading && storesResp?.stores?.map((st: Store) => <StoreCard key={st.id} store={st} />)}
+            {!loading && storesResp?.stores?.map((st: Store) => (
+              <StoreCard 
+                key={st.id} 
+                store={st}
+                onClick={() => {
+                  setQ(st.name)
+                  setFilters({...filters, storeId: String(st.id)})
+                  manualTabSetRef.current = true
+                  setActiveTab('items')
+                  setPage(1)
+                }}
+              />
+            ))}
           </div>
         )}
       </main>

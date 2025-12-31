@@ -769,6 +769,7 @@ export class SearchController {
   @ApiQuery({ name: 'page', required: false, description: 'Page number (1-based)', example: 1 })
   @ApiQuery({ name: 'size', required: false, description: 'Results per page (1-100)', example: 20 })
   @ApiQuery({ name: 'sort', required: false, description: 'Sort: distance, popularity', example: 'distance' })
+  @ApiQuery({ name: 'veg', required: false, description: 'Veg filter: "pure_veg" for ONLY pure veg (excludes mixed), "1"/"veg" for all veg restaurants (includes mixed), "0"/"non-veg" for non-veg, omit for all', example: 'pure_veg' })
   @ApiResponse({ 
     status: 200, 
     description: 'Search results with stores',
@@ -791,6 +792,7 @@ export class SearchController {
     @Query('page') page?: string,
     @Query('size') size?: string,
     @Query('sort') sort?: string,
+    @Query('veg') veg?: string,
   ) {
     // Validation: category_id requires module_id (categories are module-scoped)
     if (categoryId && !moduleId) {
@@ -808,6 +810,7 @@ export class SearchController {
     if (page) filters.page = Number(page);
     if (size) filters.size = Number(size);
     if (sort) filters.sort = sort;
+    if (veg !== undefined) filters.veg = veg;
 
     return this.searchService.searchStoresByModule(q, filters);
   }

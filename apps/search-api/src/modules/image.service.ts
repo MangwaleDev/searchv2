@@ -45,6 +45,13 @@ export class ImageService {
     category: '/assets/admin/img/100x100/2.jpg',
     default: '/assets/admin/img/160x160/img2.jpg',
   };
+  
+  // Working image date ranges (images available in storage)
+  // MinIO: 2025-03 to 2025-11, S3: 2025-04 to 2025-10 (fully accessible)
+  private readonly workingDateRanges = {
+    minio: { start: '2025-03', end: '2025-11' },
+    s3: { start: '2025-04', end: '2025-10' },
+  };
 
   constructor(private readonly config: ConfigService) {
     // Determine storage type (default to s3 for backward compatibility)
@@ -115,6 +122,84 @@ export class ImageService {
     
     return `${baseUrl}/${pathPrefix}/${filename}`;
   }
+  
+  /**
+   * Check if an image filename is likely available in storage
+   * Based on known working date ranges
+   */
+  isImageLikelyAvailable(filename: string | null | undefined, storage: 'minio' | 's3' = 'minio'): boolean {
+    if (!filename) return false;
+    
+    // Extract date prefix (e.g., "2025-06" from "2025-06-23-68593a1cda324.png")
+    const dateMatch = filename.match(/^(\d{4}-\d{2})/);
+    if (!dateMatch) return false;
+    
+    const datePrefix = dateMatch[1];
+    const range = this.workingDateRanges[storage];
+    
+    return datePrefix >= range.start && datePrefix <= range.end;
+  }
+  
+  /**
+   * Get the best available image URL with smart fallback
+   * Returns { primary, fallback, status } indicating availability
+   * Respects STORAGE_TYPE setting while checking actual availability
+   */
+  getSmartImageUrl(
+    filename: string | null | undefined,
+    entityType: string = 'product'
+  ): { primary: string | null; fallback: string | null; status: 'available' | 'fallback' | 'missing' } {
+    if (!filename) {
+      return { primary: null, fallback: null, status: 'missing' };
+    }
+    
+    const minioAvailable = this.isImageLikelyAvailable(filename, 'minio');
+    const s3Available = this.isImageLikelyAvailable(filename, 's3');
+    
+    const pathPrefix = this.pathPrefixes[entityType] || this.pathPrefixes['product'];
+    const minioUrl = `${this.minioUrl}/${this.bucket}/${pathPrefix}/${filename}`;
+    const s3Url = `${this.s3Url}/${pathPrefix}/${filename}`;
+    
+    // Respect STORAGE_TYPE setting - prefer configured storage first
+    if (this.storageType === 's3') {
+      // S3 mode: prefer S3, fallback to MinIO
+      if (s3Available) {
+        return { 
+          primary: s3Url, 
+          fallback: minioAvailable ? minioUrl : null, 
+          status: 'available' 
+        };
+      } else if (minioAvailable) {
+        return { 
+          primary: minioUrl, 
+          fallback: s3Url, 
+          status: 'fallback' 
+        };
+      }
+    } else {
+      // MinIO mode: prefer MinIO, fallback to S3
+      if (minioAvailable) {
+        return { 
+          primary: minioUrl, 
+          fallback: s3Available ? s3Url : null, 
+          status: 'available' 
+        };
+      } else if (s3Available) {
+        return { 
+          primary: s3Url, 
+          fallback: null, 
+          status: 'fallback' 
+        };
+      }
+    }
+    
+    // Neither storage has the image - return based on configured type
+    return { 
+      primary: this.storageType === 's3' ? s3Url : minioUrl, 
+      fallback: this.storageType === 's3' ? minioUrl : s3Url, 
+      status: 'missing' 
+    };
+  }
 
   /**
    * Get S3 fallback URL (always uses S3)
@@ -127,29 +212,30 @@ export class ImageService {
 
   /**
    * Transform an item object to include full image URLs
-   * Includes both primary (MinIO) and fallback (S3) URLs
+   * Uses smart URL generation with fallback based on image availability
    */
   transformItemImages(item: Record<string, any>): Record<string, any> {
     if (!item) return item;
     
     const transformed = { ...item };
     
-    // Main image - primary URL
+    // Main image - use smart URL generation
     if (item.image) {
-      transformed.image_full_url = this.getFullUrl(item.image, 'product');
-      // Add S3 fallback if using MinIO
-      if (this.enableFallback && this.storageType === 'minio') {
-        transformed.image_fallback_url = this.getS3FallbackUrl(item.image, 'product');
-      }
+      const smartUrl = this.getSmartImageUrl(item.image, 'product');
+      transformed.image_full_url = smartUrl.primary;
+      transformed.image_fallback_url = smartUrl.fallback;
+      transformed.image_status = smartUrl.status;
+      // TEMP DEBUG: Remove after testing
+      this.logger.log(`[transformItemImages] item.image=${item.image}, image_full_url=${smartUrl.primary}, status=${smartUrl.status}`);
     }
     
     // Additional images array
     if (item.images && Array.isArray(item.images)) {
       transformed.images_full_url = item.images.map((img: any) => {
         if (typeof img === 'string') {
-          return this.getFullUrl(img, 'product');
+          return this.getSmartImageUrl(img, 'product').primary;
         } else if (img && typeof img === 'object') {
-          return this.getFullUrl(img.img, 'product');
+          return this.getSmartImageUrl(img.img, 'product').primary;
         }
         return null;
       }).filter(Boolean);
@@ -160,32 +246,33 @@ export class ImageService {
 
   /**
    * Transform a store object to include full image URLs
-   * Includes both primary (MinIO) and fallback (S3) URLs
+   * Uses smart URL generation with fallback based on image availability
    */
   transformStoreImages(store: Record<string, any>): Record<string, any> {
     if (!store) return store;
     
     const transformed = { ...store };
     
-    // Logo
+    // Logo - use smart URL generation
     if (store.logo) {
-      transformed.logo_full_url = this.getFullUrl(store.logo, 'store_logo');
-      if (this.enableFallback && this.storageType === 'minio') {
-        transformed.logo_fallback_url = this.getS3FallbackUrl(store.logo, 'store_logo');
-      }
+      const smartUrl = this.getSmartImageUrl(store.logo, 'store_logo');
+      transformed.logo_full_url = smartUrl.primary;
+      transformed.logo_fallback_url = smartUrl.fallback;
+      transformed.logo_status = smartUrl.status;
     }
     
-    // Cover photo
+    // Cover photo - use smart URL generation
     if (store.cover_photo) {
-      transformed.cover_photo_full_url = this.getFullUrl(store.cover_photo, 'cover_photo');
-      if (this.enableFallback && this.storageType === 'minio') {
-        transformed.cover_photo_fallback_url = this.getS3FallbackUrl(store.cover_photo, 'cover_photo');
-      }
+      const smartUrl = this.getSmartImageUrl(store.cover_photo, 'cover_photo');
+      transformed.cover_photo_full_url = smartUrl.primary;
+      transformed.cover_photo_fallback_url = smartUrl.fallback;
+      transformed.cover_photo_status = smartUrl.status;
     }
     
     // Sometimes stores also have an image field
     if (store.image) {
-      transformed.image_full_url = this.getFullUrl(store.image, 'store');
+      const smartUrl = this.getSmartImageUrl(store.image, 'store');
+      transformed.image_full_url = smartUrl.primary;
     }
     
     return transformed;
@@ -193,7 +280,7 @@ export class ImageService {
 
   /**
    * Transform a category object to include full image URLs
-   * Includes both primary (MinIO) and fallback (S3) URLs
+   * Uses smart URL generation with fallback based on image availability
    */
   transformCategoryImages(category: Record<string, any>): Record<string, any> {
     if (!category) return category;
@@ -201,10 +288,10 @@ export class ImageService {
     const transformed = { ...category };
     
     if (category.image) {
-      transformed.image_full_url = this.getFullUrl(category.image, 'category');
-      if (this.enableFallback && this.storageType === 'minio') {
-        transformed.image_fallback_url = this.getS3FallbackUrl(category.image, 'category');
-      }
+      const smartUrl = this.getSmartImageUrl(category.image, 'category');
+      transformed.image_full_url = smartUrl.primary;
+      transformed.image_fallback_url = smartUrl.fallback;
+      transformed.image_status = smartUrl.status;
     }
     
     return transformed;
@@ -214,6 +301,7 @@ export class ImageService {
    * Transform search results (items) with full image URLs
    */
   transformItemsWithImages(items: Record<string, any>[]): Record<string, any>[] {
+    this.logger.log(`[transformItemsWithImages] called with ${items?.length ?? 0} items`);
     if (!items || !Array.isArray(items)) return items;
     return items.map(item => this.transformItemImages(item));
   }

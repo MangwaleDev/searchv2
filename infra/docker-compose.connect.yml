@@ -70,7 +70,7 @@ services:
       - traefik_proxy
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.search-frontend.rule=Host(`search.test.mangwale.ai`)"
+      - "traefik.http.routers.search-frontend.rule=Host(`opensearch.mangwale.ai`)"
       - "traefik.http.routers.search-frontend.entrypoints=web,websecure"
       - "traefik.http.routers.search-frontend.tls.certresolver=letsencrypt"
       - "traefik.http.services.search-frontend.loadbalancer.server.port=80"
