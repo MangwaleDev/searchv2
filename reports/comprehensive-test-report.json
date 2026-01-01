@@ -1,0 +1,5063 @@
+{
+  "total": 358,
+  "passed": 358,
+  "failed": 0,
+  "details": [
+    {
+      "query": "ganesh sweets",
+      "type": "suggest",
+      "success": true,
+      "latency": 75,
+      "intent": "store_first",
+      "items_count": 3,
+      "stores_count": 4,
+      "categories_count": 2,
+      "first_result": "Malai Paneer",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "ganesh sweets",
+      "type": "search_items",
+      "success": true,
+      "latency": 33,
+      "total": 35,
+      "items_count": 20,
+      "stores_count": 0,
+      "has_resolved_store": true,
+      "resolved_store_name": "Ganesh Sweet Mart",
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "Ganesh Sweet",
+      "type": "suggest",
+      "success": true,
+      "latency": 68,
+      "intent": "store_first",
+      "items_count": 3,
+      "stores_count": 2,
+      "categories_count": 5,
+      "first_result": "Malai Paneer",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "Ganesh Sweet",
+      "type": "search_items",
+      "success": true,
+      "latency": 24,
+      "total": 35,
+      "items_count": 20,
+      "stores_count": 0,
+      "has_resolved_store": true,
+      "resolved_store_name": "Ganesh Sweet Mart",
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "GANESH SWEETS",
+      "type": "suggest",
+      "success": true,
+      "latency": 46,
+      "intent": "store_first",
+      "items_count": 3,
+      "stores_count": 4,
+      "categories_count": 2,
+      "first_result": "Malai Paneer",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "GANESH SWEETS",
+      "type": "search_items",
+      "success": true,
+      "latency": 25,
+      "total": 35,
+      "items_count": 20,
+      "stores_count": 0,
+      "has_resolved_store": true,
+      "resolved_store_name": "Ganesh Sweet Mart",
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "dominos pizza",
+      "type": "suggest",
+      "success": true,
+      "latency": 47,
+      "intent": "store_first",
+      "items_count": 3,
+      "stores_count": 2,
+      "categories_count": 1,
+      "first_result": "Paneer Cheese Pizza",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "dominos pizza",
+      "type": "search_items",
+      "success": true,
+      "latency": 22,
+      "total": 30,
+      "items_count": 20,
+      "stores_count": 0,
+      "has_resolved_store": true,
+      "resolved_store_name": "Dhinchak Pizza",
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "mcdonalds",
+      "type": "suggest",
+      "success": true,
+      "latency": 64,
+      "intent": "store_first",
+      "items_count": 3,
+      "stores_count": 2,
+      "categories_count": 5,
+      "first_result": "Malai Paneer",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "mcdonalds",
+      "type": "search_items",
+      "success": true,
+      "latency": 37,
+      "total": 0,
+      "items_count": 0,
+      "stores_count": 0,
+      "has_resolved_store": false,
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "kfc",
+      "type": "suggest",
+      "success": true,
+      "latency": 52,
+      "intent": "store_first",
+      "items_count": 3,
+      "stores_count": 1,
+      "categories_count": 5,
+      "first_result": "Veg Sandwich",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "kfc",
+      "type": "search_items",
+      "success": true,
+      "latency": 15,
+      "total": 0,
+      "items_count": 0,
+      "stores_count": 0,
+      "has_resolved_store": false,
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "starbucks coffee",
+      "type": "suggest",
+      "success": true,
+      "latency": 87,
+      "intent": "store_first",
+      "items_count": 3,
+      "stores_count": 5,
+      "categories_count": 2,
+      "first_result": "Malai Paneer",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "starbucks coffee",
+      "type": "search_items",
+      "success": true,
+      "latency": 73,
+      "total": 82,
+      "items_count": 20,
+      "stores_count": 0,
+      "has_resolved_store": false,
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "subway sandwich",
+      "type": "suggest",
+      "success": true,
+      "latency": 47,
+      "intent": "store_first",
+      "items_count": 3,
+      "stores_count": 1,
+      "categories_count": 1,
+      "first_result": "Malai Paneer",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "subway sandwich",
+      "type": "search_items",
+      "success": true,
+      "latency": 26,
+      "total": 35,
+      "items_count": 20,
+      "stores_count": 0,
+      "has_resolved_store": true,
+      "resolved_store_name": "Star Boys - Burger, Sandwhich & Pizza",
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "pizza hut",
+      "type": "suggest",
+      "success": true,
+      "latency": 40,
+      "intent": "generic",
+      "items_count": 5,
+      "stores_count": 2,
+      "categories_count": 1,
+      "first_result": "Paneer Cheese Pizza",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "pizza hut",
+      "type": "search_items",
+      "success": true,
+      "latency": 21,
+      "total": 2,
+      "items_count": 2,
+      "stores_count": 0,
+      "has_resolved_store": false,
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "burger king",
+      "type": "suggest",
+      "success": true,
+      "latency": 46,
+      "intent": "generic",
+      "items_count": 5,
+      "stores_count": 1,
+      "categories_count": 1,
+      "first_result": "Malai Paneer",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "burger king",
+      "type": "search_items",
+      "success": true,
+      "latency": 53,
+      "total": 95,
+      "items_count": 20,
+      "stores_count": 0,
+      "has_resolved_store": false,
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "taco bell",
+      "type": "suggest",
+      "success": true,
+      "latency": 58,
+      "intent": "generic",
+      "items_count": 5,
+      "stores_count": 1,
+      "categories_count": 5,
+      "first_result": "Veg Sandwich",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "taco bell",
+      "type": "search_items",
+      "success": true,
+      "latency": 16,
+      "total": 1,
+      "items_count": 1,
+      "stores_count": 0,
+      "has_resolved_store": false,
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "haldirams",
+      "type": "suggest",
+      "success": true,
+      "latency": 68,
+      "intent": "store_first",
+      "items_count": 3,
+      "stores_count": 2,
+      "categories_count": 5,
+      "first_result": "Malai Paneer",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "haldirams",
+      "type": "search_items",
+      "success": true,
+      "latency": 33,
+      "total": 0,
+      "items_count": 0,
+      "stores_count": 0,
+      "has_resolved_store": false,
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "bikanervala",
+      "type": "suggest",
+      "success": true,
+      "latency": 104,
+      "intent": "store_first",
+      "items_count": 3,
+      "stores_count": 2,
+      "categories_count": 5,
+      "first_result": "Veg Masala Burger",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "bikanervala",
+      "type": "search_items",
+      "success": true,
+      "latency": 43,
+      "total": 0,
+      "items_count": 0,
+      "stores_count": 0,
+      "has_resolved_store": false,
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "nathu sweets",
+      "type": "suggest",
+      "success": true,
+      "latency": 49,
+      "intent": "store_first",
+      "items_count": 3,
+      "stores_count": 2,
+      "categories_count": 2,
+      "first_result": "Malai Paneer",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "nathu sweets",
+      "type": "search_items",
+      "success": true,
+      "latency": 20,
+      "total": 72,
+      "items_count": 20,
+      "stores_count": 0,
+      "has_resolved_store": true,
+      "resolved_store_name": "Satyam Sweets",
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "cafe coffee day",
+      "type": "suggest",
+      "success": true,
+      "latency": 68,
+      "intent": "store_first",
+      "items_count": 3,
+      "stores_count": 6,
+      "categories_count": 2,
+      "first_result": "Malai Paneer",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "cafe coffee day",
+      "type": "search_items",
+      "success": true,
+      "latency": 23,
+      "total": 50,
+      "items_count": 20,
+      "stores_count": 0,
+      "has_resolved_store": true,
+      "resolved_store_name": "Madras Cafe",
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "barista coffee",
+      "type": "suggest",
+      "success": true,
+      "latency": 66,
+      "intent": "store_first",
+      "items_count": 3,
+      "stores_count": 5,
+      "categories_count": 2,
+      "first_result": "Malai Paneer",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "barista coffee",
+      "type": "search_items",
+      "success": true,
+      "latency": 21,
+      "total": 27,
+      "items_count": 20,
+      "stores_count": 0,
+      "has_resolved_store": true,
+      "resolved_store_name": "Birista - The Biryani House",
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "paradise biryani",
+      "type": "suggest",
+      "success": true,
+      "latency": 47,
+      "intent": "store_first",
+      "items_count": 3,
+      "stores_count": 1,
+      "categories_count": 1,
+      "first_result": "Mutton Biryani",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "paradise biryani",
+      "type": "search_items",
+      "success": true,
+      "latency": 25,
+      "total": 27,
+      "items_count": 20,
+      "stores_count": 0,
+      "has_resolved_store": true,
+      "resolved_store_name": "Birista - The Biryani House",
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "bawarchi restaurant",
+      "type": "suggest",
+      "success": true,
+      "latency": 312,
+      "intent": "store_first",
+      "items_count": 3,
+      "stores_count": 10,
+      "categories_count": 5,
+      "first_result": "Paneer Cheese Pizza",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "bawarchi restaurant",
+      "type": "search_items",
+      "success": true,
+      "latency": 19,
+      "total": 3,
+      "items_count": 3,
+      "stores_count": 0,
+      "has_resolved_store": true,
+      "resolved_store_name": "Demo Restaurant",
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "punjabi dhaba",
+      "type": "suggest",
+      "success": true,
+      "latency": 119,
+      "intent": "store_first",
+      "items_count": 3,
+      "stores_count": 3,
+      "categories_count": 5,
+      "first_result": "Dahi",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "punjabi dhaba",
+      "type": "search_items",
+      "success": true,
+      "latency": 22,
+      "total": 180,
+      "items_count": 20,
+      "stores_count": 0,
+      "has_resolved_store": true,
+      "resolved_store_name": "New Hariom Dhaba",
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "south indian restaurant",
+      "type": "suggest",
+      "success": true,
+      "latency": 71,
+      "intent": "store_first",
+      "items_count": 3,
+      "stores_count": 10,
+      "categories_count": 1,
+      "first_result": "Malai Paneer",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "south indian restaurant",
+      "type": "search_items",
+      "success": true,
+      "latency": 21,
+      "total": 3,
+      "items_count": 3,
+      "stores_count": 0,
+      "has_resolved_store": true,
+      "resolved_store_name": "Demo Restaurant",
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "chinese restaurant near me",
+      "type": "suggest",
+      "success": true,
+      "latency": 77,
+      "intent": "store_first",
+      "items_count": 3,
+      "stores_count": 10,
+      "categories_count": 1,
+      "first_result": "Veg Manchurian",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "chinese restaurant near me",
+      "type": "search_items",
+      "success": true,
+      "latency": 28,
+      "total": 96,
+      "items_count": 20,
+      "stores_count": 0,
+      "has_resolved_store": true,
+      "resolved_store_name": "Dear Dosa",
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "italian restaurant",
+      "type": "suggest",
+      "success": true,
+      "latency": 118,
+      "intent": "store_first",
+      "items_count": 3,
+      "stores_count": 10,
+      "categories_count": 5,
+      "first_result": "Veg Sandwich",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "italian restaurant",
+      "type": "search_items",
+      "success": true,
+      "latency": 27,
+      "total": 48,
+      "items_count": 20,
+      "stores_count": 0,
+      "has_resolved_store": true,
+      "resolved_store_name": "Italian Ecstasy",
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "bakery near me",
+      "type": "suggest",
+      "success": true,
+      "latency": 69,
+      "intent": "store_first",
+      "items_count": 3,
+      "stores_count": 10,
+      "categories_count": 1,
+      "first_result": "Milk Cake",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "bakery near me",
+      "type": "search_items",
+      "success": true,
+      "latency": 20,
+      "total": 96,
+      "items_count": 20,
+      "stores_count": 0,
+      "has_resolved_store": true,
+      "resolved_store_name": "Dear Dosa",
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "sweet shop",
+      "type": "suggest",
+      "success": true,
+      "latency": 112,
+      "intent": "store_first",
+      "items_count": 3,
+      "stores_count": 10,
+      "categories_count": 5,
+      "first_result": "Malai Paneer",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "sweet shop",
+      "type": "search_items",
+      "success": true,
+      "latency": 17,
+      "total": 16,
+      "items_count": 16,
+      "stores_count": 0,
+      "has_resolved_store": true,
+      "resolved_store_name": "Monginis Cake Shop",
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "juice corner",
+      "type": "suggest",
+      "success": true,
+      "latency": 115,
+      "intent": "store_first",
+      "items_count": 3,
+      "stores_count": 7,
+      "categories_count": 5,
+      "first_result": "Malai Paneer",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "juice corner",
+      "type": "search_items",
+      "success": true,
+      "latency": 22,
+      "total": 119,
+      "items_count": 20,
+      "stores_count": 0,
+      "has_resolved_store": true,
+      "resolved_store_name": "Jalsa Juice",
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "ice cream parlor",
+      "type": "suggest",
+      "success": true,
+      "latency": 43,
+      "intent": "store_first",
+      "items_count": 3,
+      "stores_count": 2,
+      "categories_count": 1,
+      "first_result": "Malai Paneer",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "ice cream parlor",
+      "type": "search_items",
+      "success": true,
+      "latency": 25,
+      "total": 42,
+      "items_count": 20,
+      "stores_count": 0,
+      "has_resolved_store": true,
+      "resolved_store_name": "Ice Box Cafe & Restro",
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "chat house",
+      "type": "suggest",
+      "success": true,
+      "latency": 88,
+      "intent": "store_first",
+      "items_count": 3,
+      "stores_count": 5,
+      "categories_count": 5,
+      "first_result": "French Fries",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "chat house",
+      "type": "search_items",
+      "success": true,
+      "latency": 46,
+      "total": 164,
+      "items_count": 20,
+      "stores_count": 0,
+      "has_resolved_store": false,
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "food court",
+      "type": "suggest",
+      "success": true,
+      "latency": 69,
+      "intent": "store_first",
+      "items_count": 3,
+      "stores_count": 5,
+      "categories_count": 1,
+      "first_result": "Veg Sandwich",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "food court",
+      "type": "search_items",
+      "success": true,
+      "latency": 16,
+      "total": 231,
+      "items_count": 20,
+      "stores_count": 0,
+      "has_resolved_store": true,
+      "resolved_store_name": "Kantara Food",
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "hotel taj",
+      "type": "suggest",
+      "success": true,
+      "latency": 118,
+      "intent": "store_first",
+      "items_count": 3,
+      "stores_count": 10,
+      "categories_count": 5,
+      "first_result": "Veg Masala Burger",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "hotel taj",
+      "type": "search_items",
+      "success": true,
+      "latency": 20,
+      "total": 260,
+      "items_count": 20,
+      "stores_count": 0,
+      "has_resolved_store": true,
+      "resolved_store_name": "Hotel Razzle",
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "royal kitchen",
+      "type": "suggest",
+      "success": true,
+      "latency": 117,
+      "intent": "store_first",
+      "items_count": 3,
+      "stores_count": 7,
+      "categories_count": 5,
+      "first_result": "Paneer Cheese Pizza",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "royal kitchen",
+      "type": "search_items",
+      "success": true,
+      "latency": 19,
+      "total": 9,
+      "items_count": 9,
+      "stores_count": 0,
+      "has_resolved_store": true,
+      "resolved_store_name": "Mum's Kitchen",
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "spice lounge",
+      "type": "suggest",
+      "success": true,
+      "latency": 97,
+      "intent": "store_first",
+      "items_count": 3,
+      "stores_count": 1,
+      "categories_count": 5,
+      "first_result": "Veg Sandwich",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "spice lounge",
+      "type": "search_items",
+      "success": true,
+      "latency": 22,
+      "total": 122,
+      "items_count": 20,
+      "stores_count": 0,
+      "has_resolved_store": true,
+      "resolved_store_name": "The Spice Yard",
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "biryani",
+      "type": "suggest",
+      "success": true,
+      "latency": 48,
+      "intent": "generic",
+      "items_count": 5,
+      "stores_count": 1,
+      "categories_count": 1,
+      "first_result": "Mutton Biryani",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "biryani",
+      "type": "search_items",
+      "success": true,
+      "latency": 47,
+      "total": 235,
+      "items_count": 20,
+      "stores_count": 0,
+      "has_resolved_store": false,
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "pizza",
+      "type": "suggest",
+      "success": true,
+      "latency": 43,
+      "intent": "generic",
+      "items_count": 5,
+      "stores_count": 2,
+      "categories_count": 1,
+      "first_result": "Paneer Cheese Pizza",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "pizza",
+      "type": "search_items",
+      "success": true,
+      "latency": 32,
+      "total": 256,
+      "items_count": 20,
+      "stores_count": 0,
+      "has_resolved_store": false,
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "burger",
+      "type": "suggest",
+      "success": true,
+      "latency": 37,
+      "intent": "generic",
+      "items_count": 5,
+      "stores_count": 1,
+      "categories_count": 1,
+      "first_result": "Malai Paneer",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "burger",
+      "type": "search_items",
+      "success": true,
+      "latency": 42,
+      "total": 643,
+      "items_count": 20,
+      "stores_count": 0,
+      "has_resolved_store": false,
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "pasta",
+      "type": "suggest",
+      "success": true,
+      "latency": 88,
+      "intent": "generic",
+      "items_count": 5,
+      "stores_count": 5,
+      "categories_count": 1,
+      "first_result": "Veg Sandwich",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "pasta",
+      "type": "search_items",
+      "success": true,
+      "latency": 20,
+      "total": 190,
+      "items_count": 20,
+      "stores_count": 0,
+      "has_resolved_store": false,
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "sandwich",
+      "type": "suggest",
+      "success": true,
+      "latency": 38,
+      "intent": "generic",
+      "items_count": 5,
+      "stores_count": 1,
+      "categories_count": 1,
+      "first_result": "Veg Sandwich",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "sandwich",
+      "type": "search_items",
+      "success": true,
+      "latency": 55,
+      "total": 230,
+      "items_count": 20,
+      "stores_count": 0,
+      "has_resolved_store": false,
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "chicken tikka",
+      "type": "suggest",
+      "success": true,
+      "latency": 116,
+      "intent": "generic",
+      "items_count": 5,
+      "stores_count": 5,
+      "categories_count": 1,
+      "first_result": "Chicken Curry",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "chicken tikka",
+      "type": "search_items",
+      "success": true,
+      "latency": 35,
+      "total": 61,
+      "items_count": 20,
+      "stores_count": 0,
+      "has_resolved_store": false,
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "paneer tikka",
+      "type": "suggest",
+      "success": true,
+      "latency": 90,
+      "intent": "generic",
+      "items_count": 5,
+      "stores_count": 5,
+      "categories_count": 1,
+      "first_result": "Malai Paneer",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "paneer tikka",
+      "type": "search_items",
+      "success": true,
+      "latency": 30,
+      "total": 156,
+      "items_count": 20,
+      "stores_count": 0,
+      "has_resolved_store": false,
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "dal makhani",
+      "type": "suggest",
+      "success": true,
+      "latency": 79,
+      "intent": "generic",
+      "items_count": 5,
+      "stores_count": 5,
+      "categories_count": 1,
+      "first_result": "Veg Thali",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "dal makhani",
+      "type": "search_items",
+      "success": true,
+      "latency": 34,
+      "total": 29,
+      "items_count": 20,
+      "stores_count": 0,
+      "has_resolved_store": false,
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "gulab jamun",
+      "type": "suggest",
+      "success": true,
+      "latency": 52,
+      "intent": "generic",
+      "items_count": 5,
+      "stores_count": 5,
+      "categories_count": 1,
+      "first_result": "Malai Paneer",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "gulab jamun",
+      "type": "search_items",
+      "success": true,
+      "latency": 28,
+      "total": 35,
+      "items_count": 20,
+      "stores_count": 0,
+      "has_resolved_store": false,
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "rasgulla",
+      "type": "suggest",
+      "success": true,
+      "latency": 69,
+      "intent": "generic",
+      "items_count": 5,
+      "stores_count": 3,
+      "categories_count": 5,
+      "first_result": "Malai Paneer",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "rasgulla",
+      "type": "search_items",
+      "success": true,
+      "latency": 22,
+      "total": 3,
+      "items_count": 3,
+      "stores_count": 0,
+      "has_resolved_store": false,
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "kaju katli",
+      "type": "suggest",
+      "success": true,
+      "latency": 77,
+      "intent": "generic",
+      "items_count": 5,
+      "stores_count": 5,
+      "categories_count": 1,
+      "first_result": "Veg Masala Burger",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "kaju katli",
+      "type": "search_items",
+      "success": true,
+      "latency": 17,
+      "total": 5,
+      "items_count": 5,
+      "stores_count": 0,
+      "has_resolved_store": false,
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "barfi",
+      "type": "suggest",
+      "success": true,
+      "latency": 46,
+      "intent": "store_first",
+      "items_count": 3,
+      "stores_count": 4,
+      "categories_count": 1,
+      "first_result": "Malai Paneer",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "barfi",
+      "type": "search_items",
+      "success": true,
+      "latency": 21,
+      "total": 25,
+      "items_count": 20,
+      "stores_count": 0,
+      "has_resolved_store": false,
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "idli",
+      "type": "suggest",
+      "success": true,
+      "latency": 73,
+      "intent": "generic",
+      "items_count": 5,
+      "stores_count": 5,
+      "categories_count": 1,
+      "first_result": "Malai Paneer",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "idli",
+      "type": "search_items",
+      "success": true,
+      "latency": 17,
+      "total": 38,
+      "items_count": 20,
+      "stores_count": 0,
+      "has_resolved_store": false,
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "dosa",
+      "type": "suggest",
+      "success": true,
+      "latency": 63,
+      "intent": "generic",
+      "items_count": 5,
+      "stores_count": 2,
+      "categories_count": 1,
+      "first_result": "Masala Dosa",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "dosa",
+      "type": "search_items",
+      "success": true,
+      "latency": 31,
+      "total": 276,
+      "items_count": 20,
+      "stores_count": 0,
+      "has_resolved_store": false,
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "vada",
+      "type": "suggest",
+      "success": true,
+      "latency": 63,
+      "intent": "generic",
+      "items_count": 5,
+      "stores_count": 1,
+      "categories_count": 4,
+      "first_result": "Vada Pav (1 pc)",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "vada",
+      "type": "search_items",
+      "success": true,
+      "latency": 23,
+      "total": 149,
+      "items_count": 20,
+      "stores_count": 0,
+      "has_resolved_store": false,
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "sambar",
+      "type": "suggest",
+      "success": true,
+      "latency": 86,
+      "intent": "store_first",
+      "items_count": 3,
+      "stores_count": 2,
+      "categories_count": 5,
+      "first_result": "Masala Dosa",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "sambar",
+      "type": "search_items",
+      "success": true,
+      "latency": 16,
+      "total": 244,
+      "items_count": 20,
+      "stores_count": 0,
+      "has_resolved_store": true,
+      "resolved_store_name": "Kokni Darbar",
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "chutney",
+      "type": "suggest",
+      "success": true,
+      "latency": 90,
+      "intent": "generic",
+      "items_count": 5,
+      "stores_count": 4,
+      "categories_count": 5,
+      "first_result": "Veg Sandwich",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "chutney",
+      "type": "search_items",
+      "success": true,
+      "latency": 30,
+      "total": 399,
+      "items_count": 20,
+      "stores_count": 0,
+      "has_resolved_store": false,
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "naan",
+      "type": "suggest",
+      "success": true,
+      "latency": 77,
+      "intent": "generic",
+      "items_count": 5,
+      "stores_count": 5,
+      "categories_count": 1,
+      "first_result": "Malai Paneer",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "naan",
+      "type": "search_items",
+      "success": true,
+      "latency": 18,
+      "total": 643,
+      "items_count": 20,
+      "stores_count": 0,
+      "has_resolved_store": false,
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "roti",
+      "type": "suggest",
+      "success": true,
+      "latency": 64,
+      "intent": "generic",
+      "items_count": 5,
+      "stores_count": 1,
+      "categories_count": 1,
+      "first_result": "Wheat Plain Roti",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "roti",
+      "type": "search_items",
+      "success": true,
+      "latency": 24,
+      "total": 546,
+      "items_count": 20,
+      "stores_count": 0,
+      "has_resolved_store": false,
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "paratha",
+      "type": "suggest",
+      "success": true,
+      "latency": 78,
+      "intent": "store_first",
+      "items_count": 3,
+      "stores_count": 5,
+      "categories_count": 1,
+      "first_result": "Wheat Plain Laccha Paratha",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "paratha",
+      "type": "search_items",
+      "success": true,
+      "latency": 20,
+      "total": 36,
+      "items_count": 20,
+      "stores_count": 0,
+      "has_resolved_store": true,
+      "resolved_store_name": "PARANTHA JUNCTION",
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "kulcha",
+      "type": "suggest",
+      "success": true,
+      "latency": 55,
+      "intent": "store_first",
+      "items_count": 3,
+      "stores_count": 5,
+      "categories_count": 1,
+      "first_result": "Paneer Cheese Pizza",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "kulcha",
+      "type": "search_items",
+      "success": true,
+      "latency": 29,
+      "total": 62,
+      "items_count": 20,
+      "stores_count": 0,
+      "has_resolved_store": false,
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "fried rice",
+      "type": "suggest",
+      "success": true,
+      "latency": 85,
+      "intent": "generic",
+      "items_count": 5,
+      "stores_count": 5,
+      "categories_count": 2,
+      "first_result": "Veg Fried Momos",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "fried rice",
+      "type": "search_items",
+      "success": true,
+      "latency": 31,
+      "total": 574,
+      "items_count": 20,
+      "stores_count": 0,
+      "has_resolved_store": false,
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "noodles",
+      "type": "suggest",
+      "success": true,
+      "latency": 85,
+      "intent": "generic",
+      "items_count": 5,
+      "stores_count": 5,
+      "categories_count": 1,
+      "first_result": "Veg Schezwan Noodles",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "noodles",
+      "type": "search_items",
+      "success": true,
+      "latency": 29,
+      "total": 568,
+      "items_count": 20,
+      "stores_count": 0,
+      "has_resolved_store": false,
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "manchurian",
+      "type": "suggest",
+      "success": true,
+      "latency": 65,
+      "intent": "generic",
+      "items_count": 5,
+      "stores_count": 5,
+      "categories_count": 1,
+      "first_result": "Veg Manchurian",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "manchurian",
+      "type": "search_items",
+      "success": true,
+      "latency": 51,
+      "total": 211,
+      "items_count": 20,
+      "stores_count": 0,
+      "has_resolved_store": false,
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "spring roll",
+      "type": "suggest",
+      "success": true,
+      "latency": 86,
+      "intent": "generic",
+      "items_count": 5,
+      "stores_count": 1,
+      "categories_count": 5,
+      "first_result": "Veg Sandwich",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "spring roll",
+      "type": "search_items",
+      "success": true,
+      "latency": 39,
+      "total": 37,
+      "items_count": 20,
+      "stores_count": 0,
+      "has_resolved_store": false,
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "ice cream",
+      "type": "suggest",
+      "success": true,
+      "latency": 44,
+      "intent": "generic",
+      "items_count": 5,
+      "stores_count": 2,
+      "categories_count": 1,
+      "first_result": "Malai Paneer",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "ice cream",
+      "type": "search_items",
+      "success": true,
+      "latency": 37,
+      "total": 585,
+      "items_count": 20,
+      "stores_count": 0,
+      "has_resolved_store": false,
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "shake",
+      "type": "suggest",
+      "success": true,
+      "latency": 76,
+      "intent": "store_first",
+      "items_count": 3,
+      "stores_count": 5,
+      "categories_count": 2,
+      "first_result": "Malai Paneer",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "shake",
+      "type": "search_items",
+      "success": true,
+      "latency": 21,
+      "total": 194,
+      "items_count": 20,
+      "stores_count": 0,
+      "has_resolved_store": false,
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "lassi",
+      "type": "suggest",
+      "success": true,
+      "latency": 53,
+      "intent": "generic",
+      "items_count": 5,
+      "stores_count": 5,
+      "categories_count": 1,
+      "first_result": "Malai Paneer",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "lassi",
+      "type": "search_items",
+      "success": true,
+      "latency": 20,
+      "total": 96,
+      "items_count": 20,
+      "stores_count": 0,
+      "has_resolved_store": false,
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "juice",
+      "type": "suggest",
+      "success": true,
+      "latency": 43,
+      "intent": "generic",
+      "items_count": 5,
+      "stores_count": 1,
+      "categories_count": 1,
+      "first_result": "Malai Paneer",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "juice",
+      "type": "search_items",
+      "success": true,
+      "latency": 34,
+      "total": 601,
+      "items_count": 20,
+      "stores_count": 0,
+      "has_resolved_store": false,
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "cake",
+      "type": "suggest",
+      "success": true,
+      "latency": 61,
+      "intent": "generic",
+      "items_count": 5,
+      "stores_count": 3,
+      "categories_count": 3,
+      "first_result": "Malai Paneer",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "cake",
+      "type": "search_items",
+      "success": true,
+      "latency": 30,
+      "total": 522,
+      "items_count": 20,
+      "stores_count": 0,
+      "has_resolved_store": false,
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "pastry",
+      "type": "suggest",
+      "success": true,
+      "latency": 66,
+      "intent": "generic",
+      "items_count": 5,
+      "stores_count": 5,
+      "categories_count": 1,
+      "first_result": "Malai Paneer",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "pastry",
+      "type": "search_items",
+      "success": true,
+      "latency": 25,
+      "total": 416,
+      "items_count": 20,
+      "stores_count": 0,
+      "has_resolved_store": false,
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "cookie",
+      "type": "suggest",
+      "success": true,
+      "latency": 68,
+      "intent": "generic",
+      "items_count": 5,
+      "stores_count": 4,
+      "categories_count": 1,
+      "first_result": "Malai Paneer",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "cookie",
+      "type": "search_items",
+      "success": true,
+      "latency": 25,
+      "total": 2663,
+      "items_count": 20,
+      "stores_count": 0,
+      "has_resolved_store": false,
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "brownie",
+      "type": "suggest",
+      "success": true,
+      "latency": 48,
+      "intent": "generic",
+      "items_count": 5,
+      "stores_count": 5,
+      "categories_count": 1,
+      "first_result": "Milk Cake",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "brownie",
+      "type": "search_items",
+      "success": true,
+      "latency": 26,
+      "total": 153,
+      "items_count": 20,
+      "stores_count": 0,
+      "has_resolved_store": false,
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "samosa",
+      "type": "suggest",
+      "success": true,
+      "latency": 43,
+      "intent": "generic",
+      "items_count": 5,
+      "stores_count": 5,
+      "categories_count": 1,
+      "first_result": "Veg Masala Burger",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "samosa",
+      "type": "search_items",
+      "success": true,
+      "latency": 23,
+      "total": 26,
+      "items_count": 20,
+      "stores_count": 0,
+      "has_resolved_store": false,
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "kachori",
+      "type": "suggest",
+      "success": true,
+      "latency": 69,
+      "intent": "generic",
+      "items_count": 5,
+      "stores_count": 1,
+      "categories_count": 5,
+      "first_result": "Dahi",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "kachori",
+      "type": "search_items",
+      "success": true,
+      "latency": 41,
+      "total": 78,
+      "items_count": 20,
+      "stores_count": 0,
+      "has_resolved_store": false,
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "pav bhaji",
+      "type": "suggest",
+      "success": true,
+      "latency": 77,
+      "intent": "generic",
+      "items_count": 5,
+      "stores_count": 5,
+      "categories_count": 4,
+      "first_result": "Doodh Shev Bhaji",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "pav bhaji",
+      "type": "search_items",
+      "success": true,
+      "latency": 27,
+      "total": 54,
+      "items_count": 20,
+      "stores_count": 0,
+      "has_resolved_store": false,
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "chole bhature",
+      "type": "suggest",
+      "success": true,
+      "latency": 50,
+      "intent": "generic",
+      "items_count": 5,
+      "stores_count": 5,
+      "categories_count": 1,
+      "first_result": "Dahi",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "chole bhature",
+      "type": "search_items",
+      "success": true,
+      "latency": 37,
+      "total": 19,
+      "items_count": 19,
+      "stores_count": 0,
+      "has_resolved_store": false,
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "momos",
+      "type": "suggest",
+      "success": true,
+      "latency": 62,
+      "intent": "generic",
+      "items_count": 5,
+      "stores_count": 1,
+      "categories_count": 1,
+      "first_result": "Malai Paneer",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "momos",
+      "type": "search_items",
+      "success": true,
+      "latency": 32,
+      "total": 86,
+      "items_count": 20,
+      "stores_count": 0,
+      "has_resolved_store": false,
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "rolls",
+      "type": "suggest",
+      "success": true,
+      "latency": 65,
+      "intent": "generic",
+      "items_count": 5,
+      "stores_count": 1,
+      "categories_count": 1,
+      "first_result": "Veg Sandwich",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "rolls",
+      "type": "search_items",
+      "success": true,
+      "latency": 35,
+      "total": 167,
+      "items_count": 20,
+      "stores_count": 0,
+      "has_resolved_store": false,
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "wraps",
+      "type": "suggest",
+      "success": true,
+      "latency": 54,
+      "intent": "generic",
+      "items_count": 5,
+      "stores_count": 2,
+      "categories_count": 5,
+      "first_result": "Veg Sandwich",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "wraps",
+      "type": "search_items",
+      "success": true,
+      "latency": 17,
+      "total": 19,
+      "items_count": 19,
+      "stores_count": 0,
+      "has_resolved_store": false,
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "kebabs",
+      "type": "suggest",
+      "success": true,
+      "latency": 56,
+      "intent": "generic",
+      "items_count": 5,
+      "stores_count": 2,
+      "categories_count": 5,
+      "first_result": "Veg Sandwich",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "kebabs",
+      "type": "search_items",
+      "success": true,
+      "latency": 29,
+      "total": 200,
+      "items_count": 20,
+      "stores_count": 0,
+      "has_resolved_store": false,
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "chicken",
+      "type": "suggest",
+      "success": true,
+      "latency": 87,
+      "intent": "generic",
+      "items_count": 5,
+      "stores_count": 5,
+      "categories_count": 1,
+      "first_result": "Chicken Curry",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "chicken",
+      "type": "search_items",
+      "success": true,
+      "latency": 29,
+      "total": 1253,
+      "items_count": 20,
+      "stores_count": 0,
+      "has_resolved_store": false,
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "paneer",
+      "type": "suggest",
+      "success": true,
+      "latency": 87,
+      "intent": "generic",
+      "items_count": 5,
+      "stores_count": 5,
+      "categories_count": 1,
+      "first_result": "Malai Paneer",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "paneer",
+      "type": "search_items",
+      "success": true,
+      "latency": 25,
+      "total": 1362,
+      "items_count": 20,
+      "stores_count": 0,
+      "has_resolved_store": false,
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "mutton",
+      "type": "suggest",
+      "success": true,
+      "latency": 45,
+      "intent": "generic",
+      "items_count": 5,
+      "stores_count": 1,
+      "categories_count": 1,
+      "first_result": "Malai Paneer",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "mutton",
+      "type": "search_items",
+      "success": true,
+      "latency": 42,
+      "total": 350,
+      "items_count": 20,
+      "stores_count": 0,
+      "has_resolved_store": false,
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "fish",
+      "type": "suggest",
+      "success": true,
+      "latency": 58,
+      "intent": "generic",
+      "items_count": 5,
+      "stores_count": 5,
+      "categories_count": 2,
+      "first_result": "Dahi",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "fish",
+      "type": "search_items",
+      "success": true,
+      "latency": 16,
+      "total": 2698,
+      "items_count": 20,
+      "stores_count": 0,
+      "has_resolved_store": false,
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "egg",
+      "type": "suggest",
+      "success": true,
+      "latency": 36,
+      "intent": "generic",
+      "items_count": 5,
+      "stores_count": 1,
+      "categories_count": 1,
+      "first_result": "Egg Curry",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "egg",
+      "type": "search_items",
+      "success": true,
+      "latency": 20,
+      "total": 236,
+      "items_count": 20,
+      "stores_count": 0,
+      "has_resolved_store": false,
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "rice",
+      "type": "suggest",
+      "success": true,
+      "latency": 110,
+      "intent": "generic",
+      "items_count": 5,
+      "stores_count": 5,
+      "categories_count": 2,
+      "first_result": "Jeera Rice",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "rice",
+      "type": "search_items",
+      "success": true,
+      "latency": 32,
+      "total": 4114,
+      "items_count": 20,
+      "stores_count": 0,
+      "has_resolved_store": false,
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "bread",
+      "type": "suggest",
+      "success": true,
+      "latency": 62,
+      "intent": "generic",
+      "items_count": 5,
+      "stores_count": 5,
+      "categories_count": 2,
+      "first_result": "Malai Paneer",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "bread",
+      "type": "search_items",
+      "success": true,
+      "latency": 16,
+      "total": 260,
+      "items_count": 20,
+      "stores_count": 0,
+      "has_resolved_store": false,
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "soup",
+      "type": "suggest",
+      "success": true,
+      "latency": 83,
+      "intent": "generic",
+      "items_count": 5,
+      "stores_count": 5,
+      "categories_count": 1,
+      "first_result": "Dahi",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "soup",
+      "type": "search_items",
+      "success": true,
+      "latency": 21,
+      "total": 419,
+      "items_count": 20,
+      "stores_count": 0,
+      "has_resolved_store": false,
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "salad",
+      "type": "suggest",
+      "success": true,
+      "latency": 85,
+      "intent": "generic",
+      "items_count": 5,
+      "stores_count": 5,
+      "categories_count": 1,
+      "first_result": "Veg Sandwich",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "salad",
+      "type": "search_items",
+      "success": true,
+      "latency": 19,
+      "total": 325,
+      "items_count": 20,
+      "stores_count": 0,
+      "has_resolved_store": false,
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "breakfast",
+      "type": "suggest",
+      "success": true,
+      "latency": 79,
+      "intent": "generic",
+      "items_count": 5,
+      "stores_count": 3,
+      "categories_count": 5,
+      "first_result": "Veg Sandwich",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "breakfast",
+      "type": "search_items",
+      "success": true,
+      "latency": 31,
+      "total": 93,
+      "items_count": 20,
+      "stores_count": 0,
+      "has_resolved_store": false,
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "lunch",
+      "type": "suggest",
+      "success": true,
+      "latency": 205,
+      "intent": "generic",
+      "items_count": 5,
+      "stores_count": 1,
+      "categories_count": 5,
+      "first_result": "Veg Sandwich",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "lunch",
+      "type": "search_items",
+      "success": true,
+      "latency": 39,
+      "total": 172,
+      "items_count": 20,
+      "stores_count": 0,
+      "has_resolved_store": false,
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "dinner",
+      "type": "suggest",
+      "success": true,
+      "latency": 51,
+      "intent": "store_first",
+      "items_count": 3,
+      "stores_count": 1,
+      "categories_count": 5,
+      "first_result": "Veg Sandwich",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "dinner",
+      "type": "search_items",
+      "success": true,
+      "latency": 26,
+      "total": 300,
+      "items_count": 20,
+      "stores_count": 0,
+      "has_resolved_store": false,
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "snacks",
+      "type": "suggest",
+      "success": true,
+      "latency": 87,
+      "intent": "generic",
+      "items_count": 5,
+      "stores_count": 2,
+      "categories_count": 5,
+      "first_result": "Dahi",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "snacks",
+      "type": "search_items",
+      "success": true,
+      "latency": 56,
+      "total": 642,
+      "items_count": 20,
+      "stores_count": 0,
+      "has_resolved_store": false,
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "veg",
+      "type": "suggest",
+      "success": true,
+      "latency": 43,
+      "intent": "generic",
+      "items_count": 5,
+      "stores_count": 3,
+      "categories_count": 3,
+      "first_result": "Veg Sandwich",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "veg",
+      "type": "search_items",
+      "success": true,
+      "latency": 31,
+      "total": 1840,
+      "items_count": 20,
+      "stores_count": 0,
+      "has_resolved_store": false,
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "non veg",
+      "type": "suggest",
+      "success": true,
+      "latency": 43,
+      "intent": "generic",
+      "items_count": 5,
+      "stores_count": 2,
+      "categories_count": 3,
+      "first_result": "Veg Sandwich",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "non veg",
+      "type": "search_items",
+      "success": true,
+      "latency": 31,
+      "total": 56,
+      "items_count": 20,
+      "stores_count": 0,
+      "has_resolved_store": false,
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "chinese",
+      "type": "suggest",
+      "success": true,
+      "latency": 39,
+      "intent": "generic",
+      "items_count": 5,
+      "stores_count": 1,
+      "categories_count": 1,
+      "first_result": "Veg Manchurian",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "chinese",
+      "type": "search_items",
+      "success": true,
+      "latency": 46,
+      "total": 1569,
+      "items_count": 20,
+      "stores_count": 0,
+      "has_resolved_store": false,
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "italian",
+      "type": "suggest",
+      "success": true,
+      "latency": 57,
+      "intent": "generic",
+      "items_count": 5,
+      "stores_count": 1,
+      "categories_count": 5,
+      "first_result": "Veg Sandwich",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "italian",
+      "type": "search_items",
+      "success": true,
+      "latency": 50,
+      "total": 104,
+      "items_count": 20,
+      "stores_count": 0,
+      "has_resolved_store": false,
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "indian",
+      "type": "suggest",
+      "success": true,
+      "latency": 44,
+      "intent": "generic",
+      "items_count": 5,
+      "stores_count": 1,
+      "categories_count": 1,
+      "first_result": "Malai Paneer",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "indian",
+      "type": "search_items",
+      "success": true,
+      "latency": 46,
+      "total": 1569,
+      "items_count": 20,
+      "stores_count": 0,
+      "has_resolved_store": false,
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "spicy",
+      "type": "suggest",
+      "success": true,
+      "latency": 65,
+      "intent": "generic",
+      "items_count": 5,
+      "stores_count": 1,
+      "categories_count": 5,
+      "first_result": "Veg Schezwan Noodles",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "spicy",
+      "type": "search_items",
+      "success": true,
+      "latency": 39,
+      "total": 2480,
+      "items_count": 20,
+      "stores_count": 0,
+      "has_resolved_store": false,
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "sweet",
+      "type": "suggest",
+      "success": true,
+      "latency": 64,
+      "intent": "store_first",
+      "items_count": 3,
+      "stores_count": 3,
+      "categories_count": 2,
+      "first_result": "Malai Paneer",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "sweet",
+      "type": "search_items",
+      "success": true,
+      "latency": 14,
+      "total": 35,
+      "items_count": 20,
+      "stores_count": 0,
+      "has_resolved_store": true,
+      "resolved_store_name": "Ganesh Sweet Mart",
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "masala",
+      "type": "suggest",
+      "success": true,
+      "latency": 72,
+      "intent": "generic",
+      "items_count": 5,
+      "stores_count": 1,
+      "categories_count": 1,
+      "first_result": "Veg Masala Burger",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "masala",
+      "type": "search_items",
+      "success": true,
+      "latency": 42,
+      "total": 1401,
+      "items_count": 20,
+      "stores_count": 0,
+      "has_resolved_store": false,
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "curry",
+      "type": "suggest",
+      "success": true,
+      "latency": 110,
+      "intent": "generic",
+      "items_count": 5,
+      "stores_count": 2,
+      "categories_count": 5,
+      "first_result": "Soyabean Masala",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "curry",
+      "type": "search_items",
+      "success": true,
+      "latency": 40,
+      "total": 1424,
+      "items_count": 20,
+      "stores_count": 0,
+      "has_resolved_store": false,
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "fast food",
+      "type": "suggest",
+      "success": true,
+      "latency": 39,
+      "intent": "store_first",
+      "items_count": 3,
+      "stores_count": 5,
+      "categories_count": 1,
+      "first_result": "Malai Paneer",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "fast food",
+      "type": "search_items",
+      "success": true,
+      "latency": 14,
+      "total": 231,
+      "items_count": 20,
+      "stores_count": 0,
+      "has_resolved_store": true,
+      "resolved_store_name": "Kantara Food",
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "healthy food",
+      "type": "suggest",
+      "success": true,
+      "latency": 37,
+      "intent": "store_first",
+      "items_count": 3,
+      "stores_count": 5,
+      "categories_count": 1,
+      "first_result": "Malai Paneer",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "healthy food",
+      "type": "search_items",
+      "success": true,
+      "latency": 17,
+      "total": 231,
+      "items_count": 20,
+      "stores_count": 0,
+      "has_resolved_store": true,
+      "resolved_store_name": "Kantara Food",
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "diet food",
+      "type": "suggest",
+      "success": true,
+      "latency": 39,
+      "intent": "store_first",
+      "items_count": 3,
+      "stores_count": 5,
+      "categories_count": 1,
+      "first_result": "Malai Paneer",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "diet food",
+      "type": "search_items",
+      "success": true,
+      "latency": 15,
+      "total": 231,
+      "items_count": 20,
+      "stores_count": 0,
+      "has_resolved_store": true,
+      "resolved_store_name": "Kantara Food",
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "veg biryani",
+      "type": "suggest",
+      "success": true,
+      "latency": 44,
+      "intent": "generic",
+      "items_count": 5,
+      "stores_count": 3,
+      "categories_count": 4,
+      "first_result": "Veg Sandwich",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "veg biryani",
+      "type": "search_items",
+      "success": true,
+      "latency": 48,
+      "total": 50,
+      "items_count": 20,
+      "stores_count": 0,
+      "has_resolved_store": false,
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "veg pizza",
+      "type": "suggest",
+      "success": true,
+      "latency": 40,
+      "intent": "generic",
+      "items_count": 5,
+      "stores_count": 4,
+      "categories_count": 4,
+      "first_result": "Veg Sandwich",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "veg pizza",
+      "type": "search_items",
+      "success": true,
+      "latency": 28,
+      "total": 34,
+      "items_count": 20,
+      "stores_count": 0,
+      "has_resolved_store": false,
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "veg burger",
+      "type": "suggest",
+      "success": true,
+      "latency": 39,
+      "intent": "generic",
+      "items_count": 5,
+      "stores_count": 3,
+      "categories_count": 4,
+      "first_result": "Veg Sandwich",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "veg burger",
+      "type": "search_items",
+      "success": true,
+      "latency": 41,
+      "total": 44,
+      "items_count": 20,
+      "stores_count": 0,
+      "has_resolved_store": false,
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "vegetarian food",
+      "type": "suggest",
+      "success": true,
+      "latency": 39,
+      "intent": "store_first",
+      "items_count": 3,
+      "stores_count": 5,
+      "categories_count": 1,
+      "first_result": "Malai Paneer",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "vegetarian food",
+      "type": "search_items",
+      "success": true,
+      "latency": 21,
+      "total": 231,
+      "items_count": 20,
+      "stores_count": 0,
+      "has_resolved_store": true,
+      "resolved_store_name": "Kantara Food",
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "pure veg restaurant",
+      "type": "suggest",
+      "success": true,
+      "latency": 43,
+      "intent": "store_first",
+      "items_count": 3,
+      "stores_count": 10,
+      "categories_count": 2,
+      "first_result": "Dahi",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "pure veg restaurant",
+      "type": "search_items",
+      "success": true,
+      "latency": 22,
+      "total": 192,
+      "items_count": 20,
+      "stores_count": 0,
+      "has_resolved_store": true,
+      "resolved_store_name": "Dingores Veg Curry",
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "chicken biryani",
+      "type": "suggest",
+      "success": true,
+      "latency": 43,
+      "intent": "generic",
+      "items_count": 5,
+      "stores_count": 1,
+      "categories_count": 2,
+      "first_result": "Chicken Biryani",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "chicken biryani",
+      "type": "search_items",
+      "success": true,
+      "latency": 73,
+      "total": 52,
+      "items_count": 20,
+      "stores_count": 0,
+      "has_resolved_store": false,
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "mutton curry",
+      "type": "suggest",
+      "success": true,
+      "latency": 41,
+      "intent": "generic",
+      "items_count": 5,
+      "stores_count": 3,
+      "categories_count": 1,
+      "first_result": "Mutton Biryani",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "mutton curry",
+      "type": "search_items",
+      "success": true,
+      "latency": 44,
+      "total": 54,
+      "items_count": 20,
+      "stores_count": 0,
+      "has_resolved_store": false,
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "fish fry",
+      "type": "suggest",
+      "success": true,
+      "latency": 59,
+      "intent": "generic",
+      "items_count": 5,
+      "stores_count": 5,
+      "categories_count": 2,
+      "first_result": "Veg Sandwich",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "fish fry",
+      "type": "search_items",
+      "success": true,
+      "latency": 20,
+      "total": 191,
+      "items_count": 20,
+      "stores_count": 0,
+      "has_resolved_store": false,
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "egg curry",
+      "type": "suggest",
+      "success": true,
+      "latency": 84,
+      "intent": "generic",
+      "items_count": 5,
+      "stores_count": 2,
+      "categories_count": 5,
+      "first_result": "Soyabean Masala",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "egg curry",
+      "type": "search_items",
+      "success": true,
+      "latency": 28,
+      "total": 41,
+      "items_count": 20,
+      "stores_count": 0,
+      "has_resolved_store": false,
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "chicken pizza",
+      "type": "suggest",
+      "success": true,
+      "latency": 38,
+      "intent": "generic",
+      "items_count": 5,
+      "stores_count": 2,
+      "categories_count": 2,
+      "first_result": "Paneer Cheese Pizza",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "chicken pizza",
+      "type": "search_items",
+      "success": true,
+      "latency": 35,
+      "total": 10,
+      "items_count": 10,
+      "stores_count": 0,
+      "has_resolved_store": false,
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "non veg thali",
+      "type": "suggest",
+      "success": true,
+      "latency": 43,
+      "intent": "generic",
+      "items_count": 5,
+      "stores_count": 2,
+      "categories_count": 4,
+      "first_result": "Veg Sandwich",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "non veg thali",
+      "type": "search_items",
+      "success": true,
+      "latency": 21,
+      "total": 3,
+      "items_count": 3,
+      "stores_count": 0,
+      "has_resolved_store": false,
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "briyani",
+      "type": "suggest",
+      "success": true,
+      "latency": 63,
+      "intent": "generic",
+      "items_count": 5,
+      "stores_count": 2,
+      "categories_count": 5,
+      "first_result": "Paneer Cheese Pizza",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "briyani",
+      "type": "search_items",
+      "success": true,
+      "latency": 44,
+      "total": 222,
+      "items_count": 20,
+      "stores_count": 0,
+      "has_resolved_store": false,
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "piza",
+      "type": "suggest",
+      "success": true,
+      "latency": 59,
+      "intent": "generic",
+      "items_count": 5,
+      "stores_count": 2,
+      "categories_count": 5,
+      "first_result": "Malai Paneer",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "piza",
+      "type": "search_items",
+      "success": true,
+      "latency": 29,
+      "total": 255,
+      "items_count": 20,
+      "stores_count": 0,
+      "has_resolved_store": false,
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "buger",
+      "type": "suggest",
+      "success": true,
+      "latency": 57,
+      "intent": "generic",
+      "items_count": 5,
+      "stores_count": 2,
+      "categories_count": 5,
+      "first_result": "Malai Paneer",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "buger",
+      "type": "search_items",
+      "success": true,
+      "latency": 28,
+      "total": 102,
+      "items_count": 20,
+      "stores_count": 0,
+      "has_resolved_store": false,
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "resturant",
+      "type": "suggest",
+      "success": true,
+      "latency": 83,
+      "intent": "store_first",
+      "items_count": 3,
+      "stores_count": 1,
+      "categories_count": 5,
+      "first_result": "Veg Sandwich",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "resturant",
+      "type": "search_items",
+      "success": true,
+      "latency": 20,
+      "total": 173,
+      "items_count": 20,
+      "stores_count": 0,
+      "has_resolved_store": true,
+      "resolved_store_name": "HOTEL SWAD NX FAMILY RESTURANT",
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "chiken",
+      "type": "suggest",
+      "success": true,
+      "latency": 77,
+      "intent": "generic",
+      "items_count": 5,
+      "stores_count": 4,
+      "categories_count": 5,
+      "first_result": "Malai Paneer",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "chiken",
+      "type": "search_items",
+      "success": true,
+      "latency": 27,
+      "total": 1213,
+      "items_count": 20,
+      "stores_count": 0,
+      "has_resolved_store": false,
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "panir",
+      "type": "suggest",
+      "success": true,
+      "latency": 66,
+      "intent": "generic",
+      "items_count": 5,
+      "stores_count": 3,
+      "categories_count": 5,
+      "first_result": "Malai Paneer",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "panir",
+      "type": "search_items",
+      "success": true,
+      "latency": 19,
+      "total": 39,
+      "items_count": 20,
+      "stores_count": 0,
+      "has_resolved_store": false,
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "biriyani",
+      "type": "suggest",
+      "success": true,
+      "latency": 70,
+      "intent": "generic",
+      "items_count": 5,
+      "stores_count": 3,
+      "categories_count": 5,
+      "first_result": "Dahi",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "biriyani",
+      "type": "search_items",
+      "success": true,
+      "latency": 50,
+      "total": 222,
+      "items_count": 20,
+      "stores_count": 0,
+      "has_resolved_store": false,
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "restraunt",
+      "type": "suggest",
+      "success": true,
+      "latency": 54,
+      "intent": "store_first",
+      "items_count": 3,
+      "stores_count": 1,
+      "categories_count": 5,
+      "first_result": "Veg Sandwich",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "restraunt",
+      "type": "search_items",
+      "success": true,
+      "latency": 20,
+      "total": 173,
+      "items_count": 20,
+      "stores_count": 0,
+      "has_resolved_store": true,
+      "resolved_store_name": "HOTEL SWAD NX FAMILY RESTURANT",
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "sweats",
+      "type": "suggest",
+      "success": true,
+      "latency": 54,
+      "intent": "store_first",
+      "items_count": 3,
+      "stores_count": 2,
+      "categories_count": 5,
+      "first_result": "Dahi",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "sweats",
+      "type": "search_items",
+      "success": true,
+      "latency": 17,
+      "total": 72,
+      "items_count": 20,
+      "stores_count": 0,
+      "has_resolved_store": true,
+      "resolved_store_name": "Satyam Sweets",
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "juise",
+      "type": "suggest",
+      "success": true,
+      "latency": 63,
+      "intent": "generic",
+      "items_count": 5,
+      "stores_count": 3,
+      "categories_count": 5,
+      "first_result": "Malai Paneer",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "juise",
+      "type": "search_items",
+      "success": true,
+      "latency": 32,
+      "total": 229,
+      "items_count": 20,
+      "stores_count": 0,
+      "has_resolved_store": false,
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "coffe",
+      "type": "suggest",
+      "success": true,
+      "latency": 59,
+      "intent": "generic",
+      "items_count": 5,
+      "stores_count": 5,
+      "categories_count": 3,
+      "first_result": "Malai Paneer",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "coffe",
+      "type": "search_items",
+      "success": true,
+      "latency": 21,
+      "total": 115,
+      "items_count": 20,
+      "stores_count": 0,
+      "has_resolved_store": false,
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "resturent",
+      "type": "suggest",
+      "success": true,
+      "latency": 60,
+      "intent": "store_first",
+      "items_count": 3,
+      "stores_count": 2,
+      "categories_count": 5,
+      "first_result": "Malai Paneer",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "resturent",
+      "type": "search_items",
+      "success": true,
+      "latency": 11,
+      "total": 3,
+      "items_count": 3,
+      "stores_count": 0,
+      "has_resolved_store": true,
+      "resolved_store_name": "Demo Restaurant",
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "bir",
+      "type": "suggest",
+      "success": true,
+      "latency": 38,
+      "intent": "generic",
+      "items_count": 5,
+      "stores_count": 1,
+      "categories_count": 1,
+      "first_result": "Mutton Biryani",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "bir",
+      "type": "search_items",
+      "success": true,
+      "latency": 35,
+      "total": 329,
+      "items_count": 20,
+      "stores_count": 0,
+      "has_resolved_store": false,
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "piz",
+      "type": "suggest",
+      "success": true,
+      "latency": 39,
+      "intent": "generic",
+      "items_count": 5,
+      "stores_count": 2,
+      "categories_count": 1,
+      "first_result": "Paneer Cheese Pizza",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "piz",
+      "type": "search_items",
+      "success": true,
+      "latency": 29,
+      "total": 221,
+      "items_count": 20,
+      "stores_count": 0,
+      "has_resolved_store": false,
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "chi",
+      "type": "suggest",
+      "success": true,
+      "latency": 67,
+      "intent": "generic",
+      "items_count": 5,
+      "stores_count": 3,
+      "categories_count": 3,
+      "first_result": "Chilly Cheese Burst Pizza Sandwich",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "chi",
+      "type": "search_items",
+      "success": true,
+      "latency": 31,
+      "total": 1471,
+      "items_count": 20,
+      "stores_count": 0,
+      "has_resolved_store": false,
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "pan",
+      "type": "suggest",
+      "success": true,
+      "latency": 37,
+      "intent": "generic",
+      "items_count": 5,
+      "stores_count": 1,
+      "categories_count": 1,
+      "first_result": "Malai Paneer",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "pan",
+      "type": "search_items",
+      "success": true,
+      "latency": 28,
+      "total": 1631,
+      "items_count": 20,
+      "stores_count": 0,
+      "has_resolved_store": false,
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "gul",
+      "type": "suggest",
+      "success": true,
+      "latency": 53,
+      "intent": "generic",
+      "items_count": 5,
+      "stores_count": 5,
+      "categories_count": 1,
+      "first_result": "Malai Paneer",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "gul",
+      "type": "search_items",
+      "success": true,
+      "latency": 17,
+      "total": 58,
+      "items_count": 20,
+      "stores_count": 0,
+      "has_resolved_store": false,
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "res",
+      "type": "suggest",
+      "success": true,
+      "latency": 39,
+      "intent": "store_first",
+      "items_count": 3,
+      "stores_count": 10,
+      "categories_count": 1,
+      "first_result": "Malai Paneer",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "res",
+      "type": "search_items",
+      "success": true,
+      "latency": 17,
+      "total": 49,
+      "items_count": 20,
+      "stores_count": 0,
+      "has_resolved_store": true,
+      "resolved_store_name": "New Rasoi Restaurant",
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "caf",
+      "type": "suggest",
+      "success": true,
+      "latency": 82,
+      "intent": "store_first",
+      "items_count": 3,
+      "stores_count": 6,
+      "categories_count": 5,
+      "first_result": "Malai Paneer",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "caf",
+      "type": "search_items",
+      "success": true,
+      "latency": 18,
+      "total": 50,
+      "items_count": 20,
+      "stores_count": 0,
+      "has_resolved_store": true,
+      "resolved_store_name": "Madras Cafe",
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "bak",
+      "type": "suggest",
+      "success": true,
+      "latency": 37,
+      "intent": "store_first",
+      "items_count": 3,
+      "stores_count": 4,
+      "categories_count": 1,
+      "first_result": "Paneer Cheese Pizza",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "bak",
+      "type": "search_items",
+      "success": true,
+      "latency": 18,
+      "total": 122,
+      "items_count": 20,
+      "stores_count": 0,
+      "has_resolved_store": true,
+      "resolved_store_name": "Kwality RESTO BAR",
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "swe",
+      "type": "suggest",
+      "success": true,
+      "latency": 41,
+      "intent": "store_first",
+      "items_count": 3,
+      "stores_count": 3,
+      "categories_count": 2,
+      "first_result": "Malai Paneer",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "swe",
+      "type": "search_items",
+      "success": true,
+      "latency": 14,
+      "total": 35,
+      "items_count": 20,
+      "stores_count": 0,
+      "has_resolved_store": true,
+      "resolved_store_name": "Ganesh Sweet Mart",
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "jui",
+      "type": "suggest",
+      "success": true,
+      "latency": 38,
+      "intent": "generic",
+      "items_count": 5,
+      "stores_count": 1,
+      "categories_count": 1,
+      "first_result": "Malai Paneer",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "jui",
+      "type": "search_items",
+      "success": true,
+      "latency": 34,
+      "total": 111,
+      "items_count": 20,
+      "stores_count": 0,
+      "has_resolved_store": false,
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "chicken biryani ganesh",
+      "type": "suggest",
+      "success": true,
+      "latency": 49,
+      "intent": "generic",
+      "items_count": 5,
+      "stores_count": 2,
+      "categories_count": 2,
+      "first_result": "Chicken Biryani",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "chicken biryani ganesh",
+      "type": "search_items",
+      "success": true,
+      "latency": 89,
+      "total": 1037,
+      "items_count": 20,
+      "stores_count": 0,
+      "has_resolved_store": false,
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "pizza dominos",
+      "type": "suggest",
+      "success": true,
+      "latency": 45,
+      "intent": "store_first",
+      "items_count": 3,
+      "stores_count": 2,
+      "categories_count": 1,
+      "first_result": "Paneer Cheese Pizza",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "pizza dominos",
+      "type": "search_items",
+      "success": true,
+      "latency": 18,
+      "total": 30,
+      "items_count": 20,
+      "stores_count": 0,
+      "has_resolved_store": true,
+      "resolved_store_name": "Dhinchak Pizza",
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "burger kfc",
+      "type": "suggest",
+      "success": true,
+      "latency": 41,
+      "intent": "store_first",
+      "items_count": 3,
+      "stores_count": 1,
+      "categories_count": 1,
+      "first_result": "Veg Sandwich",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "burger kfc",
+      "type": "search_items",
+      "success": true,
+      "latency": 16,
+      "total": 35,
+      "items_count": 20,
+      "stores_count": 0,
+      "has_resolved_store": true,
+      "resolved_store_name": "Star Boys - Burger, Sandwhich & Pizza",
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "coffee starbucks",
+      "type": "suggest",
+      "success": true,
+      "latency": 59,
+      "intent": "store_first",
+      "items_count": 3,
+      "stores_count": 5,
+      "categories_count": 2,
+      "first_result": "Veg Sandwich",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "coffee starbucks",
+      "type": "search_items",
+      "success": true,
+      "latency": 67,
+      "total": 82,
+      "items_count": 20,
+      "stores_count": 0,
+      "has_resolved_store": false,
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "ice cream baskin",
+      "type": "suggest",
+      "success": true,
+      "latency": 43,
+      "intent": "store_first",
+      "items_count": 3,
+      "stores_count": 2,
+      "categories_count": 1,
+      "first_result": "Malai Paneer",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "ice cream baskin",
+      "type": "search_items",
+      "success": true,
+      "latency": 22,
+      "total": 42,
+      "items_count": 20,
+      "stores_count": 0,
+      "has_resolved_store": true,
+      "resolved_store_name": "Ice Box Cafe & Restro",
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "sweets haldirams",
+      "type": "suggest",
+      "success": true,
+      "latency": 46,
+      "intent": "store_first",
+      "items_count": 3,
+      "stores_count": 2,
+      "categories_count": 2,
+      "first_result": "Malai Paneer",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "sweets haldirams",
+      "type": "search_items",
+      "success": true,
+      "latency": 23,
+      "total": 72,
+      "items_count": 20,
+      "stores_count": 0,
+      "has_resolved_store": true,
+      "resolved_store_name": "Satyam Sweets",
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "biryani paradise",
+      "type": "suggest",
+      "success": true,
+      "latency": 43,
+      "intent": "store_first",
+      "items_count": 3,
+      "stores_count": 1,
+      "categories_count": 1,
+      "first_result": "Mutton Biryani",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "biryani paradise",
+      "type": "search_items",
+      "success": true,
+      "latency": 22,
+      "total": 27,
+      "items_count": 20,
+      "stores_count": 0,
+      "has_resolved_store": true,
+      "resolved_store_name": "Birista - The Biryani House",
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "dosa south indian",
+      "type": "suggest",
+      "success": true,
+      "latency": 43,
+      "intent": "store_first",
+      "items_count": 3,
+      "stores_count": 3,
+      "categories_count": 2,
+      "first_result": "Malai Paneer",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "dosa south indian",
+      "type": "search_items",
+      "success": true,
+      "latency": 19,
+      "total": 96,
+      "items_count": 20,
+      "stores_count": 0,
+      "has_resolved_store": true,
+      "resolved_store_name": "Dear Dosa",
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "cheap biryani",
+      "type": "suggest",
+      "success": true,
+      "latency": 45,
+      "intent": "generic",
+      "items_count": 5,
+      "stores_count": 1,
+      "categories_count": 1,
+      "first_result": "Mutton Biryani",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "cheap biryani",
+      "type": "search_items",
+      "success": true,
+      "latency": 53,
+      "total": 200,
+      "items_count": 20,
+      "stores_count": 0,
+      "has_resolved_store": false,
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "affordable pizza",
+      "type": "suggest",
+      "success": true,
+      "latency": 42,
+      "intent": "generic",
+      "items_count": 5,
+      "stores_count": 2,
+      "categories_count": 1,
+      "first_result": "Paneer Cheese Pizza",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "affordable pizza",
+      "type": "search_items",
+      "success": true,
+      "latency": 61,
+      "total": 236,
+      "items_count": 20,
+      "stores_count": 0,
+      "has_resolved_store": false,
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "budget restaurant",
+      "type": "suggest",
+      "success": true,
+      "latency": 84,
+      "intent": "store_first",
+      "items_count": 3,
+      "stores_count": 10,
+      "categories_count": 5,
+      "first_result": "Veg Sandwich",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "budget restaurant",
+      "type": "search_items",
+      "success": true,
+      "latency": 17,
+      "total": 3,
+      "items_count": 3,
+      "stores_count": 0,
+      "has_resolved_store": true,
+      "resolved_store_name": "Demo Restaurant",
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "expensive restaurant",
+      "type": "suggest",
+      "success": true,
+      "latency": 85,
+      "intent": "store_first",
+      "items_count": 3,
+      "stores_count": 10,
+      "categories_count": 5,
+      "first_result": "Paneer Cheese Pizza",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "expensive restaurant",
+      "type": "search_items",
+      "success": true,
+      "latency": 19,
+      "total": 3,
+      "items_count": 3,
+      "stores_count": 0,
+      "has_resolved_store": true,
+      "resolved_store_name": "Demo Restaurant",
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "premium food",
+      "type": "suggest",
+      "success": true,
+      "latency": 40,
+      "intent": "store_first",
+      "items_count": 3,
+      "stores_count": 5,
+      "categories_count": 1,
+      "first_result": "Malai Paneer",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "premium food",
+      "type": "search_items",
+      "success": true,
+      "latency": 17,
+      "total": 231,
+      "items_count": 20,
+      "stores_count": 0,
+      "has_resolved_store": true,
+      "resolved_store_name": "Kantara Food",
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "restaurant near me",
+      "type": "suggest",
+      "success": true,
+      "latency": 85,
+      "intent": "store_first",
+      "items_count": 3,
+      "stores_count": 10,
+      "categories_count": 5,
+      "first_result": "Veg Sandwich",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "restaurant near me",
+      "type": "search_items",
+      "success": true,
+      "latency": 21,
+      "total": 96,
+      "items_count": 20,
+      "stores_count": 0,
+      "has_resolved_store": true,
+      "resolved_store_name": "Dear Dosa",
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "food near me",
+      "type": "suggest",
+      "success": true,
+      "latency": 43,
+      "intent": "store_first",
+      "items_count": 3,
+      "stores_count": 10,
+      "categories_count": 1,
+      "first_result": "Malai Paneer",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "food near me",
+      "type": "search_items",
+      "success": true,
+      "latency": 15,
+      "total": 96,
+      "items_count": 20,
+      "stores_count": 0,
+      "has_resolved_store": true,
+      "resolved_store_name": "Dear Dosa",
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "pizza nearby",
+      "type": "suggest",
+      "success": true,
+      "latency": 39,
+      "intent": "store_first",
+      "items_count": 3,
+      "stores_count": 2,
+      "categories_count": 1,
+      "first_result": "Paneer Cheese Pizza",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "pizza nearby",
+      "type": "search_items",
+      "success": true,
+      "latency": 21,
+      "total": 30,
+      "items_count": 20,
+      "stores_count": 0,
+      "has_resolved_store": true,
+      "resolved_store_name": "Dhinchak Pizza",
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "biryani delivery",
+      "type": "suggest",
+      "success": true,
+      "latency": 47,
+      "intent": "generic",
+      "items_count": 5,
+      "stores_count": 1,
+      "categories_count": 1,
+      "first_result": "Mutton Biryani",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "biryani delivery",
+      "type": "search_items",
+      "success": true,
+      "latency": 69,
+      "total": 200,
+      "items_count": 20,
+      "stores_count": 0,
+      "has_resolved_store": false,
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "fast food near me",
+      "type": "suggest",
+      "success": true,
+      "latency": 49,
+      "intent": "store_first",
+      "items_count": 3,
+      "stores_count": 10,
+      "categories_count": 1,
+      "first_result": "Malai Paneer",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "fast food near me",
+      "type": "search_items",
+      "success": true,
+      "latency": 19,
+      "total": 96,
+      "items_count": 20,
+      "stores_count": 0,
+      "has_resolved_store": true,
+      "resolved_store_name": "Dear Dosa",
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "breakfast near me",
+      "type": "suggest",
+      "success": true,
+      "latency": 90,
+      "intent": "generic",
+      "items_count": 5,
+      "stores_count": 5,
+      "categories_count": 5,
+      "first_result": "Veg Sandwich",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "breakfast near me",
+      "type": "search_items",
+      "success": true,
+      "latency": 67,
+      "total": 1298,
+      "items_count": 20,
+      "stores_count": 0,
+      "has_resolved_store": false,
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "lunch special",
+      "type": "suggest",
+      "success": true,
+      "latency": 41,
+      "intent": "generic",
+      "items_count": 5,
+      "stores_count": 1,
+      "categories_count": 1,
+      "first_result": "Sabudana Khichdi",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "lunch special",
+      "type": "search_items",
+      "success": true,
+      "latency": 42,
+      "total": 2,
+      "items_count": 3,
+      "stores_count": 0,
+      "has_resolved_store": false,
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "dinner buffet",
+      "type": "suggest",
+      "success": true,
+      "latency": 51,
+      "intent": "store_first",
+      "items_count": 3,
+      "stores_count": 1,
+      "categories_count": 5,
+      "first_result": "Veg Sandwich",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "dinner buffet",
+      "type": "search_items",
+      "success": true,
+      "latency": 34,
+      "total": 1,
+      "items_count": 1,
+      "stores_count": 0,
+      "has_resolved_store": false,
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "midnight delivery",
+      "type": "suggest",
+      "success": true,
+      "latency": 58,
+      "intent": "generic",
+      "items_count": 5,
+      "stores_count": 2,
+      "categories_count": 5,
+      "first_result": "Malai Paneer",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "midnight delivery",
+      "type": "search_items",
+      "success": true,
+      "latency": 46,
+      "total": 0,
+      "items_count": 0,
+      "stores_count": 0,
+      "has_resolved_store": false,
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "early morning breakfast",
+      "type": "suggest",
+      "success": true,
+      "latency": 72,
+      "intent": "generic",
+      "items_count": 5,
+      "stores_count": 3,
+      "categories_count": 5,
+      "first_result": "Malai Paneer",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "early morning breakfast",
+      "type": "search_items",
+      "success": true,
+      "latency": 51,
+      "total": 0,
+      "items_count": 0,
+      "stores_count": 0,
+      "has_resolved_store": false,
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "halal food",
+      "type": "suggest",
+      "success": true,
+      "latency": 41,
+      "intent": "store_first",
+      "items_count": 3,
+      "stores_count": 5,
+      "categories_count": 1,
+      "first_result": "Malai Paneer",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "halal food",
+      "type": "search_items",
+      "success": true,
+      "latency": 15,
+      "total": 231,
+      "items_count": 20,
+      "stores_count": 0,
+      "has_resolved_store": true,
+      "resolved_store_name": "Kantara Food",
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "organic food",
+      "type": "suggest",
+      "success": true,
+      "latency": 40,
+      "intent": "store_first",
+      "items_count": 3,
+      "stores_count": 5,
+      "categories_count": 1,
+      "first_result": "Malai Paneer",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "organic food",
+      "type": "search_items",
+      "success": true,
+      "latency": 17,
+      "total": 231,
+      "items_count": 20,
+      "stores_count": 0,
+      "has_resolved_store": true,
+      "resolved_store_name": "Kantara Food",
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "healthy food",
+      "type": "suggest",
+      "success": true,
+      "latency": 39,
+      "intent": "store_first",
+      "items_count": 3,
+      "stores_count": 5,
+      "categories_count": 1,
+      "first_result": "Malai Paneer",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "healthy food",
+      "type": "search_items",
+      "success": true,
+      "latency": 17,
+      "total": 231,
+      "items_count": 20,
+      "stores_count": 0,
+      "has_resolved_store": true,
+      "resolved_store_name": "Kantara Food",
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "gluten free",
+      "type": "suggest",
+      "success": true,
+      "latency": 61,
+      "intent": "generic",
+      "items_count": 5,
+      "stores_count": 2,
+      "categories_count": 5,
+      "first_result": "Malai Paneer",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "gluten free",
+      "type": "search_items",
+      "success": true,
+      "latency": 27,
+      "total": 18,
+      "items_count": 18,
+      "stores_count": 0,
+      "has_resolved_store": false,
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "sugar free",
+      "type": "suggest",
+      "success": true,
+      "latency": 86,
+      "intent": "generic",
+      "items_count": 5,
+      "stores_count": 3,
+      "categories_count": 5,
+      "first_result": "Malai Paneer",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "sugar free",
+      "type": "search_items",
+      "success": true,
+      "latency": 20,
+      "total": 5,
+      "items_count": 5,
+      "stores_count": 0,
+      "has_resolved_store": false,
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "low calorie",
+      "type": "suggest",
+      "success": true,
+      "latency": 70,
+      "intent": "generic",
+      "items_count": 5,
+      "stores_count": 3,
+      "categories_count": 5,
+      "first_result": "Malai Paneer",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "low calorie",
+      "type": "search_items",
+      "success": true,
+      "latency": 30,
+      "total": 1,
+      "items_count": 1,
+      "stores_count": 0,
+      "has_resolved_store": false,
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "best biryani",
+      "type": "suggest",
+      "success": true,
+      "latency": 42,
+      "intent": "generic",
+      "items_count": 5,
+      "stores_count": 1,
+      "categories_count": 1,
+      "first_result": "Mutton Biryani",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "best biryani",
+      "type": "search_items",
+      "success": true,
+      "latency": 36,
+      "total": 16,
+      "items_count": 16,
+      "stores_count": 0,
+      "has_resolved_store": false,
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "top rated pizza",
+      "type": "suggest",
+      "success": true,
+      "latency": 48,
+      "intent": "generic",
+      "items_count": 5,
+      "stores_count": 2,
+      "categories_count": 1,
+      "first_result": "Paneer Cheese Pizza",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "top rated pizza",
+      "type": "search_items",
+      "success": true,
+      "latency": 43,
+      "total": 371,
+      "items_count": 20,
+      "stores_count": 0,
+      "has_resolved_store": false,
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "highly rated restaurant",
+      "type": "suggest",
+      "success": true,
+      "latency": 103,
+      "intent": "store_first",
+      "items_count": 3,
+      "stores_count": 10,
+      "categories_count": 5,
+      "first_result": "Veg Sandwich",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "highly rated restaurant",
+      "type": "search_items",
+      "success": true,
+      "latency": 19,
+      "total": 3,
+      "items_count": 3,
+      "stores_count": 0,
+      "has_resolved_store": true,
+      "resolved_store_name": "Demo Restaurant",
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "5 star restaurant",
+      "type": "suggest",
+      "success": true,
+      "latency": 89,
+      "intent": "store_first",
+      "items_count": 3,
+      "stores_count": 10,
+      "categories_count": 5,
+      "first_result": "Veg Sandwich",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "5 star restaurant",
+      "type": "search_items",
+      "success": true,
+      "latency": 21,
+      "total": 35,
+      "items_count": 20,
+      "stores_count": 0,
+      "has_resolved_store": true,
+      "resolved_store_name": "Star Boys - Burger, Sandwhich & Pizza",
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "popular food",
+      "type": "suggest",
+      "success": true,
+      "latency": 45,
+      "intent": "store_first",
+      "items_count": 3,
+      "stores_count": 5,
+      "categories_count": 1,
+      "first_result": "Sabudana Khichdi",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "popular food",
+      "type": "search_items",
+      "success": true,
+      "latency": 18,
+      "total": 231,
+      "items_count": 20,
+      "stores_count": 0,
+      "has_resolved_store": true,
+      "resolved_store_name": "Kantara Food",
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "",
+      "type": "suggest",
+      "success": true,
+      "latency": 1,
+      "intent": "generic",
+      "items_count": 0,
+      "stores_count": 0,
+      "categories_count": 0,
+      "first_result": "none"
+    },
+    {
+      "query": "",
+      "type": "search_items",
+      "success": true,
+      "latency": 13,
+      "total": 9389,
+      "items_count": 20,
+      "stores_count": 0,
+      "has_resolved_store": false,
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "a",
+      "type": "suggest",
+      "success": true,
+      "latency": 2,
+      "intent": "generic",
+      "items_count": 0,
+      "stores_count": 0,
+      "categories_count": 0,
+      "first_result": "none"
+    },
+    {
+      "query": "a",
+      "type": "search_items",
+      "success": true,
+      "latency": 31,
+      "total": 9159,
+      "items_count": 20,
+      "stores_count": 0,
+      "has_resolved_store": false,
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "the",
+      "type": "suggest",
+      "success": true,
+      "latency": 111,
+      "intent": "generic",
+      "items_count": 5,
+      "stores_count": 5,
+      "categories_count": 5,
+      "first_result": "Doodh Shev Bhaji",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "the",
+      "type": "search_items",
+      "success": true,
+      "latency": 39,
+      "total": 2012,
+      "items_count": 20,
+      "stores_count": 0,
+      "has_resolved_store": false,
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "123",
+      "type": "suggest",
+      "success": true,
+      "latency": 59,
+      "intent": "generic",
+      "items_count": 5,
+      "stores_count": 2,
+      "categories_count": 5,
+      "first_result": "Dahi",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "123",
+      "type": "search_items",
+      "success": true,
+      "latency": 14,
+      "total": 13,
+      "items_count": 13,
+      "stores_count": 0,
+      "has_resolved_store": false,
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "!!!",
+      "type": "suggest",
+      "success": true,
+      "latency": 60,
+      "intent": "generic",
+      "items_count": 5,
+      "stores_count": 2,
+      "categories_count": 5,
+      "first_result": "Dahi",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "!!!",
+      "type": "search_items",
+      "success": true,
+      "latency": 8,
+      "total": 0,
+      "items_count": 0,
+      "stores_count": 0,
+      "has_resolved_store": false,
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "very very very long search query to test edge cases",
+      "type": "suggest",
+      "success": true,
+      "latency": 85,
+      "intent": "generic",
+      "items_count": 5,
+      "stores_count": 1,
+      "categories_count": 5,
+      "first_result": "Veg Sandwich",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "very very very long search query to test edge cases",
+      "type": "search_items",
+      "success": true,
+      "latency": 109,
+      "total": 135,
+      "items_count": 20,
+      "stores_count": 0,
+      "has_resolved_store": false,
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "food and restaurant and biryani and pizza",
+      "type": "suggest",
+      "success": true,
+      "latency": 48,
+      "intent": "store_first",
+      "items_count": 3,
+      "stores_count": 10,
+      "categories_count": 2,
+      "first_result": "Paneer Cheese Pizza",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "food and restaurant and biryani and pizza",
+      "type": "search_items",
+      "success": true,
+      "latency": 34,
+      "total": 148,
+      "items_count": 20,
+      "stores_count": 0,
+      "has_resolved_store": true,
+      "resolved_store_name": "Dolce Bistro and Patissiere",
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "🍕🍔🍝",
+      "type": "suggest",
+      "success": true,
+      "latency": 58,
+      "intent": "generic",
+      "items_count": 5,
+      "stores_count": 2,
+      "categories_count": 5,
+      "first_result": "Paneer Cheese Pizza",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "🍕🍔🍝",
+      "type": "search_items",
+      "success": true,
+      "latency": 12,
+      "total": 0,
+      "items_count": 0,
+      "stores_count": 0,
+      "has_resolved_store": false,
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "test@#$%^",
+      "type": "suggest",
+      "success": true,
+      "latency": 74,
+      "intent": "generic",
+      "items_count": 5,
+      "stores_count": 1,
+      "categories_count": 3,
+      "first_result": "Malai Paneer",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "test@#$%^",
+      "type": "search_items",
+      "success": true,
+      "latency": 20,
+      "total": 312,
+      "items_count": 20,
+      "stores_count": 0,
+      "has_resolved_store": false,
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "ganesh ganesh ganesh",
+      "type": "suggest",
+      "success": true,
+      "latency": 63,
+      "intent": "generic",
+      "items_count": 5,
+      "stores_count": 2,
+      "categories_count": 5,
+      "first_result": "Malai Paneer",
+      "db_verification": {
+        "verified": false,
+        "error": "Unknown column 'f_name' in 'where clause'"
+      }
+    },
+    {
+      "query": "ganesh ganesh ganesh",
+      "type": "search_items",
+      "success": true,
+      "latency": 81,
+      "total": 37,
+      "items_count": 20,
+      "stores_count": 0,
+      "has_resolved_store": false,
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 0
+    },
+    {
+      "query": "biryani",
+      "type": "search_items",
+      "success": true,
+      "latency": 45,
+      "total": 122,
+      "items_count": 20,
+      "stores_count": 0,
+      "has_resolved_store": false,
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 1
+    },
+    {
+      "query": "biryani",
+      "type": "search_items",
+      "success": true,
+      "latency": 42,
+      "total": 113,
+      "items_count": 20,
+      "stores_count": 0,
+      "has_resolved_store": false,
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 1
+    },
+    {
+      "query": "pizza",
+      "type": "search_items",
+      "success": true,
+      "latency": 32,
+      "total": 189,
+      "items_count": 20,
+      "stores_count": 0,
+      "has_resolved_store": false,
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 2
+    },
+    {
+      "query": "restaurant",
+      "type": "search_items",
+      "success": true,
+      "latency": 12,
+      "total": 1,
+      "items_count": 1,
+      "stores_count": 0,
+      "has_resolved_store": true,
+      "resolved_store_name": "Demo Restaurant",
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 1
+    },
+    {
+      "query": "food",
+      "type": "search_items",
+      "success": true,
+      "latency": 13,
+      "total": 231,
+      "items_count": 20,
+      "stores_count": 0,
+      "has_resolved_store": true,
+      "resolved_store_name": "Kantara Food",
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 1
+    },
+    {
+      "query": "biryani",
+      "type": "search_items",
+      "success": true,
+      "latency": 48,
+      "total": 235,
+      "items_count": 20,
+      "stores_count": 0,
+      "has_resolved_store": false,
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 1
+    },
+    {
+      "query": "salad",
+      "type": "search_items",
+      "success": true,
+      "latency": 18,
+      "total": 325,
+      "items_count": 20,
+      "stores_count": 0,
+      "has_resolved_store": false,
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 1
+    },
+    {
+      "query": "pizza",
+      "type": "search_items",
+      "success": true,
+      "latency": 31,
+      "total": 256,
+      "items_count": 20,
+      "stores_count": 0,
+      "has_resolved_store": false,
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 1
+    },
+    {
+      "query": "food",
+      "type": "search_items",
+      "success": true,
+      "latency": 14,
+      "total": 231,
+      "items_count": 20,
+      "stores_count": 0,
+      "has_resolved_store": true,
+      "resolved_store_name": "Kantara Food",
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 1
+    },
+    {
+      "query": "restaurant",
+      "type": "search_items",
+      "success": true,
+      "latency": 13,
+      "total": 3,
+      "items_count": 3,
+      "stores_count": 0,
+      "has_resolved_store": true,
+      "resolved_store_name": "Demo Restaurant",
+      "has_facets": false,
+      "category_facets": 0,
+      "filters_applied": 1
+    }
+  ]
+}

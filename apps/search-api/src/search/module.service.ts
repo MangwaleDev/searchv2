@@ -32,7 +32,7 @@ export class ModuleService {
     const port = this.config.get<number>('MYSQL_PORT') || 3306;
     const user = this.config.get<string>('MYSQL_USER') || 'mangwale_user';
     const password = this.config.get<string>('MYSQL_PASSWORD') || 'admin123';
-    const database = this.config.get<string>('MYSQL_DATABASE') || 'migrated_db';
+    const database = this.config.get<string>('MYSQL_DATABASE') || 'mangwale_db';
 
     this.pool = mysql.createPool({
       host,
@@ -267,7 +267,7 @@ export class ModuleService {
     
     // Log connection details for debugging
     const host = this.config.get<string>('MYSQL_HOST') || 'localhost';
-    const database = this.config.get<string>('MYSQL_DATABASE') || 'migrated_db';
+    const database = this.config.get<string>('MYSQL_DATABASE') || 'mangwale_db';
     const user = this.config.get<string>('MYSQL_USER') || 'mangwale_user';
     this.logger.debug(`[getStoreLogos] Connecting to MySQL: ${user}@${host}/${database} for ${storeIds.length} stores`);
     
@@ -308,7 +308,7 @@ export class ModuleService {
     if (!storeIds || storeIds.length === 0) return new Map();
     
     const host = this.config.get<string>('MYSQL_HOST') || 'localhost';
-    const database = this.config.get<string>('MYSQL_DATABASE') || 'migrated_db';
+    const database = this.config.get<string>('MYSQL_DATABASE') || 'mangwale_db';
     const user = this.config.get<string>('MYSQL_USER') || 'mangwale_user';
     this.logger.debug(`[getStoreNames] Connecting to MySQL: ${user}@${host}/${database} for ${storeIds.length} stores`);
     
@@ -350,7 +350,7 @@ export class ModuleService {
     
     // Log connection details for debugging
     const host = this.config.get<string>('MYSQL_HOST') || 'localhost';
-    const database = this.config.get<string>('MYSQL_DATABASE') || 'migrated_db';
+    const database = this.config.get<string>('MYSQL_DATABASE') || 'mangwale_db';
     const user = this.config.get<string>('MYSQL_USER') || 'mangwale_user';
     this.logger.debug(`[getStoreAddressesAndCoverPhotos] Connecting to MySQL: ${user}@${host}/${database} for ${storeIds.length} stores`);
     

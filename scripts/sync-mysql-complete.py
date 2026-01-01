@@ -13,11 +13,11 @@ import os
 # Configuration - Using production MySQL (READ-ONLY) and OpenSearch on port 9201
 OPENSEARCH_URL = os.getenv("OPENSEARCH_URL", "http://localhost:9201")
 MYSQL_CONFIG = {
-    'host': os.getenv("MYSQL_HOST", "103.160.107.41"),
-    'port': int(os.getenv("MYSQL_PORT", "3306")),
+    'host': os.getenv("MYSQL_HOST", "103.86.176.59"),
+    'port': int(os.getenv("MYSQL_PORT", 3306)),
     'user': os.getenv("MYSQL_USER", "root"),
-    'password': os.getenv("MYSQL_PASSWORD", "test@mangwale2025"),
-    'database': os.getenv("MYSQL_DATABASE", "migrated_db")
+    'password': os.getenv("MYSQL_PASSWORD", "root_password"),
+    'database': os.getenv("MYSQL_DATABASE", "mangwale_db")
 }
 
 INDEX_NAME = "food_items"

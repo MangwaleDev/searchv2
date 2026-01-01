@@ -11,7 +11,11 @@ export class EmbeddingService {
   private readonly embeddingUrl: string;
 
   constructor(private configService: ConfigService) {
-    this.embeddingUrl = this.configService.get<string>('EMBEDDING_API_URL') || 'http://localhost:3101';
+    // Support both EMBEDDING_SERVICE_URL (docker-compose) and EMBEDDING_API_URL (legacy)
+    this.embeddingUrl = process.env.EMBEDDING_SERVICE_URL
+      || this.configService.get<string>('EMBEDDING_SERVICE_URL') 
+      || this.configService.get<string>('EMBEDDING_API_URL') 
+      || 'http://localhost:3101';
     this.logger.log(`Embedding service URL: ${this.embeddingUrl}`);
   }
 

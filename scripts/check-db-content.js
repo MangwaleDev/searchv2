@@ -3,10 +3,10 @@ require('dotenv').config();
 
 async function checkContent() {
   const connection = await mysql.createConnection({
-    host: process.env.DB_HOST || '103.160.107.41',
-    user: process.env.DB_USER || 'root',
-    password: process.env.DB_PASSWORD || 'test@mangwale2025',
-    database: process.env.DB_NAME || 'migrated_db',
+    host: process.env.MYSQL_HOST || '103.86.176.59',
+    user: process.env.MYSQL_USER || 'root',
+    password: process.env.MYSQL_PASSWORD || 'root_password',
+    database: process.env.MYSQL_DATABASE || 'mangwale_db',
   });
 
   try {

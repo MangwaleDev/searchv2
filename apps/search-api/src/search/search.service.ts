@@ -3863,10 +3863,23 @@ export class SearchService {
       filterClauses.push({ term: { category_id: Number(filters.category_id) } });
     }
 
-    // Items query
+    // Generate embedding for semantic search enhancement
+    let embedding: number[] | null = null;
+    try {
+      const modelType = filters?.module_id === 4 ? 'food' : 'general';
+      embedding = await this.embeddingService.generateEmbedding(q, modelType);
+      if (embedding) {
+        this.logger.debug(`✅ Generated embedding for suggestion: "${q}"`);
+      }
+    } catch (error) {
+      this.logger.warn(`Failed to generate embedding for suggestion: ${(error as Error).message}`);
+    }
+
+    // Items query - prefer keyword for suggestions, use embedding for fallback/typos
     const itemQuery: any = {
       bool: {
         should: [
+          // Keyword queries (high priority for exact/prefix matches)
           { term: { name: { value: q, boost: 10 } } },
           { term: { slug: { value: q.toLowerCase(), boost: 8 } } },
           { match_phrase: { name: { query: q, boost: 6 } } },
@@ -3879,7 +3892,77 @@ export class SearchService {
       },
     };
 
-    const itemBody: any = {
+    // When embedding available, add KNN as extra context (helps with typos and synonyms)
+    // Add popularity and rating boosting functions for better ranking
+    const rankingFunctions = [
+      // Boost by order count (log scale to avoid extreme values)
+      { 
+        field_value_factor: { 
+          field: 'order_count', 
+          modifier: 'log1p', 
+          factor: 0.5, 
+          missing: 0 
+        } 
+      },
+      // Boost by average rating
+      { 
+        field_value_factor: { 
+          field: 'avg_rating', 
+          modifier: 'sqrt', 
+          factor: 1.5, 
+          missing: 0 
+        } 
+      },
+      // Boost recommended items
+      {
+        filter: { term: { recommended: 1 } },
+        weight: 1.3
+      }
+    ];
+
+    const itemBody: any = embedding ? {
+      query: hasGeo ? {
+        function_score: {
+          query: {
+            bool: {
+              should: [
+                { knn: { item_vector: { vector: embedding, k: size * 5 } } }, // KNN for semantic similarity
+                itemQuery // Keyword queries
+              ],
+              minimum_should_match: 1,
+              filter: filterClauses,
+            },
+          },
+          functions: [
+            ...rankingFunctions,
+            { gauss: { store_location: { origin: { lat, lon }, scale: '2km', offset: '0km', decay: 0.5 } }, weight: 2 }
+          ],
+          score_mode: 'sum',
+          boost_mode: 'multiply',
+        },
+      } : {
+        function_score: {
+          query: {
+            bool: {
+              should: [
+                { knn: { item_vector: { vector: embedding, k: size * 5 } } }, // KNN for semantic similarity
+                itemQuery // Keyword queries
+              ],
+              minimum_should_match: 1,
+              filter: filterClauses,
+            },
+          },
+          functions: rankingFunctions,
+          score_mode: 'sum',
+          boost_mode: 'multiply',
+        },
+      },
+      size: size * 3,
+      _source: ['id', 'name', 'slug', 'image', 'images', 'price', 'base_price', 'veg', 'category_id', 'category_name', 'store_id', 'store_name', 'store_location', 'module_id', 'description', 'available_time_starts', 'available_time_ends', 'rating_count', 'avg_rating', 'order_count', 'discount', 'discount_type', 'status', 'tax', 'tax_type', 'stock', 'recommended', 'is_approved', 'is_halal', 'is_visible', 'organic', 'zone_id', 'unit_id', 'maximum_cart_quantity', 'attributes'],
+      script_fields: hasGeo ? {
+        distance_km: { script: { source: "if (doc['store_location'].size() == 0) return null; doc['store_location'].arcDistance(params.lat, params.lon) / 1000.0", params: { lat, lon } } },
+      } : undefined,
+    } : {
       query: hasGeo ? {
         function_score: {
           query: {
@@ -3888,14 +3971,24 @@ export class SearchService {
               filter: filterClauses,
             },
           },
-          functions: [{ gauss: { store_location: { origin: { lat, lon }, scale: '2km', offset: '0km', decay: 0.5 } }, weight: 2 }],
-          score_mode: 'multiply',
-          boost_mode: 'sum',
+          functions: [
+            ...rankingFunctions,
+            { gauss: { store_location: { origin: { lat, lon }, scale: '2km', offset: '0km', decay: 0.5 } }, weight: 2 }
+          ],
+          score_mode: 'sum',
+          boost_mode: 'multiply',
         },
       } : {
-        bool: {
-          must: [itemQuery],
-          filter: filterClauses,
+        function_score: {
+          query: {
+            bool: {
+              must: [itemQuery],
+              filter: filterClauses,
+            },
+          },
+          functions: rankingFunctions,
+          score_mode: 'sum',
+          boost_mode: 'multiply',
         },
       },
       size: size * 3, // Fetch more items (3x requested) to ensure variety across multiple stores

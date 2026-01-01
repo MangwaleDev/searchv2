@@ -56,7 +56,7 @@ export class SyncService {
     const mysqlPort = this.config.get<number>('MYSQL_PORT') || 3306;
     const mysqlUser = this.config.get<string>('MYSQL_USER') || 'root';
     const mysqlPassword = this.config.get<string>('MYSQL_PASSWORD');
-    const mysqlDatabase = this.config.get<string>('MYSQL_DATABASE') || 'migrated_db';
+    const mysqlDatabase = this.config.get<string>('MYSQL_DATABASE') || 'mangwale_db';
 
     this.mysqlPool = mysql.createPool({
       host: mysqlHost,

@@ -269,6 +269,11 @@ services:
       - CLICKHOUSE_USER=${CLICKHOUSE_USER:-default}
       - CLICKHOUSE_PASSWORD=${CLICKHOUSE_PASSWORD:-clickhouse123}
       - EMBEDDING_SERVICE_URL=http://search-embedding-service:3101
+      # Configurable Index Names
+      - FOOD_ITEMS_INDEX=${FOOD_ITEMS_INDEX:-food_items_v4}
+      - ECOM_ITEMS_INDEX=${ECOM_ITEMS_INDEX:-ecom_items}
+      - FOOD_STORES_INDEX=${FOOD_STORES_INDEX:-food_stores}
+      - ECOM_STORES_INDEX=${ECOM_STORES_INDEX:-ecom_stores}
       # Image Storage Configuration (MinIO primary, S3 fallback)
       - STORAGE_TYPE=${STORAGE_TYPE:-minio}
       - S3_URL=${S3_URL:-https://mangwale.s3.ap-south-1.amazonaws.com}
@@ -351,11 +356,21 @@ services:
     environment:
       - KAFKA_BROKER=search-redpanda:9092
       - OPENSEARCH_HOST=http://search-opensearch:9200
+      - EMBEDDING_SERVICE_URL=http://search-embedding-service:3101
       - CDC_GROUP_ID=cdc-osync-prod
+      # Configurable Index Names
+      - FOOD_ITEMS_INDEX=${FOOD_ITEMS_INDEX:-food_items_v4}
+      - ECOM_ITEMS_INDEX=${ECOM_ITEMS_INDEX:-ecom_items}
+      - FOOD_STORES_INDEX=${FOOD_STORES_INDEX:-food_stores}
+      - ECOM_STORES_INDEX=${ECOM_STORES_INDEX:-ecom_stores}
+      # Auto-vectorization control
+      - ENABLE_AUTO_VECTORIZATION=${ENABLE_AUTO_VECTORIZATION:-true}
     depends_on:
       search-redpanda:
         condition: service_healthy
       search-opensearch:
+        condition: service_healthy
+      search-embedding-service:
         condition: service_healthy
     networks:
       - search-network

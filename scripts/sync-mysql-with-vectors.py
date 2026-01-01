@@ -126,6 +126,20 @@ INDEX_MAPPING = {
             "choice_options": {"type": "text"},
             "unit_id": {"type": "long"},
             
+            # === PARSED JSON FIELDS FOR FILTERING/SEARCH ===
+            "variations_parsed": {"type": "object", "enabled": True},
+            "food_variations_parsed": {"type": "object", "enabled": True},
+            "add_ons_parsed": {"type": "object", "enabled": True},
+            "attributes_parsed": {"type": "object", "enabled": True},
+            "choice_options_parsed": {"type": "object", "enabled": True},
+            
+            # === EXTRACTED VARIATION DATA ===
+            "available_sizes": {"type": "keyword"},
+            "available_spice_levels": {"type": "keyword"},
+            "available_portions": {"type": "keyword"},
+            "has_variations": {"type": "boolean"},
+            "has_add_ons": {"type": "boolean"},
+            
             # === ITEM IMAGES ===
             "image": {"type": "keyword"},
             "images": {"type": "keyword"},
@@ -381,6 +395,7 @@ LEFT JOIN categories c ON i.category_id = c.id
 WHERE i.module_id = 4
   AND i.status = 1
   AND i.is_approved = 1
+  -- Removed is_visible filter - index all approved items, filter visibility at search time
   AND s.status = 1
   AND s.active = 1
 ORDER BY i.id
@@ -572,6 +587,54 @@ class MangwaleAISync:
             info.append('organic')
         return info
     
+    def parse_json_field(self, field_value: Any) -> Optional[Any]:
+        """Safely parse JSON string field"""
+        if not field_value:
+            return None
+        if isinstance(field_value, (dict, list)):
+            return field_value
+        try:
+            return json.loads(field_value)
+        except:
+            return None
+    
+    def extract_variation_data(self, food_variations_parsed: Any) -> Dict[str, Any]:
+        """Extract searchable data from food_variations JSON"""
+        result = {
+            "available_sizes": [],
+            "available_spice_levels": [],
+            "available_portions": []
+        }
+        
+        if not food_variations_parsed or not isinstance(food_variations_parsed, list):
+            return result
+        
+        for variation in food_variations_parsed:
+            if not isinstance(variation, dict):
+                continue
+                
+            name = variation.get('name', '').lower()
+            values = variation.get('values', [])
+            
+            if 'size' in name or 'portion' in name:
+                for val in values:
+                    if isinstance(val, dict):
+                        label = val.get('label', '')
+                        if label:
+                            if 'portion' in name:
+                                result['available_portions'].append(label)
+                            else:
+                                result['available_sizes'].append(label)
+            
+            if 'spice' in name or 'spicy' in name:
+                for val in values:
+                    if isinstance(val, dict):
+                        label = val.get('label', '')
+                        if label:
+                            result['available_spice_levels'].append(label)
+        
+        return result
+    
     def transform_item(self, item: Dict) -> Dict:
         """Transform MySQL row to OpenSearch document with enriched fields"""
         # Build store_location
@@ -656,13 +719,46 @@ class MangwaleAISync:
             "next_open_time": self.convert_value(item.get('next_open_time')),
             "from_time": self.convert_value(item.get('from_time')),
             
-            # Item variations
+            # Item variations (raw strings)
             "variations": self.convert_value(item.get('variations')),
             "food_variations": self.convert_value(item.get('food_variations')),
             "add_ons": self.convert_value(item.get('add_ons')),
             "attributes": self.convert_value(item.get('attributes')),
             "choice_options": self.convert_value(item.get('choice_options')),
             "unit_id": item.get('unit_id'),
+        }
+        
+        # Parse JSON fields
+        variations_parsed = self.parse_json_field(item.get('variations'))
+        food_variations_parsed = self.parse_json_field(item.get('food_variations'))
+        add_ons_parsed = self.parse_json_field(item.get('add_ons'))
+        attributes_parsed = self.parse_json_field(item.get('attributes'))
+        choice_options_parsed = self.parse_json_field(item.get('choice_options'))
+        
+        # Add parsed JSON fields
+        if variations_parsed:
+            doc["variations_parsed"] = variations_parsed
+        if food_variations_parsed:
+            doc["food_variations_parsed"] = food_variations_parsed
+        if add_ons_parsed:
+            doc["add_ons_parsed"] = add_ons_parsed
+        if attributes_parsed:
+            doc["attributes_parsed"] = attributes_parsed
+        if choice_options_parsed:
+            doc["choice_options_parsed"] = choice_options_parsed
+        
+        # Extract variation metadata
+        if food_variations_parsed:
+            variation_data = self.extract_variation_data(food_variations_parsed)
+            doc["available_sizes"] = variation_data["available_sizes"]
+            doc["available_spice_levels"] = variation_data["available_spice_levels"]
+            doc["available_portions"] = variation_data["available_portions"]
+        
+        doc["has_variations"] = bool(variations_parsed or food_variations_parsed)
+        doc["has_add_ons"] = bool(add_ons_parsed)
+        
+        # Continue with rest of document
+        doc.update({
             
             # Item images
             "image": image,
@@ -741,7 +837,7 @@ class MangwaleAISync:
             "cuisine_type": cuisine_type,
             "meal_type": meal_type,
             "dietary_info": dietary_info,
-        }
+        })
         
         return doc
     

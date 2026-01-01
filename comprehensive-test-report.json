@@ -1,5026 +1,2513 @@
 {
   "total": 358,
-  "passed": 358,
-  "failed": 0,
+  "passed": 0,
+  "failed": 358,
   "details": [
     {
       "query": "ganesh sweets",
       "type": "suggest",
-      "success": true,
-      "latency": 57,
-      "intent": "store_first",
-      "items_count": 3,
-      "stores_count": 5,
-      "categories_count": 2,
-      "first_result": "Dry Fruit Kaju Katli",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 3
     },
     {
       "query": "ganesh sweets",
       "type": "search_items",
-      "success": true,
-      "latency": 24,
-      "total": 42,
-      "items_count": 20,
-      "stores_count": 0,
-      "has_resolved_store": true,
-      "resolved_store_name": "Ganesh Sweet Mart",
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "Ganesh Sweet",
       "type": "suggest",
-      "success": true,
-      "latency": 22,
-      "intent": "store_first",
-      "items_count": 3,
-      "stores_count": 2,
-      "categories_count": 5,
-      "first_result": "Sweet Lassi",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "Ganesh Sweet",
       "type": "search_items",
-      "success": true,
-      "latency": 23,
-      "total": 42,
-      "items_count": 20,
-      "stores_count": 0,
-      "has_resolved_store": true,
-      "resolved_store_name": "Ganesh Sweet Mart",
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "GANESH SWEETS",
       "type": "suggest",
-      "success": true,
-      "latency": 11,
-      "intent": "store_first",
-      "items_count": 3,
-      "stores_count": 5,
-      "categories_count": 2,
-      "first_result": "Dry Fruit Kaju Katli",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "GANESH SWEETS",
       "type": "search_items",
-      "success": true,
-      "latency": 23,
-      "total": 42,
-      "items_count": 20,
-      "stores_count": 0,
-      "has_resolved_store": true,
-      "resolved_store_name": "Ganesh Sweet Mart",
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "dominos pizza",
       "type": "suggest",
-      "success": true,
-      "latency": 11,
-      "intent": "generic",
-      "items_count": 5,
-      "stores_count": 2,
-      "categories_count": 1,
-      "first_result": "Panner Pizza",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "dominos pizza",
       "type": "search_items",
-      "success": true,
-      "latency": 67,
-      "total": 194,
-      "items_count": 20,
-      "stores_count": 0,
-      "has_resolved_store": false,
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "mcdonalds",
       "type": "suggest",
-      "success": true,
-      "latency": 8,
-      "intent": "generic",
-      "items_count": 0,
-      "stores_count": 0,
-      "categories_count": 0,
-      "first_result": "none",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "mcdonalds",
       "type": "search_items",
-      "success": true,
-      "latency": 61,
-      "total": 0,
-      "items_count": 0,
-      "stores_count": 0,
-      "has_resolved_store": false,
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "kfc",
       "type": "suggest",
-      "success": true,
-      "latency": 7,
-      "intent": "generic",
-      "items_count": 0,
-      "stores_count": 0,
-      "categories_count": 0,
-      "first_result": "none",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "kfc",
       "type": "search_items",
-      "success": true,
-      "latency": 16,
-      "total": 0,
-      "items_count": 0,
-      "stores_count": 0,
-      "has_resolved_store": false,
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "starbucks coffee",
       "type": "suggest",
-      "success": true,
-      "latency": 19,
-      "intent": "generic",
-      "items_count": 1,
-      "stores_count": 1,
-      "categories_count": 3,
-      "first_result": "Coffee",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "starbucks coffee",
       "type": "search_items",
-      "success": true,
-      "latency": 54,
-      "total": 0,
-      "items_count": 0,
-      "stores_count": 0,
-      "has_resolved_store": false,
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "subway sandwich",
       "type": "suggest",
-      "success": true,
-      "latency": 30,
-      "intent": "generic",
-      "items_count": 4,
-      "stores_count": 5,
-      "categories_count": 1,
-      "first_result": "Sandwich",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "subway sandwich",
       "type": "search_items",
-      "success": true,
-      "latency": 74,
-      "total": 160,
-      "items_count": 20,
-      "stores_count": 0,
-      "has_resolved_store": false,
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "pizza hut",
       "type": "suggest",
-      "success": true,
-      "latency": 10,
-      "intent": "generic",
-      "items_count": 5,
-      "stores_count": 2,
-      "categories_count": 1,
-      "first_result": "Panner Pizza",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "pizza hut",
       "type": "search_items",
-      "success": true,
-      "latency": 24,
-      "total": 1,
-      "items_count": 1,
-      "stores_count": 0,
-      "has_resolved_store": false,
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "burger king",
       "type": "suggest",
-      "success": true,
-      "latency": 10,
-      "intent": "generic",
-      "items_count": 4,
-      "stores_count": 1,
-      "categories_count": 1,
-      "first_result": "King Makhni Bhau Vadapav",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "burger king",
       "type": "search_items",
-      "success": true,
-      "latency": 53,
-      "total": 78,
-      "items_count": 20,
-      "stores_count": 0,
-      "has_resolved_store": false,
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "taco bell",
       "type": "suggest",
-      "success": true,
-      "latency": 34,
-      "intent": "generic",
-      "items_count": 5,
-      "stores_count": 5,
-      "categories_count": 5,
-      "first_result": "Bell Pepper Noodlse",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "taco bell",
       "type": "search_items",
-      "success": true,
-      "latency": 19,
-      "total": 1,
-      "items_count": 1,
-      "stores_count": 0,
-      "has_resolved_store": false,
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "haldirams",
       "type": "suggest",
-      "success": true,
-      "latency": 7,
-      "intent": "generic",
-      "items_count": 0,
-      "stores_count": 0,
-      "categories_count": 0,
-      "first_result": "none",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "haldirams",
       "type": "search_items",
-      "success": true,
-      "latency": 32,
-      "total": 0,
-      "items_count": 0,
-      "stores_count": 0,
-      "has_resolved_store": false,
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "bikanervala",
       "type": "suggest",
-      "success": true,
-      "latency": 8,
-      "intent": "generic",
-      "items_count": 0,
-      "stores_count": 0,
-      "categories_count": 0,
-      "first_result": "none",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "bikanervala",
       "type": "search_items",
-      "success": true,
-      "latency": 36,
-      "total": 0,
-      "items_count": 0,
-      "stores_count": 0,
-      "has_resolved_store": false,
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "nathu sweets",
       "type": "suggest",
-      "success": true,
-      "latency": 9,
-      "intent": "store_first",
-      "items_count": 3,
-      "stores_count": 3,
-      "categories_count": 2,
-      "first_result": "Dry Fruit Kaju Katli",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 2
     },
     {
       "query": "nathu sweets",
       "type": "search_items",
-      "success": true,
-      "latency": 19,
-      "total": 72,
-      "items_count": 20,
-      "stores_count": 0,
-      "has_resolved_store": true,
-      "resolved_store_name": "Satyam Sweets",
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "cafe coffee day",
       "type": "suggest",
-      "success": true,
-      "latency": 10,
-      "intent": "store_first",
-      "items_count": 2,
-      "stores_count": 5,
-      "categories_count": 2,
-      "first_result": "Cafe Mocha",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "cafe coffee day",
       "type": "search_items",
-      "success": true,
-      "latency": 22,
-      "total": 62,
-      "items_count": 20,
-      "stores_count": 0,
-      "has_resolved_store": true,
-      "resolved_store_name": "Madras Cafe",
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "barista coffee",
       "type": "suggest",
-      "success": true,
-      "latency": 13,
-      "intent": "store_first",
-      "items_count": 1,
-      "stores_count": 1,
-      "categories_count": 2,
-      "first_result": "Coffee",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "barista coffee",
       "type": "search_items",
-      "success": true,
-      "latency": 20,
-      "total": 30,
-      "items_count": 20,
-      "stores_count": 0,
-      "has_resolved_store": true,
-      "resolved_store_name": "Birista - The Biryani House",
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "paradise biryani",
       "type": "suggest",
-      "success": true,
-      "latency": 9,
-      "intent": "generic",
-      "items_count": 5,
-      "stores_count": 2,
-      "categories_count": 1,
-      "first_result": "Peachy Paradise Iced Tea",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "paradise biryani",
       "type": "search_items",
-      "success": true,
-      "latency": 77,
-      "total": 178,
-      "items_count": 20,
-      "stores_count": 0,
-      "has_resolved_store": false,
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "bawarchi restaurant",
       "type": "suggest",
-      "success": true,
-      "latency": 31,
-      "intent": "store_first",
-      "items_count": 3,
-      "stores_count": 5,
-      "categories_count": 5,
-      "first_result": "Paneer Tikka Masala",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "bawarchi restaurant",
       "type": "search_items",
-      "success": true,
-      "latency": 21,
-      "total": 1,
-      "items_count": 1,
-      "stores_count": 0,
-      "has_resolved_store": true,
-      "resolved_store_name": "Demo Restaurant",
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "punjabi dhaba",
       "type": "suggest",
-      "success": true,
-      "latency": 30,
-      "intent": "store_first",
-      "items_count": 3,
-      "stores_count": 4,
-      "categories_count": 5,
-      "first_result": "Paneer Punjabi",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "punjabi dhaba",
       "type": "search_items",
-      "success": true,
-      "latency": 74,
-      "total": 600,
-      "items_count": 20,
-      "stores_count": 0,
-      "has_resolved_store": false,
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "south indian restaurant",
       "type": "suggest",
-      "success": true,
-      "latency": 14,
-      "intent": "store_first",
-      "items_count": 3,
-      "stores_count": 5,
-      "categories_count": 1,
-      "first_result": "Kantara Paneer Thali. ( Punjabi Indian)",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "south indian restaurant",
       "type": "search_items",
-      "success": true,
-      "latency": 20,
-      "total": 1,
-      "items_count": 1,
-      "stores_count": 0,
-      "has_resolved_store": true,
-      "resolved_store_name": "Demo Restaurant",
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "chinese restaurant near me",
       "type": "suggest",
-      "success": true,
-      "latency": 14,
-      "intent": "store_first",
-      "items_count": 3,
-      "stores_count": 5,
-      "categories_count": 1,
-      "first_result": "Chinese Bhel",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "chinese restaurant near me",
       "type": "search_items",
-      "success": true,
-      "latency": 113,
-      "total": 2156,
-      "items_count": 20,
-      "stores_count": 0,
-      "has_resolved_store": false,
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "italian restaurant",
       "type": "suggest",
-      "success": true,
-      "latency": 30,
-      "intent": "store_first",
-      "items_count": 3,
-      "stores_count": 5,
-      "categories_count": 5,
-      "first_result": "Italian Style Pizza",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "italian restaurant",
       "type": "search_items",
-      "success": true,
-      "latency": 30,
-      "total": 50,
-      "items_count": 20,
-      "stores_count": 0,
-      "has_resolved_store": true,
-      "resolved_store_name": "Italian Ecstasy",
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "bakery near me",
       "type": "suggest",
-      "success": true,
-      "latency": 32,
-      "intent": "store_first",
-      "items_count": 3,
-      "stores_count": 5,
-      "categories_count": 1,
-      "first_result": "Almond Praline Waffle Cake",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "bakery near me",
       "type": "search_items",
-      "success": true,
-      "latency": 18,
-      "total": 73,
-      "items_count": 20,
-      "stores_count": 0,
-      "has_resolved_store": true,
-      "resolved_store_name": "Dear Dosa",
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "sweet shop",
       "type": "suggest",
-      "success": true,
-      "latency": 21,
-      "intent": "store_first",
-      "items_count": 3,
-      "stores_count": 5,
-      "categories_count": 5,
-      "first_result": "Sweet Lassi",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "sweet shop",
       "type": "search_items",
-      "success": true,
-      "latency": 16,
-      "total": 28,
-      "items_count": 20,
-      "stores_count": 0,
-      "has_resolved_store": true,
-      "resolved_store_name": "Monginis Cake Shop",
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "juice corner",
       "type": "suggest",
-      "success": true,
-      "latency": 31,
-      "intent": "store_first",
-      "items_count": 3,
-      "stores_count": 5,
-      "categories_count": 5,
-      "first_result": "Masambi Juice",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "juice corner",
       "type": "search_items",
-      "success": true,
-      "latency": 19,
-      "total": 119,
-      "items_count": 20,
-      "stores_count": 0,
-      "has_resolved_store": true,
-      "resolved_store_name": "Jalsa Juice",
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "ice cream parlor",
       "type": "suggest",
-      "success": true,
-      "latency": 10,
-      "intent": "generic",
-      "items_count": 5,
-      "stores_count": 2,
-      "categories_count": 1,
-      "first_result": "Strawberry Ice Cream",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "ice cream parlor",
       "type": "search_items",
-      "success": true,
-      "latency": 52,
-      "total": 60,
-      "items_count": 20,
-      "stores_count": 0,
-      "has_resolved_store": false,
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "chat house",
       "type": "suggest",
-      "success": true,
-      "latency": 19,
-      "intent": "generic",
-      "items_count": 5,
-      "stores_count": 5,
-      "categories_count": 5,
-      "first_result": "Penult Chat",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "chat house",
       "type": "search_items",
-      "success": true,
-      "latency": 40,
-      "total": 136,
-      "items_count": 20,
-      "stores_count": 0,
-      "has_resolved_store": false,
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "food court",
       "type": "suggest",
-      "success": true,
-      "latency": 8,
-      "intent": "generic",
-      "items_count": 5,
-      "stores_count": 5,
-      "categories_count": 1,
-      "first_result": "Dry Samosa",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "food court",
       "type": "search_items",
-      "success": true,
-      "latency": 36,
-      "total": 374,
-      "items_count": 20,
-      "stores_count": 0,
-      "has_resolved_store": false,
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "hotel taj",
       "type": "suggest",
-      "success": true,
-      "latency": 28,
-      "intent": "store_first",
-      "items_count": 2,
-      "stores_count": 5,
-      "categories_count": 5,
-      "first_result": "Chicken Taj Chilli",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "hotel taj",
       "type": "search_items",
-      "success": true,
-      "latency": 15,
-      "total": 280,
-      "items_count": 20,
-      "stores_count": 0,
-      "has_resolved_store": true,
-      "resolved_store_name": "Hotel Mauli",
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "royal kitchen",
       "type": "suggest",
-      "success": true,
-      "latency": 28,
-      "intent": "store_first",
-      "items_count": 3,
-      "stores_count": 5,
-      "categories_count": 5,
-      "first_result": "Choclate Royal Cake",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "royal kitchen",
       "type": "search_items",
-      "success": true,
-      "latency": 16,
-      "total": 11,
-      "items_count": 11,
-      "stores_count": 0,
-      "has_resolved_store": true,
-      "resolved_store_name": "Mum's Kitchen",
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "spice lounge",
       "type": "suggest",
-      "success": true,
-      "latency": 21,
-      "intent": "store_first",
-      "items_count": 3,
-      "stores_count": 1,
-      "categories_count": 5,
-      "first_result": "Chicken Kolhapuri",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "spice lounge",
       "type": "search_items",
-      "success": true,
-      "latency": 22,
-      "total": 128,
-      "items_count": 20,
-      "stores_count": 0,
-      "has_resolved_store": true,
-      "resolved_store_name": "The Spice Yard",
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "biryani",
       "type": "suggest",
-      "success": true,
-      "latency": 8,
-      "intent": "generic",
-      "items_count": 5,
-      "stores_count": 2,
-      "categories_count": 1,
-      "first_result": "Shahi Biryani",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "biryani",
       "type": "search_items",
-      "success": true,
-      "latency": 42,
-      "total": 211,
-      "items_count": 20,
-      "stores_count": 0,
-      "has_resolved_store": false,
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "pizza",
       "type": "suggest",
-      "success": true,
-      "latency": 7,
-      "intent": "generic",
-      "items_count": 5,
-      "stores_count": 2,
-      "categories_count": 1,
-      "first_result": "Panner Pizza",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "pizza",
       "type": "search_items",
-      "success": true,
-      "latency": 26,
-      "total": 222,
-      "items_count": 20,
-      "stores_count": 0,
-      "has_resolved_store": false,
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "burger",
       "type": "suggest",
-      "success": true,
-      "latency": 8,
-      "intent": "generic",
-      "items_count": 4,
-      "stores_count": 1,
-      "categories_count": 1,
-      "first_result": "Chicken Burger",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "burger",
       "type": "search_items",
-      "success": true,
-      "latency": 45,
-      "total": 567,
-      "items_count": 20,
-      "stores_count": 0,
-      "has_resolved_store": false,
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "pasta",
       "type": "suggest",
-      "success": true,
-      "latency": 17,
-      "intent": "generic",
-      "items_count": 5,
-      "stores_count": 5,
-      "categories_count": 1,
-      "first_result": "Alfredo Pasta",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "pasta",
       "type": "search_items",
-      "success": true,
-      "latency": 24,
-      "total": 164,
-      "items_count": 20,
-      "stores_count": 0,
-      "has_resolved_store": false,
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "sandwich",
       "type": "suggest",
-      "success": true,
-      "latency": 22,
-      "intent": "generic",
-      "items_count": 4,
-      "stores_count": 5,
-      "categories_count": 1,
-      "first_result": "Sandwich",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "sandwich",
       "type": "search_items",
-      "success": true,
-      "latency": 47,
-      "total": 219,
-      "items_count": 20,
-      "stores_count": 0,
-      "has_resolved_store": false,
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "chicken tikka",
       "type": "suggest",
-      "success": true,
-      "latency": 30,
-      "intent": "generic",
-      "items_count": 1,
-      "stores_count": 5,
-      "categories_count": 1,
-      "first_result": "Chicken Tikka",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "chicken tikka",
       "type": "search_items",
-      "success": true,
-      "latency": 38,
-      "total": 56,
-      "items_count": 20,
-      "stores_count": 0,
-      "has_resolved_store": false,
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "paneer tikka",
       "type": "suggest",
-      "success": true,
-      "latency": 31,
-      "intent": "generic",
-      "items_count": 1,
-      "stores_count": 5,
-      "categories_count": 1,
-      "first_result": "Paneer Tikka",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "paneer tikka",
       "type": "search_items",
-      "success": true,
-      "latency": 35,
-      "total": 141,
-      "items_count": 20,
-      "stores_count": 0,
-      "has_resolved_store": false,
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "dal makhani",
       "type": "suggest",
-      "success": true,
-      "latency": 22,
-      "intent": "generic",
-      "items_count": 1,
-      "stores_count": 5,
-      "categories_count": 1,
-      "first_result": "Dal Makhani",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "dal makhani",
       "type": "search_items",
-      "success": true,
-      "latency": 42,
-      "total": 23,
-      "items_count": 20,
-      "stores_count": 0,
-      "has_resolved_store": false,
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "gulab jamun",
       "type": "suggest",
-      "success": true,
-      "latency": 13,
-      "intent": "generic",
-      "items_count": 1,
-      "stores_count": 1,
-      "categories_count": 1,
-      "first_result": "Gulab Jamun",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "gulab jamun",
       "type": "search_items",
-      "success": true,
-      "latency": 26,
-      "total": 25,
-      "items_count": 20,
-      "stores_count": 0,
-      "has_resolved_store": false,
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "rasgulla",
       "type": "suggest",
-      "success": true,
-      "latency": 20,
-      "intent": "generic",
-      "items_count": 1,
-      "stores_count": 1,
-      "categories_count": 4,
-      "first_result": "Rasgulla",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "rasgulla",
       "type": "search_items",
-      "success": true,
-      "latency": 26,
-      "total": 1,
-      "items_count": 1,
-      "stores_count": 0,
-      "has_resolved_store": false,
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "kaju katli",
       "type": "suggest",
-      "success": true,
-      "latency": 11,
-      "intent": "generic",
-      "items_count": 4,
-      "stores_count": 3,
-      "categories_count": 1,
-      "first_result": "Kaju Katli",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "kaju katli",
       "type": "search_items",
-      "success": true,
-      "latency": 19,
-      "total": 3,
-      "items_count": 3,
-      "stores_count": 0,
-      "has_resolved_store": false,
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "barfi",
       "type": "suggest",
-      "success": true,
-      "latency": 10,
-      "intent": "store_first",
-      "items_count": 3,
-      "stores_count": 1,
-      "categories_count": 1,
-      "first_result": "Malai Barfi",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "barfi",
       "type": "search_items",
-      "success": true,
-      "latency": 17,
-      "total": 16,
-      "items_count": 16,
-      "stores_count": 0,
-      "has_resolved_store": false,
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "idli",
       "type": "suggest",
-      "success": true,
-      "latency": 11,
-      "intent": "generic",
-      "items_count": 2,
-      "stores_count": 2,
-      "categories_count": 1,
-      "first_result": "Idli Vada",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "idli",
       "type": "search_items",
-      "success": true,
-      "latency": 15,
-      "total": 142,
-      "items_count": 20,
-      "stores_count": 0,
-      "has_resolved_store": false,
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "dosa",
       "type": "suggest",
-      "success": true,
-      "latency": 8,
-      "intent": "generic",
-      "items_count": 4,
-      "stores_count": 2,
-      "categories_count": 1,
-      "first_result": "Sada Dosa",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "dosa",
       "type": "search_items",
-      "success": true,
-      "latency": 46,
-      "total": 220,
-      "items_count": 20,
-      "stores_count": 0,
-      "has_resolved_store": false,
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "vada",
       "type": "suggest",
-      "success": true,
-      "latency": 7,
-      "intent": "generic",
-      "items_count": 5,
-      "stores_count": 1,
-      "categories_count": 4,
-      "first_result": "Idli Vada",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "vada",
       "type": "search_items",
-      "success": true,
-      "latency": 26,
-      "total": 195,
-      "items_count": 20,
-      "stores_count": 0,
-      "has_resolved_store": false,
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "sambar",
       "type": "suggest",
-      "success": true,
-      "latency": 29,
-      "intent": "store_first",
-      "items_count": 2,
-      "stores_count": 2,
-      "categories_count": 5,
-      "first_result": "Idli Sambar",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "sambar",
       "type": "search_items",
-      "success": true,
-      "latency": 18,
-      "total": 50,
-      "items_count": 20,
-      "stores_count": 0,
-      "has_resolved_store": true,
-      "resolved_store_name": "Kokni Darbar",
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "chutney",
       "type": "suggest",
-      "success": true,
-      "latency": 29,
-      "intent": "generic",
-      "items_count": 3,
-      "stores_count": 2,
-      "categories_count": 5,
-      "first_result": "Tomato Chutney",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "chutney",
       "type": "search_items",
-      "success": true,
-      "latency": 27,
-      "total": 390,
-      "items_count": 20,
-      "stores_count": 0,
-      "has_resolved_store": false,
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "naan",
       "type": "suggest",
-      "success": true,
-      "latency": 10,
-      "intent": "generic",
-      "items_count": 1,
-      "stores_count": 1,
-      "categories_count": 1,
-      "first_result": "Naan",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "naan",
       "type": "search_items",
-      "success": true,
-      "latency": 16,
-      "total": 647,
-      "items_count": 20,
-      "stores_count": 0,
-      "has_resolved_store": false,
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "roti",
       "type": "suggest",
-      "success": true,
-      "latency": 9,
-      "intent": "generic",
-      "items_count": 1,
-      "stores_count": 1,
-      "categories_count": 1,
-      "first_result": "Roti",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "roti",
       "type": "search_items",
-      "success": true,
-      "latency": 25,
-      "total": 542,
-      "items_count": 20,
-      "stores_count": 0,
-      "has_resolved_store": false,
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "paratha",
       "type": "suggest",
-      "success": true,
-      "latency": 10,
-      "intent": "generic",
-      "items_count": 1,
-      "stores_count": 1,
-      "categories_count": 1,
-      "first_result": "Paratha",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "paratha",
       "type": "search_items",
-      "success": true,
-      "latency": 44,
-      "total": 358,
-      "items_count": 20,
-      "stores_count": 0,
-      "has_resolved_store": false,
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "kulcha",
       "type": "suggest",
-      "success": true,
-      "latency": 11,
-      "intent": "generic",
-      "items_count": 1,
-      "stores_count": 1,
-      "categories_count": 1,
-      "first_result": "Kulcha",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "kulcha",
       "type": "search_items",
-      "success": true,
-      "latency": 31,
-      "total": 54,
-      "items_count": 20,
-      "stores_count": 0,
-      "has_resolved_store": false,
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "fried rice",
       "type": "suggest",
-      "success": true,
-      "latency": 31,
-      "intent": "generic",
-      "items_count": 1,
-      "stores_count": 5,
-      "categories_count": 2,
-      "first_result": "Fried Rice",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "fried rice",
       "type": "search_items",
-      "success": true,
-      "latency": 34,
-      "total": 519,
-      "items_count": 20,
-      "stores_count": 0,
-      "has_resolved_store": false,
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "noodles",
       "type": "suggest",
-      "success": true,
-      "latency": 13,
-      "intent": "generic",
-      "items_count": 5,
-      "stores_count": 5,
-      "categories_count": 1,
-      "first_result": "Singhapore Noodles",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "noodles",
       "type": "search_items",
-      "success": true,
-      "latency": 29,
-      "total": 735,
-      "items_count": 20,
-      "stores_count": 0,
-      "has_resolved_store": false,
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "manchurian",
       "type": "suggest",
-      "success": true,
-      "latency": 10,
-      "intent": "generic",
-      "items_count": 4,
-      "stores_count": 3,
-      "categories_count": 1,
-      "first_result": "Manchurian",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "manchurian",
       "type": "search_items",
-      "success": true,
-      "latency": 33,
-      "total": 197,
-      "items_count": 20,
-      "stores_count": 0,
-      "has_resolved_store": false,
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "spring roll",
       "type": "suggest",
-      "success": true,
-      "latency": 13,
-      "intent": "generic",
-      "items_count": 3,
-      "stores_count": 1,
-      "categories_count": 1,
-      "first_result": "Veg Spring Roll",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "spring roll",
       "type": "search_items",
-      "success": true,
-      "latency": 42,
-      "total": 35,
-      "items_count": 20,
-      "stores_count": 0,
-      "has_resolved_store": false,
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "ice cream",
       "type": "suggest",
-      "success": true,
-      "latency": 10,
-      "intent": "generic",
-      "items_count": 4,
-      "stores_count": 2,
-      "categories_count": 1,
-      "first_result": "Choclate Ice Cream",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "ice cream",
       "type": "search_items",
-      "success": true,
-      "latency": 32,
-      "total": 637,
-      "items_count": 20,
-      "stores_count": 0,
-      "has_resolved_store": false,
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "shake",
       "type": "suggest",
-      "success": true,
-      "latency": 25,
-      "intent": "generic",
-      "items_count": 4,
-      "stores_count": 5,
-      "categories_count": 2,
-      "first_result": "Strawberry Shake",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "shake",
       "type": "search_items",
-      "success": true,
-      "latency": 21,
-      "total": 193,
-      "items_count": 20,
-      "stores_count": 0,
-      "has_resolved_store": false,
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "lassi",
       "type": "suggest",
-      "success": true,
-      "latency": 7,
-      "intent": "generic",
-      "items_count": 1,
-      "stores_count": 1,
-      "categories_count": 1,
-      "first_result": "Lassi",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "lassi",
       "type": "search_items",
-      "success": true,
-      "latency": 26,
-      "total": 78,
-      "items_count": 20,
-      "stores_count": 0,
-      "has_resolved_store": false,
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "juice",
       "type": "suggest",
-      "success": true,
-      "latency": 9,
-      "intent": "generic",
-      "items_count": 5,
-      "stores_count": 1,
-      "categories_count": 1,
-      "first_result": "Masambi Juice",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "juice",
       "type": "search_items",
-      "success": true,
-      "latency": 30,
-      "total": 542,
-      "items_count": 20,
-      "stores_count": 0,
-      "has_resolved_store": false,
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "cake",
       "type": "suggest",
-      "success": true,
-      "latency": 8,
-      "intent": "generic",
-      "items_count": 4,
-      "stores_count": 3,
-      "categories_count": 3,
-      "first_result": "Rasmalai Cake",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "cake",
       "type": "search_items",
-      "success": true,
-      "latency": 25,
-      "total": 667,
-      "items_count": 20,
-      "stores_count": 0,
-      "has_resolved_store": false,
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "pastry",
       "type": "suggest",
-      "success": true,
-      "latency": 13,
-      "intent": "generic",
-      "items_count": 5,
-      "stores_count": 2,
-      "categories_count": 1,
-      "first_result": "Pineapple Pastry",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "pastry",
       "type": "search_items",
-      "success": true,
-      "latency": 31,
-      "total": 371,
-      "items_count": 20,
-      "stores_count": 0,
-      "has_resolved_store": false,
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "cookie",
       "type": "suggest",
-      "success": true,
-      "latency": 12,
-      "intent": "generic",
-      "items_count": 5,
-      "stores_count": 3,
-      "categories_count": 1,
-      "first_result": "Biscoff Cookie Crumble",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "cookie",
       "type": "search_items",
-      "success": true,
-      "latency": 25,
-      "total": 2440,
-      "items_count": 20,
-      "stores_count": 0,
-      "has_resolved_store": false,
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "brownie",
       "type": "suggest",
-      "success": true,
-      "latency": 11,
-      "intent": "generic",
-      "items_count": 4,
-      "stores_count": 3,
-      "categories_count": 1,
-      "first_result": "Choco Brownie",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "brownie",
       "type": "search_items",
-      "success": true,
-      "latency": 24,
-      "total": 154,
-      "items_count": 20,
-      "stores_count": 0,
-      "has_resolved_store": false,
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "samosa",
       "type": "suggest",
-      "success": true,
-      "latency": 9,
-      "intent": "generic",
-      "items_count": 3,
-      "stores_count": 1,
-      "categories_count": 1,
-      "first_result": "Dry Samosa",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "samosa",
       "type": "search_items",
-      "success": true,
-      "latency": 44,
-      "total": 22,
-      "items_count": 20,
-      "stores_count": 0,
-      "has_resolved_store": false,
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "kachori",
       "type": "suggest",
-      "success": true,
-      "latency": 11,
-      "intent": "generic",
-      "items_count": 5,
-      "stores_count": 1,
-      "categories_count": 3,
-      "first_result": "Kachori (1 pic)",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "kachori",
       "type": "search_items",
-      "success": true,
-      "latency": 45,
-      "total": 62,
-      "items_count": 20,
-      "stores_count": 0,
-      "has_resolved_store": false,
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "pav bhaji",
       "type": "suggest",
-      "success": true,
-      "latency": 16,
-      "intent": "generic",
-      "items_count": 2,
-      "stores_count": 5,
-      "categories_count": 4,
-      "first_result": "Pav Bhaji",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "pav bhaji",
       "type": "search_items",
-      "success": true,
-      "latency": 28,
-      "total": 56,
-      "items_count": 20,
-      "stores_count": 0,
-      "has_resolved_store": false,
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "chole bhature",
       "type": "suggest",
-      "success": true,
-      "latency": 11,
-      "intent": "generic",
-      "items_count": 1,
-      "stores_count": 1,
-      "categories_count": 1,
-      "first_result": "Chole Bhature",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "chole bhature",
       "type": "search_items",
-      "success": true,
-      "latency": 48,
-      "total": 24,
-      "items_count": 20,
-      "stores_count": 0,
-      "has_resolved_store": false,
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "momos",
       "type": "suggest",
-      "success": true,
-      "latency": 7,
-      "intent": "generic",
-      "items_count": 2,
-      "stores_count": 1,
-      "categories_count": 1,
-      "first_result": "Panner Momos",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "momos",
       "type": "search_items",
-      "success": true,
-      "latency": 27,
-      "total": 89,
-      "items_count": 20,
-      "stores_count": 0,
-      "has_resolved_store": false,
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "rolls",
       "type": "suggest",
-      "success": true,
-      "latency": 8,
-      "intent": "generic",
-      "items_count": 5,
-      "stores_count": 2,
-      "categories_count": 1,
-      "first_result": "Choco Rolls",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "rolls",
       "type": "search_items",
-      "success": true,
-      "latency": 78,
-      "total": 146,
-      "items_count": 20,
-      "stores_count": 0,
-      "has_resolved_store": false,
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "wraps",
       "type": "suggest",
-      "success": true,
-      "latency": 21,
-      "intent": "generic",
-      "items_count": 1,
-      "stores_count": 1,
-      "categories_count": 5,
-      "first_result": "Paneer Bhurji",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "wraps",
       "type": "search_items",
-      "success": true,
-      "latency": 15,
-      "total": 95,
-      "items_count": 20,
-      "stores_count": 0,
-      "has_resolved_store": false,
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "kebabs",
       "type": "suggest",
-      "success": true,
-      "latency": 27,
-      "intent": "generic",
-      "items_count": 4,
-      "stores_count": 3,
-      "categories_count": 5,
-      "first_result": "Kaju Seekh Kebab",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "kebabs",
       "type": "search_items",
-      "success": true,
-      "latency": 27,
-      "total": 186,
-      "items_count": 20,
-      "stores_count": 0,
-      "has_resolved_store": false,
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "chicken",
       "type": "suggest",
-      "success": true,
-      "latency": 27,
-      "intent": "generic",
-      "items_count": 5,
-      "stores_count": 5,
-      "categories_count": 1,
-      "first_result": "Chicken Masala",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "chicken",
       "type": "search_items",
-      "success": true,
-      "latency": 27,
-      "total": 1025,
-      "items_count": 20,
-      "stores_count": 0,
-      "has_resolved_store": false,
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "paneer",
       "type": "suggest",
-      "success": true,
-      "latency": 26,
-      "intent": "generic",
-      "items_count": 5,
-      "stores_count": 5,
-      "categories_count": 1,
-      "first_result": "Paneer Lababdar",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "paneer",
       "type": "search_items",
-      "success": true,
-      "latency": 23,
-      "total": 1235,
-      "items_count": 20,
-      "stores_count": 0,
-      "has_resolved_store": false,
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "mutton",
       "type": "suggest",
-      "success": true,
-      "latency": 7,
-      "intent": "generic",
-      "items_count": 5,
-      "stores_count": 1,
-      "categories_count": 1,
-      "first_result": "Mutton Keema",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "mutton",
       "type": "search_items",
-      "success": true,
-      "latency": 37,
-      "total": 274,
-      "items_count": 20,
-      "stores_count": 0,
-      "has_resolved_store": false,
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "fish",
       "type": "suggest",
-      "success": true,
-      "latency": 12,
-      "intent": "generic",
-      "items_count": 5,
-      "stores_count": 5,
-      "categories_count": 2,
-      "first_result": "Fish Biryani",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "fish",
       "type": "search_items",
-      "success": true,
-      "latency": 15,
-      "total": 2921,
-      "items_count": 20,
-      "stores_count": 0,
-      "has_resolved_store": false,
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "egg",
       "type": "suggest",
-      "success": true,
-      "latency": 7,
-      "intent": "generic",
-      "items_count": 5,
-      "stores_count": 1,
-      "categories_count": 1,
-      "first_result": "Egg Roll",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "egg",
       "type": "search_items",
-      "success": true,
-      "latency": 23,
-      "total": 201,
-      "items_count": 20,
-      "stores_count": 0,
-      "has_resolved_store": false,
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "rice",
       "type": "suggest",
-      "success": true,
-      "latency": 27,
-      "intent": "generic",
-      "items_count": 4,
-      "stores_count": 5,
-      "categories_count": 2,
-      "first_result": "Rice",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "rice",
       "type": "search_items",
-      "success": true,
-      "latency": 26,
-      "total": 4069,
-      "items_count": 20,
-      "stores_count": 0,
-      "has_resolved_store": false,
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "bread",
       "type": "suggest",
-      "success": true,
-      "latency": 27,
-      "intent": "generic",
-      "items_count": 4,
-      "stores_count": 5,
-      "categories_count": 2,
-      "first_result": "Garlic Bread",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "bread",
       "type": "search_items",
-      "success": true,
-      "latency": 15,
-      "total": 708,
-      "items_count": 20,
-      "stores_count": 0,
-      "has_resolved_store": false,
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "soup",
       "type": "suggest",
-      "success": true,
-      "latency": 30,
-      "intent": "generic",
-      "items_count": 4,
-      "stores_count": 5,
-      "categories_count": 1,
-      "first_result": "Tomato Soup",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "soup",
       "type": "search_items",
-      "success": true,
-      "latency": 21,
-      "total": 332,
-      "items_count": 20,
-      "stores_count": 0,
-      "has_resolved_store": false,
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "salad",
       "type": "suggest",
-      "success": true,
-      "latency": 21,
-      "intent": "generic",
-      "items_count": 3,
-      "stores_count": 5,
-      "categories_count": 1,
-      "first_result": "Grren Salad",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "salad",
       "type": "search_items",
-      "success": true,
-      "latency": 21,
-      "total": 201,
-      "items_count": 20,
-      "stores_count": 0,
-      "has_resolved_store": false,
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "breakfast",
       "type": "suggest",
-      "success": true,
-      "latency": 27,
-      "intent": "generic",
-      "items_count": 5,
-      "stores_count": 4,
-      "categories_count": 5,
-      "first_result": "Pohe",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "breakfast",
       "type": "search_items",
-      "success": true,
-      "latency": 29,
-      "total": 133,
-      "items_count": 20,
-      "stores_count": 0,
-      "has_resolved_store": false,
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "lunch",
       "type": "suggest",
-      "success": true,
-      "latency": 17,
-      "intent": "generic",
-      "items_count": 2,
-      "stores_count": 1,
-      "categories_count": 5,
-      "first_result": "Veg Fried Rice",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "lunch",
       "type": "search_items",
-      "success": true,
-      "latency": 28,
-      "total": 191,
-      "items_count": 20,
-      "stores_count": 0,
-      "has_resolved_store": false,
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "dinner",
       "type": "suggest",
-      "success": true,
-      "latency": 9,
-      "intent": "generic",
-      "items_count": 1,
-      "stores_count": 0,
-      "categories_count": 0,
-      "first_result": "Veg Fried Rice",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "dinner",
       "type": "search_items",
-      "success": true,
-      "latency": 22,
-      "total": 406,
-      "items_count": 20,
-      "stores_count": 0,
-      "has_resolved_store": false,
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "snacks",
       "type": "suggest",
-      "success": true,
-      "latency": 18,
-      "intent": "generic",
-      "items_count": 5,
-      "stores_count": 2,
-      "categories_count": 5,
-      "first_result": "Veg Nuggets",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "snacks",
       "type": "search_items",
-      "success": true,
-      "latency": 42,
-      "total": 819,
-      "items_count": 20,
-      "stores_count": 0,
-      "has_resolved_store": false,
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "veg",
       "type": "suggest",
-      "success": true,
-      "latency": 7,
-      "intent": "generic",
-      "items_count": 4,
-      "stores_count": 2,
-      "categories_count": 3,
-      "first_result": "Veg Kofta",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "veg",
       "type": "search_items",
-      "success": true,
-      "latency": 24,
-      "total": 1874,
-      "items_count": 20,
-      "stores_count": 0,
-      "has_resolved_store": false,
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "non veg",
       "type": "suggest",
-      "success": true,
-      "latency": 8,
-      "intent": "generic",
-      "items_count": 4,
-      "stores_count": 1,
-      "categories_count": 3,
-      "first_result": "Non Veg Plater",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "non veg",
       "type": "search_items",
-      "success": true,
-      "latency": 30,
-      "total": 419,
-      "items_count": 20,
-      "stores_count": 0,
-      "has_resolved_store": false,
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "chinese",
       "type": "suggest",
-      "success": true,
-      "latency": 7,
-      "intent": "generic",
-      "items_count": 3,
-      "stores_count": 3,
-      "categories_count": 1,
-      "first_result": "Chinese Bhel",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "chinese",
       "type": "search_items",
-      "success": true,
-      "latency": 41,
-      "total": 1561,
-      "items_count": 20,
-      "stores_count": 0,
-      "has_resolved_store": false,
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "italian",
       "type": "suggest",
-      "success": true,
-      "latency": 15,
-      "intent": "generic",
-      "items_count": 4,
-      "stores_count": 1,
-      "categories_count": 4,
-      "first_result": "Italian Style Pizza",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "italian",
       "type": "search_items",
-      "success": true,
-      "latency": 43,
-      "total": 97,
-      "items_count": 20,
-      "stores_count": 0,
-      "has_resolved_store": false,
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "indian",
       "type": "suggest",
-      "success": true,
-      "latency": 6,
-      "intent": "generic",
-      "items_count": 4,
-      "stores_count": 1,
-      "categories_count": 1,
-      "first_result": "Kantara Paneer Thali. ( Punjabi Indian)",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "indian",
       "type": "search_items",
-      "success": true,
-      "latency": 46,
-      "total": 1952,
-      "items_count": 20,
-      "stores_count": 0,
-      "has_resolved_store": false,
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "spicy",
       "type": "suggest",
-      "success": true,
-      "latency": 11,
-      "intent": "generic",
-      "items_count": 4,
-      "stores_count": 1,
-      "categories_count": 3,
-      "first_result": "Spicy Mango Mojito",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "spicy",
       "type": "search_items",
-      "success": true,
-      "latency": 30,
-      "total": 2072,
-      "items_count": 20,
-      "stores_count": 0,
-      "has_resolved_store": false,
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "sweet",
       "type": "suggest",
-      "success": true,
-      "latency": 7,
-      "intent": "store_first",
-      "items_count": 3,
-      "stores_count": 3,
-      "categories_count": 2,
-      "first_result": "Sweet Lassi",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "sweet",
       "type": "search_items",
-      "success": true,
-      "latency": 13,
-      "total": 42,
-      "items_count": 20,
-      "stores_count": 0,
-      "has_resolved_store": true,
-      "resolved_store_name": "Ganesh Sweet Mart",
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "masala",
       "type": "suggest",
-      "success": true,
-      "latency": 7,
-      "intent": "generic",
-      "items_count": 5,
-      "stores_count": 1,
-      "categories_count": 1,
-      "first_result": "Masala Rice",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "masala",
       "type": "search_items",
-      "success": true,
-      "latency": 58,
-      "total": 1012,
-      "items_count": 20,
-      "stores_count": 0,
-      "has_resolved_store": false,
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "curry",
       "type": "suggest",
-      "success": true,
-      "latency": 25,
-      "intent": "generic",
-      "items_count": 4,
-      "stores_count": 2,
-      "categories_count": 5,
-      "first_result": "Kaju Curry",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "curry",
       "type": "search_items",
-      "success": true,
-      "latency": 27,
-      "total": 1304,
-      "items_count": 20,
-      "stores_count": 0,
-      "has_resolved_store": false,
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "fast food",
       "type": "suggest",
-      "success": true,
-      "latency": 8,
-      "intent": "generic",
-      "items_count": 5,
-      "stores_count": 5,
-      "categories_count": 1,
-      "first_result": "Panner Burger",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "fast food",
       "type": "search_items",
-      "success": true,
-      "latency": 24,
-      "total": 104,
-      "items_count": 20,
-      "stores_count": 0,
-      "has_resolved_store": false,
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "healthy food",
       "type": "suggest",
-      "success": true,
-      "latency": 9,
-      "intent": "generic",
-      "items_count": 5,
-      "stores_count": 5,
-      "categories_count": 1,
-      "first_result": "Grren Salad",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "healthy food",
       "type": "search_items",
-      "success": true,
-      "latency": 50,
-      "total": 17,
-      "items_count": 18,
-      "stores_count": 0,
-      "has_resolved_store": false,
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "diet food",
       "type": "suggest",
-      "success": true,
-      "latency": 8,
-      "intent": "generic",
-      "items_count": 5,
-      "stores_count": 5,
-      "categories_count": 1,
-      "first_result": "Dry Samosa",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "diet food",
       "type": "search_items",
-      "success": true,
-      "latency": 30,
-      "total": 374,
-      "items_count": 20,
-      "stores_count": 0,
-      "has_resolved_store": false,
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "veg biryani",
       "type": "suggest",
-      "success": true,
-      "latency": 8,
-      "intent": "generic",
-      "items_count": 2,
-      "stores_count": 3,
-      "categories_count": 4,
-      "first_result": "Veg Biryani",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "veg biryani",
       "type": "search_items",
-      "success": true,
-      "latency": 51,
-      "total": 46,
-      "items_count": 20,
-      "stores_count": 0,
-      "has_resolved_store": false,
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "veg pizza",
       "type": "suggest",
-      "success": true,
-      "latency": 9,
-      "intent": "generic",
-      "items_count": 1,
-      "stores_count": 3,
-      "categories_count": 4,
-      "first_result": "Veg Pizza",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "veg pizza",
       "type": "search_items",
-      "success": true,
-      "latency": 26,
-      "total": 27,
-      "items_count": 20,
-      "stores_count": 0,
-      "has_resolved_store": false,
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "veg burger",
       "type": "suggest",
-      "success": true,
-      "latency": 7,
-      "intent": "generic",
-      "items_count": 1,
-      "stores_count": 2,
-      "categories_count": 4,
-      "first_result": "Veg Burger",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "veg burger",
       "type": "search_items",
-      "success": true,
-      "latency": 42,
-      "total": 37,
-      "items_count": 20,
-      "stores_count": 0,
-      "has_resolved_store": false,
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "vegetarian food",
       "type": "suggest",
-      "success": true,
-      "latency": 8,
-      "intent": "generic",
-      "items_count": 5,
-      "stores_count": 5,
-      "categories_count": 1,
-      "first_result": "Veg Biryani",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "vegetarian food",
       "type": "search_items",
-      "success": true,
-      "latency": 46,
-      "total": 2,
-      "items_count": 2,
-      "stores_count": 0,
-      "has_resolved_store": false,
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "pure veg restaurant",
       "type": "suggest",
-      "success": true,
-      "latency": 10,
-      "intent": "store_first",
-      "items_count": 3,
-      "stores_count": 5,
-      "categories_count": 2,
-      "first_result": "Ladoo Pure Ghee",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "pure veg restaurant",
       "type": "search_items",
-      "success": true,
-      "latency": 19,
-      "total": 192,
-      "items_count": 20,
-      "stores_count": 0,
-      "has_resolved_store": true,
-      "resolved_store_name": "Dingores Veg Curry",
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "chicken biryani",
       "type": "suggest",
-      "success": true,
-      "latency": 9,
-      "intent": "generic",
-      "items_count": 1,
-      "stores_count": 2,
-      "categories_count": 2,
-      "first_result": "Chicken Biryani",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "chicken biryani",
       "type": "search_items",
-      "success": true,
-      "latency": 68,
-      "total": 49,
-      "items_count": 20,
-      "stores_count": 0,
-      "has_resolved_store": false,
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "mutton curry",
       "type": "suggest",
-      "success": true,
-      "latency": 8,
-      "intent": "generic",
-      "items_count": 1,
-      "stores_count": 3,
-      "categories_count": 1,
-      "first_result": "Mutton Curry",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "mutton curry",
       "type": "search_items",
-      "success": true,
-      "latency": 44,
-      "total": 46,
-      "items_count": 20,
-      "stores_count": 0,
-      "has_resolved_store": false,
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "fish fry",
       "type": "suggest",
-      "success": true,
-      "latency": 11,
-      "intent": "generic",
-      "items_count": 5,
-      "stores_count": 5,
-      "categories_count": 2,
-      "first_result": "Fish Bombil Fry",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "fish fry",
       "type": "search_items",
-      "success": true,
-      "latency": 64,
-      "total": 197,
-      "items_count": 20,
-      "stores_count": 0,
-      "has_resolved_store": false,
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "egg curry",
       "type": "suggest",
-      "success": true,
-      "latency": 26,
-      "intent": "generic",
-      "items_count": 2,
-      "stores_count": 2,
-      "categories_count": 5,
-      "first_result": "Egg Curry",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "egg curry",
       "type": "search_items",
-      "success": true,
-      "latency": 28,
-      "total": 36,
-      "items_count": 20,
-      "stores_count": 0,
-      "has_resolved_store": false,
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "chicken pizza",
       "type": "suggest",
-      "success": true,
-      "latency": 8,
-      "intent": "generic",
-      "items_count": 5,
-      "stores_count": 2,
-      "categories_count": 2,
-      "first_result": "Chicken Pizza",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "chicken pizza",
       "type": "search_items",
-      "success": true,
-      "latency": 41,
-      "total": 17,
-      "items_count": 17,
-      "stores_count": 0,
-      "has_resolved_store": false,
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "non veg thali",
       "type": "suggest",
-      "success": true,
-      "latency": 8,
-      "intent": "generic",
-      "items_count": 2,
-      "stores_count": 1,
-      "categories_count": 4,
-      "first_result": "Non Veg Plater",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "non veg thali",
       "type": "search_items",
-      "success": true,
-      "latency": 26,
-      "total": 2,
-      "items_count": 2,
-      "stores_count": 0,
-      "has_resolved_store": false,
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "briyani",
       "type": "suggest",
-      "success": true,
-      "latency": 5,
-      "intent": "generic",
-      "items_count": 0,
-      "stores_count": 0,
-      "categories_count": 0,
-      "first_result": "none",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "briyani",
       "type": "search_items",
-      "success": true,
-      "latency": 42,
-      "total": 202,
-      "items_count": 20,
-      "stores_count": 0,
-      "has_resolved_store": false,
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "piza",
       "type": "suggest",
-      "success": true,
-      "latency": 5,
-      "intent": "generic",
-      "items_count": 0,
-      "stores_count": 0,
-      "categories_count": 0,
-      "first_result": "none",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "piza",
       "type": "search_items",
-      "success": true,
-      "latency": 24,
-      "total": 222,
-      "items_count": 20,
-      "stores_count": 0,
-      "has_resolved_store": false,
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "buger",
       "type": "suggest",
-      "success": true,
-      "latency": 5,
-      "intent": "generic",
-      "items_count": 0,
-      "stores_count": 0,
-      "categories_count": 0,
-      "first_result": "none",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "buger",
       "type": "search_items",
-      "success": true,
-      "latency": 26,
-      "total": 93,
-      "items_count": 20,
-      "stores_count": 0,
-      "has_resolved_store": false,
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "resturant",
       "type": "suggest",
-      "success": true,
-      "latency": 6,
-      "intent": "generic",
-      "items_count": 0,
-      "stores_count": 0,
-      "categories_count": 0,
-      "first_result": "none",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "resturant",
       "type": "search_items",
-      "success": true,
-      "latency": 71,
-      "total": 919,
-      "items_count": 20,
-      "stores_count": 0,
-      "has_resolved_store": false,
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "chiken",
       "type": "suggest",
-      "success": true,
-      "latency": 27,
-      "intent": "generic",
-      "items_count": 4,
-      "stores_count": 4,
-      "categories_count": 5,
-      "first_result": "Chiken Roll",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "chiken",
       "type": "search_items",
-      "success": true,
-      "latency": 25,
-      "total": 975,
-      "items_count": 20,
-      "stores_count": 0,
-      "has_resolved_store": false,
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "panir",
       "type": "suggest",
-      "success": true,
-      "latency": 5,
-      "intent": "generic",
-      "items_count": 0,
-      "stores_count": 0,
-      "categories_count": 0,
-      "first_result": "none",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "panir",
       "type": "search_items",
-      "success": true,
-      "latency": 16,
-      "total": 27,
-      "items_count": 20,
-      "stores_count": 0,
-      "has_resolved_store": false,
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "biriyani",
       "type": "suggest",
-      "success": true,
-      "latency": 7,
-      "intent": "generic",
-      "items_count": 0,
-      "stores_count": 0,
-      "categories_count": 0,
-      "first_result": "none",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "biriyani",
       "type": "search_items",
-      "success": true,
-      "latency": 44,
-      "total": 202,
-      "items_count": 20,
-      "stores_count": 0,
-      "has_resolved_store": false,
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "restraunt",
       "type": "suggest",
-      "success": true,
-      "latency": 5,
-      "intent": "generic",
-      "items_count": 0,
-      "stores_count": 0,
-      "categories_count": 0,
-      "first_result": "none",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "restraunt",
       "type": "search_items",
-      "success": true,
-      "latency": 32,
-      "total": 125,
-      "items_count": 20,
-      "stores_count": 0,
-      "has_resolved_store": false,
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "sweats",
       "type": "suggest",
-      "success": true,
-      "latency": 6,
-      "intent": "generic",
-      "items_count": 0,
-      "stores_count": 0,
-      "categories_count": 0,
-      "first_result": "none",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "sweats",
       "type": "search_items",
-      "success": true,
-      "latency": 40,
-      "total": 684,
-      "items_count": 20,
-      "stores_count": 0,
-      "has_resolved_store": false,
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "juise",
       "type": "suggest",
-      "success": true,
-      "latency": 6,
-      "intent": "generic",
-      "items_count": 0,
-      "stores_count": 0,
-      "categories_count": 0,
-      "first_result": "none",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "juise",
       "type": "search_items",
-      "success": true,
-      "latency": 24,
-      "total": 212,
-      "items_count": 20,
-      "stores_count": 0,
-      "has_resolved_store": false,
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "coffe",
       "type": "suggest",
-      "success": true,
-      "latency": 10,
-      "intent": "generic",
-      "items_count": 2,
-      "stores_count": 2,
-      "categories_count": 3,
-      "first_result": "Cold Coffe",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "coffe",
       "type": "search_items",
-      "success": true,
-      "latency": 22,
-      "total": 97,
-      "items_count": 20,
-      "stores_count": 0,
-      "has_resolved_store": false,
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "resturent",
       "type": "suggest",
-      "success": true,
-      "latency": 5,
-      "intent": "generic",
-      "items_count": 0,
-      "stores_count": 0,
-      "categories_count": 0,
-      "first_result": "none",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "resturent",
       "type": "search_items",
-      "success": true,
-      "latency": 49,
-      "total": 918,
-      "items_count": 20,
-      "stores_count": 0,
-      "has_resolved_store": false,
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "bir",
       "type": "suggest",
-      "success": true,
-      "latency": 6,
-      "intent": "generic",
-      "items_count": 5,
-      "stores_count": 2,
-      "categories_count": 1,
-      "first_result": "Shahi Biryani",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "bir",
       "type": "search_items",
-      "success": true,
-      "latency": 26,
-      "total": 304,
-      "items_count": 20,
-      "stores_count": 0,
-      "has_resolved_store": false,
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "piz",
       "type": "suggest",
-      "success": true,
-      "latency": 6,
-      "intent": "generic",
-      "items_count": 5,
-      "stores_count": 2,
-      "categories_count": 1,
-      "first_result": "Panner Pizza",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "piz",
       "type": "search_items",
-      "success": true,
-      "latency": 19,
-      "total": 189,
-      "items_count": 20,
-      "stores_count": 0,
-      "has_resolved_store": false,
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "chi",
       "type": "suggest",
-      "success": true,
-      "latency": 8,
-      "intent": "generic",
-      "items_count": 5,
-      "stores_count": 5,
-      "categories_count": 3,
-      "first_result": "Chirote",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "chi",
       "type": "search_items",
-      "success": true,
-      "latency": 22,
-      "total": 1239,
-      "items_count": 20,
-      "stores_count": 0,
-      "has_resolved_store": false,
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "pan",
       "type": "suggest",
-      "success": true,
-      "latency": 7,
-      "intent": "generic",
-      "items_count": 4,
-      "stores_count": 1,
-      "categories_count": 1,
-      "first_result": "Pan Fried Noodles",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "pan",
       "type": "search_items",
-      "success": true,
-      "latency": 26,
-      "total": 1547,
-      "items_count": 20,
-      "stores_count": 0,
-      "has_resolved_store": false,
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "gul",
       "type": "suggest",
-      "success": true,
-      "latency": 9,
-      "intent": "generic",
-      "items_count": 4,
-      "stores_count": 3,
-      "categories_count": 1,
-      "first_result": "Gulchhadi",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "gul",
       "type": "search_items",
-      "success": true,
-      "latency": 25,
-      "total": 49,
-      "items_count": 20,
-      "stores_count": 0,
-      "has_resolved_store": false,
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "res",
       "type": "suggest",
-      "success": true,
-      "latency": 6,
-      "intent": "generic",
-      "items_count": 3,
-      "stores_count": 5,
-      "categories_count": 1,
-      "first_result": "Chicken Reshmi Chilli",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "res",
       "type": "search_items",
-      "success": true,
-      "latency": 24,
-      "total": 230,
-      "items_count": 20,
-      "stores_count": 0,
-      "has_resolved_store": false,
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "caf",
       "type": "suggest",
-      "success": true,
-      "latency": 24,
-      "intent": "generic",
-      "items_count": 4,
-      "stores_count": 5,
-      "categories_count": 5,
-      "first_result": "Café Mocha",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "caf",
       "type": "search_items",
-      "success": true,
-      "latency": 24,
-      "total": 555,
-      "items_count": 20,
-      "stores_count": 0,
-      "has_resolved_store": false,
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "bak",
       "type": "suggest",
-      "success": true,
-      "latency": 7,
-      "intent": "generic",
-      "items_count": 5,
-      "stores_count": 4,
-      "categories_count": 1,
-      "first_result": "Bake Beans Veg Pizza",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "bak",
       "type": "search_items",
-      "success": true,
-      "latency": 26,
-      "total": 170,
-      "items_count": 20,
-      "stores_count": 0,
-      "has_resolved_store": false,
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "swe",
       "type": "suggest",
-      "success": true,
-      "latency": 7,
-      "intent": "generic",
-      "items_count": 5,
-      "stores_count": 3,
-      "categories_count": 2,
-      "first_result": "SweetLassi",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "swe",
       "type": "search_items",
-      "success": true,
-      "latency": 23,
-      "total": 43,
-      "items_count": 20,
-      "stores_count": 0,
-      "has_resolved_store": false,
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "jui",
       "type": "suggest",
-      "success": true,
-      "latency": 6,
-      "intent": "generic",
-      "items_count": 5,
-      "stores_count": 1,
-      "categories_count": 1,
-      "first_result": "Masambi Juice",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "jui",
       "type": "search_items",
-      "success": true,
-      "latency": 23,
-      "total": 98,
-      "items_count": 20,
-      "stores_count": 0,
-      "has_resolved_store": false,
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "chicken biryani ganesh",
       "type": "suggest",
-      "success": true,
-      "latency": 11,
-      "intent": "generic",
-      "items_count": 1,
-      "stores_count": 3,
-      "categories_count": 2,
-      "first_result": "Chicken Biryani",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "chicken biryani ganesh",
       "type": "search_items",
-      "success": true,
-      "latency": 87,
-      "total": 597,
-      "items_count": 20,
-      "stores_count": 0,
-      "has_resolved_store": false,
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "pizza dominos",
       "type": "suggest",
-      "success": true,
-      "latency": 8,
-      "intent": "generic",
-      "items_count": 5,
-      "stores_count": 2,
-      "categories_count": 1,
-      "first_result": "Panner Pizza",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "pizza dominos",
       "type": "search_items",
-      "success": true,
-      "latency": 49,
-      "total": 194,
-      "items_count": 20,
-      "stores_count": 0,
-      "has_resolved_store": false,
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "burger kfc",
       "type": "suggest",
-      "success": true,
-      "latency": 8,
-      "intent": "generic",
-      "items_count": 4,
-      "stores_count": 1,
-      "categories_count": 1,
-      "first_result": "Chicken Burger",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "burger kfc",
       "type": "search_items",
-      "success": true,
-      "latency": 41,
-      "total": 78,
-      "items_count": 20,
-      "stores_count": 0,
-      "has_resolved_store": false,
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "coffee starbucks",
       "type": "suggest",
-      "success": true,
-      "latency": 11,
-      "intent": "generic",
-      "items_count": 1,
-      "stores_count": 1,
-      "categories_count": 3,
-      "first_result": "Coffee",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "coffee starbucks",
       "type": "search_items",
-      "success": true,
-      "latency": 42,
-      "total": 0,
-      "items_count": 0,
-      "stores_count": 0,
-      "has_resolved_store": false,
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "ice cream baskin",
       "type": "suggest",
-      "success": true,
-      "latency": 8,
-      "intent": "generic",
-      "items_count": 5,
-      "stores_count": 2,
-      "categories_count": 1,
-      "first_result": "Strawberry Ice Cream",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "ice cream baskin",
       "type": "search_items",
-      "success": true,
-      "latency": 76,
-      "total": 14,
-      "items_count": 14,
-      "stores_count": 0,
-      "has_resolved_store": false,
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "sweets haldirams",
       "type": "suggest",
-      "success": true,
-      "latency": 8,
-      "intent": "store_first",
-      "items_count": 3,
-      "stores_count": 3,
-      "categories_count": 2,
-      "first_result": "Dry Fruit Kaju Katli",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "sweets haldirams",
       "type": "search_items",
-      "success": true,
-      "latency": 19,
-      "total": 72,
-      "items_count": 20,
-      "stores_count": 0,
-      "has_resolved_store": true,
-      "resolved_store_name": "Satyam Sweets",
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "biryani paradise",
       "type": "suggest",
-      "success": true,
-      "latency": 8,
-      "intent": "generic",
-      "items_count": 5,
-      "stores_count": 2,
-      "categories_count": 1,
-      "first_result": "Peachy Paradise Iced Tea",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "biryani paradise",
       "type": "search_items",
-      "success": true,
-      "latency": 68,
-      "total": 178,
-      "items_count": 20,
-      "stores_count": 0,
-      "has_resolved_store": false,
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "dosa south indian",
       "type": "suggest",
-      "success": true,
-      "latency": 10,
-      "intent": "generic",
-      "items_count": 4,
-      "stores_count": 3,
-      "categories_count": 2,
-      "first_result": "Kantara Paneer Thali. ( Punjabi Indian)",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "dosa south indian",
       "type": "search_items",
-      "success": true,
-      "latency": 53,
-      "total": 89,
-      "items_count": 20,
-      "stores_count": 0,
-      "has_resolved_store": false,
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "cheap biryani",
       "type": "suggest",
-      "success": true,
-      "latency": 10,
-      "intent": "generic",
-      "items_count": 5,
-      "stores_count": 2,
-      "categories_count": 1,
-      "first_result": "Shahi Biryani",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "cheap biryani",
       "type": "search_items",
-      "success": true,
-      "latency": 44,
-      "total": 2,
-      "items_count": 2,
-      "stores_count": 0,
-      "has_resolved_store": false,
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "affordable pizza",
       "type": "suggest",
-      "success": true,
-      "latency": 8,
-      "intent": "generic",
-      "items_count": 5,
-      "stores_count": 2,
-      "categories_count": 1,
-      "first_result": "Panner Pizza",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "affordable pizza",
       "type": "search_items",
-      "success": true,
-      "latency": 62,
-      "total": 194,
-      "items_count": 20,
-      "stores_count": 0,
-      "has_resolved_store": false,
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "budget restaurant",
       "type": "suggest",
-      "success": true,
-      "latency": 27,
-      "intent": "store_first",
-      "items_count": 3,
-      "stores_count": 5,
-      "categories_count": 5,
-      "first_result": "Paneer Tikka Masala",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "budget restaurant",
       "type": "search_items",
-      "success": true,
-      "latency": 16,
-      "total": 1,
-      "items_count": 1,
-      "stores_count": 0,
-      "has_resolved_store": true,
-      "resolved_store_name": "Demo Restaurant",
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "expensive restaurant",
       "type": "suggest",
-      "success": true,
-      "latency": 28,
-      "intent": "store_first",
-      "items_count": 3,
-      "stores_count": 5,
-      "categories_count": 5,
-      "first_result": "Paneer Tikka Masala",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "expensive restaurant",
       "type": "search_items",
-      "success": true,
-      "latency": 18,
-      "total": 1,
-      "items_count": 1,
-      "stores_count": 0,
-      "has_resolved_store": true,
-      "resolved_store_name": "Demo Restaurant",
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "premium food",
       "type": "suggest",
-      "success": true,
-      "latency": 7,
-      "intent": "generic",
-      "items_count": 5,
-      "stores_count": 5,
-      "categories_count": 1,
-      "first_result": "Premium Cold Coffee",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "premium food",
       "type": "search_items",
-      "success": true,
-      "latency": 47,
-      "total": 374,
-      "items_count": 20,
-      "stores_count": 0,
-      "has_resolved_store": false,
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "restaurant near me",
       "type": "suggest",
-      "success": true,
-      "latency": 27,
-      "intent": "store_first",
-      "items_count": 3,
-      "stores_count": 5,
-      "categories_count": 5,
-      "first_result": "Paneer Tikka Masala",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "restaurant near me",
       "type": "search_items",
-      "success": true,
-      "latency": 19,
-      "total": 73,
-      "items_count": 20,
-      "stores_count": 0,
-      "has_resolved_store": true,
-      "resolved_store_name": "Dear Dosa",
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "food near me",
       "type": "suggest",
-      "success": true,
-      "latency": 9,
-      "intent": "generic",
-      "items_count": 5,
-      "stores_count": 5,
-      "categories_count": 1,
-      "first_result": "Dry Samosa",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "food near me",
       "type": "search_items",
-      "success": true,
-      "latency": 40,
-      "total": 1554,
-      "items_count": 20,
-      "stores_count": 0,
-      "has_resolved_store": false,
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "pizza nearby",
       "type": "suggest",
-      "success": true,
-      "latency": 8,
-      "intent": "generic",
-      "items_count": 5,
-      "stores_count": 2,
-      "categories_count": 1,
-      "first_result": "Panner Pizza",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "pizza nearby",
       "type": "search_items",
-      "success": true,
-      "latency": 35,
-      "total": 2,
-      "items_count": 2,
-      "stores_count": 0,
-      "has_resolved_store": false,
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "biryani delivery",
       "type": "suggest",
-      "success": true,
-      "latency": 8,
-      "intent": "generic",
-      "items_count": 5,
-      "stores_count": 2,
-      "categories_count": 1,
-      "first_result": "Shahi Biryani",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "biryani delivery",
       "type": "search_items",
-      "success": true,
-      "latency": 52,
-      "total": 1,
-      "items_count": 1,
-      "stores_count": 0,
-      "has_resolved_store": false,
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "fast food near me",
       "type": "suggest",
-      "success": true,
-      "latency": 10,
-      "intent": "generic",
-      "items_count": 5,
-      "stores_count": 5,
-      "categories_count": 1,
-      "first_result": "Dry Samosa",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "fast food near me",
       "type": "search_items",
-      "success": true,
-      "latency": 43,
-      "total": 1554,
-      "items_count": 20,
-      "stores_count": 0,
-      "has_resolved_store": false,
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "breakfast near me",
       "type": "suggest",
-      "success": true,
-      "latency": 29,
-      "intent": "generic",
-      "items_count": 5,
-      "stores_count": 5,
-      "categories_count": 5,
-      "first_result": "Veg Sandwich",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "breakfast near me",
       "type": "search_items",
-      "success": true,
-      "latency": 59,
-      "total": 1197,
-      "items_count": 20,
-      "stores_count": 0,
-      "has_resolved_store": false,
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "lunch special",
       "type": "suggest",
-      "success": true,
-      "latency": 8,
-      "intent": "generic",
-      "items_count": 5,
-      "stores_count": 1,
-      "categories_count": 1,
-      "first_result": "Special Tea",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "lunch special",
       "type": "search_items",
-      "success": true,
-      "latency": 77,
-      "total": 4,
-      "items_count": 5,
-      "stores_count": 0,
-      "has_resolved_store": false,
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "dinner buffet",
       "type": "suggest",
-      "success": true,
-      "latency": 11,
-      "intent": "generic",
-      "items_count": 1,
-      "stores_count": 0,
-      "categories_count": 0,
-      "first_result": "Veg Fried Rice",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "dinner buffet",
       "type": "search_items",
-      "success": true,
-      "latency": 33,
-      "total": 1,
-      "items_count": 1,
-      "stores_count": 0,
-      "has_resolved_store": false,
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "midnight delivery",
       "type": "suggest",
-      "success": true,
-      "latency": 18,
-      "intent": "generic",
-      "items_count": 1,
-      "stores_count": 1,
-      "categories_count": 3,
-      "first_result": "Midnight Dream",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "midnight delivery",
       "type": "search_items",
-      "success": true,
-      "latency": 44,
-      "total": 0,
-      "items_count": 0,
-      "stores_count": 0,
-      "has_resolved_store": false,
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "early morning breakfast",
       "type": "suggest",
-      "success": true,
-      "latency": 22,
-      "intent": "generic",
-      "items_count": 5,
-      "stores_count": 1,
-      "categories_count": 5,
-      "first_result": "Veg Sandwich",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "early morning breakfast",
       "type": "search_items",
-      "success": true,
-      "latency": 53,
-      "total": 0,
-      "items_count": 0,
-      "stores_count": 0,
-      "has_resolved_store": false,
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "halal food",
       "type": "suggest",
-      "success": true,
-      "latency": 7,
-      "intent": "generic",
-      "items_count": 5,
-      "stores_count": 5,
-      "categories_count": 1,
-      "first_result": "Dry Samosa",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "halal food",
       "type": "search_items",
-      "success": true,
-      "latency": 32,
-      "total": 374,
-      "items_count": 20,
-      "stores_count": 0,
-      "has_resolved_store": false,
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "organic food",
       "type": "suggest",
-      "success": true,
-      "latency": 8,
-      "intent": "generic",
-      "items_count": 5,
-      "stores_count": 5,
-      "categories_count": 1,
-      "first_result": "Dry Samosa",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "organic food",
       "type": "search_items",
-      "success": true,
-      "latency": 48,
-      "total": 374,
-      "items_count": 20,
-      "stores_count": 0,
-      "has_resolved_store": false,
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "healthy food",
       "type": "suggest",
-      "success": true,
-      "latency": 7,
-      "intent": "generic",
-      "items_count": 5,
-      "stores_count": 5,
-      "categories_count": 1,
-      "first_result": "Grren Salad",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "healthy food",
       "type": "search_items",
-      "success": true,
-      "latency": 50,
-      "total": 17,
-      "items_count": 18,
-      "stores_count": 0,
-      "has_resolved_store": false,
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "gluten free",
       "type": "suggest",
-      "success": true,
-      "latency": 28,
-      "intent": "generic",
-      "items_count": 4,
-      "stores_count": 4,
-      "categories_count": 5,
-      "first_result": "Sugar Free Tea",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "gluten free",
       "type": "search_items",
-      "success": true,
-      "latency": 32,
-      "total": 25,
-      "items_count": 20,
-      "stores_count": 0,
-      "has_resolved_store": false,
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "sugar free",
       "type": "suggest",
-      "success": true,
-      "latency": 27,
-      "intent": "generic",
-      "items_count": 5,
-      "stores_count": 5,
-      "categories_count": 5,
-      "first_result": "Sugar Free Tea",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "sugar free",
       "type": "search_items",
-      "success": true,
-      "latency": 21,
-      "total": 4,
-      "items_count": 4,
-      "stores_count": 0,
-      "has_resolved_store": false,
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "low calorie",
       "type": "suggest",
-      "success": true,
-      "latency": 31,
-      "intent": "generic",
-      "items_count": 5,
-      "stores_count": 5,
-      "categories_count": 5,
-      "first_result": "Chicken Soup",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "low calorie",
       "type": "search_items",
-      "success": true,
-      "latency": 31,
-      "total": 1,
-      "items_count": 1,
-      "stores_count": 0,
-      "has_resolved_store": false,
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "best biryani",
       "type": "suggest",
-      "success": true,
-      "latency": 8,
-      "intent": "generic",
-      "items_count": 5,
-      "stores_count": 2,
-      "categories_count": 1,
-      "first_result": "Ala Rosey (Pink Sauce) Best",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "best biryani",
       "type": "search_items",
-      "success": true,
-      "latency": 39,
-      "total": 11,
-      "items_count": 11,
-      "stores_count": 0,
-      "has_resolved_store": false,
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "top rated pizza",
       "type": "suggest",
-      "success": true,
-      "latency": 8,
-      "intent": "generic",
-      "items_count": 3,
-      "stores_count": 2,
-      "categories_count": 1,
-      "first_result": "Paneer Hill Top",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "top rated pizza",
       "type": "search_items",
-      "success": true,
-      "latency": 39,
-      "total": 194,
-      "items_count": 20,
-      "stores_count": 0,
-      "has_resolved_store": false,
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "highly rated restaurant",
       "type": "suggest",
-      "success": true,
-      "latency": 27,
-      "intent": "store_first",
-      "items_count": 3,
-      "stores_count": 5,
-      "categories_count": 5,
-      "first_result": "Paneer Tikka Masala",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "highly rated restaurant",
       "type": "search_items",
-      "success": true,
-      "latency": 21,
-      "total": 1,
-      "items_count": 1,
-      "stores_count": 0,
-      "has_resolved_store": true,
-      "resolved_store_name": "Demo Restaurant",
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "5 star restaurant",
       "type": "suggest",
-      "success": true,
-      "latency": 27,
-      "intent": "store_first",
-      "items_count": 3,
-      "stores_count": 5,
-      "categories_count": 5,
-      "first_result": "5 Samosa Combo",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "5 star restaurant",
       "type": "search_items",
-      "success": true,
-      "latency": 17,
-      "total": 35,
-      "items_count": 20,
-      "stores_count": 0,
-      "has_resolved_store": true,
-      "resolved_store_name": "Star Boys - Burger, Sandwhich & Pizza",
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "popular food",
       "type": "suggest",
-      "success": true,
-      "latency": 9,
-      "intent": "generic",
-      "items_count": 5,
-      "stores_count": 5,
-      "categories_count": 1,
-      "first_result": "Dry Samosa",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "popular food",
       "type": "search_items",
-      "success": true,
-      "latency": 38,
-      "total": 33,
-      "items_count": 20,
-      "stores_count": 0,
-      "has_resolved_store": false,
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "",
       "type": "suggest",
-      "success": true,
-      "latency": 2,
-      "intent": "generic",
-      "items_count": 0,
-      "stores_count": 0,
-      "categories_count": 0,
-      "first_result": "none"
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "",
       "type": "search_items",
-      "success": true,
-      "latency": 9,
-      "total": 8004,
-      "items_count": 20,
-      "stores_count": 0,
-      "has_resolved_store": false,
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "a",
       "type": "suggest",
-      "success": true,
-      "latency": 1,
-      "intent": "generic",
-      "items_count": 0,
-      "stores_count": 0,
-      "categories_count": 0,
-      "first_result": "none"
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "a",
       "type": "search_items",
-      "success": true,
-      "latency": 24,
-      "total": 7911,
-      "items_count": 20,
-      "stores_count": 0,
-      "has_resolved_store": false,
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "the",
       "type": "suggest",
-      "success": true,
-      "latency": 25,
-      "intent": "generic",
-      "items_count": 4,
-      "stores_count": 5,
-      "categories_count": 5,
-      "first_result": "The Plane Uttapam",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "the",
       "type": "search_items",
-      "success": true,
-      "latency": 25,
-      "total": 2451,
-      "items_count": 20,
-      "stores_count": 0,
-      "has_resolved_store": false,
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "123",
       "type": "suggest",
-      "success": true,
-      "latency": 5,
-      "intent": "generic",
-      "items_count": 0,
-      "stores_count": 0,
-      "categories_count": 0,
-      "first_result": "none",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "123",
       "type": "search_items",
-      "success": true,
-      "latency": 34,
-      "total": 27,
-      "items_count": 20,
-      "stores_count": 0,
-      "has_resolved_store": false,
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "!!!",
       "type": "suggest",
-      "success": true,
-      "latency": 6,
-      "intent": "generic",
-      "items_count": 0,
-      "stores_count": 0,
-      "categories_count": 0,
-      "first_result": "none",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "!!!",
       "type": "search_items",
-      "success": true,
-      "latency": 10,
-      "total": 0,
-      "items_count": 0,
-      "stores_count": 0,
-      "has_resolved_store": false,
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "very very very long search query to test edge cases",
       "type": "suggest",
-      "success": true,
-      "latency": 15,
-      "intent": "generic",
-      "items_count": 5,
-      "stores_count": 1,
-      "categories_count": 3,
-      "first_result": "Masala Papad",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "very very very long search query to test edge cases",
       "type": "search_items",
-      "success": true,
-      "latency": 125,
-      "total": 0,
-      "items_count": 0,
-      "stores_count": 0,
-      "has_resolved_store": false,
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "food and restaurant and biryani and pizza",
       "type": "suggest",
-      "success": true,
-      "latency": 12,
-      "intent": "store_first",
-      "items_count": 3,
-      "stores_count": 5,
-      "categories_count": 2,
-      "first_result": "Cheese and Corn Pizza",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "food and restaurant and biryani and pizza",
       "type": "search_items",
-      "success": true,
-      "latency": 127,
-      "total": 1884,
-      "items_count": 20,
-      "stores_count": 0,
-      "has_resolved_store": false,
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "🍕🍔🍝",
       "type": "suggest",
-      "success": true,
-      "latency": 28,
-      "intent": "generic",
-      "items_count": 5,
-      "stores_count": 4,
-      "categories_count": 5,
-      "first_result": "Combo Meals",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "🍕🍔🍝",
       "type": "search_items",
-      "success": true,
-      "latency": 23,
-      "total": 0,
-      "items_count": 0,
-      "stores_count": 0,
-      "has_resolved_store": false,
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "test@#$%^",
       "type": "suggest",
-      "success": true,
-      "latency": 10,
-      "intent": "generic",
-      "items_count": 1,
-      "stores_count": 1,
-      "categories_count": 1,
-      "first_result": "Sabudana Khichdi",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "test@#$%^",
       "type": "search_items",
-      "success": true,
-      "latency": 30,
-      "total": 271,
-      "items_count": 20,
-      "stores_count": 0,
-      "has_resolved_store": false,
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "ganesh ganesh ganesh",
       "type": "suggest",
-      "success": true,
-      "latency": 19,
-      "intent": "generic",
-      "items_count": 5,
-      "stores_count": 2,
-      "categories_count": 5,
-      "first_result": "Goti Pedha",
-      "db_verification": {
-        "verified": false,
-        "message": "DB not connected"
-      }
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 0
     },
     {
       "query": "ganesh ganesh ganesh",
       "type": "search_items",
-      "success": true,
-      "latency": 86,
-      "total": 44,
-      "items_count": 20,
-      "stores_count": 0,
-      "has_resolved_store": false,
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 0
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "biryani",
       "type": "search_items",
-      "success": true,
-      "latency": 45,
-      "total": 110,
-      "items_count": 20,
-      "stores_count": 0,
-      "has_resolved_store": false,
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 1
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "biryani",
       "type": "search_items",
-      "success": true,
-      "latency": 42,
-      "total": 101,
-      "items_count": 20,
-      "stores_count": 0,
-      "has_resolved_store": false,
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 1
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "pizza",
       "type": "search_items",
-      "success": true,
-      "latency": 22,
-      "total": 168,
-      "items_count": 20,
-      "stores_count": 0,
-      "has_resolved_store": false,
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 2
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "restaurant",
       "type": "search_items",
-      "success": true,
-      "latency": 55,
-      "total": 2,
-      "items_count": 4,
-      "stores_count": 0,
-      "has_resolved_store": false,
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 1
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "food",
       "type": "search_items",
-      "success": true,
-      "latency": 25,
-      "total": 529,
-      "items_count": 20,
-      "stores_count": 0,
-      "has_resolved_store": false,
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 1
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "biryani",
       "type": "search_items",
-      "success": true,
-      "latency": 40,
-      "total": 211,
-      "items_count": 20,
-      "stores_count": 0,
-      "has_resolved_store": false,
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 1
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "salad",
       "type": "search_items",
-      "success": true,
-      "latency": 22,
-      "total": 201,
-      "items_count": 20,
-      "stores_count": 0,
-      "has_resolved_store": false,
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 1
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "pizza",
       "type": "search_items",
-      "success": true,
-      "latency": 27,
-      "total": 222,
-      "items_count": 20,
-      "stores_count": 0,
-      "has_resolved_store": false,
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 1
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "food",
       "type": "search_items",
-      "success": true,
-      "latency": 26,
-      "total": 529,
-      "items_count": 20,
-      "stores_count": 0,
-      "has_resolved_store": false,
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 1
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     },
     {
       "query": "restaurant",
       "type": "search_items",
-      "success": true,
-      "latency": 13,
-      "total": 1,
-      "items_count": 1,
-      "stores_count": 0,
-      "has_resolved_store": true,
-      "resolved_store_name": "Demo Restaurant",
-      "has_facets": false,
-      "category_facets": 0,
-      "filters_applied": 1
+      "success": false,
+      "error": "connect ECONNREFUSED 127.0.0.1:3100",
+      "latency": 1
     }
   ]
 }

@@ -6,10 +6,19 @@
  */
 
 const https = require('https');
+const http = require('http');
 const mysql = require('mysql2/promise');
 
-const BASE_URL = 'https://opensearch.mangwale.ai';
-const API_BASE = `${BASE_URL}/v2/search`;
+// Env-configurable API and DB targets to avoid prod hits by default
+const API_BASE = process.env.API_BASE || 'http://localhost:3100/v2/search';
+const DB_CONFIG = {
+  host: process.env.DB_HOST || 'localhost',
+  user: process.env.DB_USER || 'mangwale',
+  password: process.env.DB_PASSWORD || 'mangwale123',
+  database: process.env.DB_NAME || 'mangwale_production',
+  port: Number(process.env.DB_PORT || 3306)
+};
+const REPORT_PATH = process.env.REPORT_PATH || '/home/ubuntu/Devs/Search/comprehensive-test-report.json';
 
 // Test categories based on real user behavior patterns
 const TEST_SCENARIOS = {
@@ -127,13 +136,7 @@ const TEST_SCENARIOS = {
 };
 
 // MySQL connection config
-const DB_CONFIG = {
-  host: 'localhost',
-  user: 'mangwale',
-  password: 'mangwale123',
-  database: 'mangwale_production',
-  port: 3306
-};
+// Values come from env vars when provided; defaults target local dev stack
 
 class SearchTester {
   constructor() {
@@ -165,13 +168,15 @@ class SearchTester {
     return new Promise((resolve, reject) => {
       const queryString = new URLSearchParams(params).toString();
       const url = `${endpoint}?${queryString}`;
-      
+
+      const useHttps = url.startsWith('https');
+      const client = useHttps ? https : http;
       const options = {
         method: 'GET',
         rejectUnauthorized: false
       };
 
-      https.get(url, options, (res) => {
+      client.get(url, options, (res) => {
         let data = '';
         res.on('data', chunk => data += chunk);
         res.on('end', () => {
@@ -492,9 +497,8 @@ class SearchTester {
 
     // Save detailed report
     const fs = require('fs');
-    const reportPath = '/home/ubuntu/Devs/Search/comprehensive-test-report.json';
-    fs.writeFileSync(reportPath, JSON.stringify(this.results, null, 2));
-    console.log(`\n💾 Detailed report saved to: ${reportPath}`);
+    fs.writeFileSync(REPORT_PATH, JSON.stringify(this.results, null, 2));
+    console.log(`\n💾 Detailed report saved to: ${REPORT_PATH}`);
 
     console.log('\n' + '='.repeat(80));
     console.log('✅ TESTING COMPLETE\n');

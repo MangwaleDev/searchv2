@@ -29,10 +29,10 @@ def is_point_in_polygon(x, y, polygon):
 
 try:
     conn = mysql.connector.connect(
-        host="103.160.107.41",
-        user="root",
-        password="test@mangwale2025",
-        database="migrated_db"
+        host=os.getenv("MYSQL_HOST", "103.86.176.59"),
+        user=os.getenv("MYSQL_USER", "root"),
+        password=os.getenv("MYSQL_PASSWORD", "root_password"),
+        database=os.getenv("MYSQL_DATABASE", "mangwale_db")
     )
     cursor = conn.cursor(dictionary=True)
     cursor.execute("SELECT id, ST_AsText(coordinates) as coordinates FROM zones WHERE status = 1")

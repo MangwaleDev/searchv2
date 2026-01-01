@@ -3,10 +3,10 @@ const mysql = require('mysql2/promise');
 async function checkSchema() {
   try {
     const connection = await mysql.createConnection({
-      host: '103.160.107.41',
-      user: 'root',
-      password: 'test@mangwale2025',
-      database: 'migrated_db'
+      host: process.env.MYSQL_HOST || '103.86.176.59',
+      user: process.env.MYSQL_USER || 'root',
+      password: process.env.MYSQL_PASSWORD || 'root_password',
+      database: process.env.MYSQL_DATABASE || 'mangwale_db'
     });
 
     console.log('Connected to MySQL');
@@ -15,7 +15,7 @@ async function checkSchema() {
     const [columns] = await connection.query(`
       SELECT COLUMN_NAME, DATA_TYPE, COLUMN_TYPE 
       FROM INFORMATION_SCHEMA.COLUMNS 
-      WHERE TABLE_SCHEMA = 'migrated_db' AND TABLE_NAME = 'stores' AND COLUMN_NAME IN ('latitude', 'longitude')
+      WHERE TABLE_SCHEMA = 'mangwale_db' AND TABLE_NAME = 'stores' AND COLUMN_NAME IN ('latitude', 'longitude')
     `);
 
     console.log('\n--- Column Definitions ---');

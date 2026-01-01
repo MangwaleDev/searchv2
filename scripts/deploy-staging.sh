@@ -383,11 +383,11 @@ create_env_file() {
 # ============================================
 # MySQL Configuration
 # ============================================
-MYSQL_DATABASE=migrated_db
-MYSQL_HOST=103.160.107.41
+MYSQL_DATABASE=mangwale_db
+MYSQL_HOST=103.86.176.59
 MYSQL_PORT=3306
 MYSQL_USER=root
-MYSQL_PASSWORD=test@mangwale2025
+MYSQL_PASSWORD=root_password
 
 # ============================================
 # Redis Configuration (External)

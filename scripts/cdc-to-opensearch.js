@@ -8,21 +8,30 @@
 
 const { Kafka } = require('kafkajs');
 const { Client } = require('@opensearch-project/opensearch');
+const axios = require('axios');
 require('dotenv').config();
 
 // Set KAFKA_BROKER=localhost:9092 when running on host; inside docker, use service DNS (e.g., redpanda:9092)
 const KAFKA_BROKER = process.env.KAFKA_BROKER || 'localhost:9092';
 const GROUP_ID = process.env.CDC_GROUP_ID || 'cdc-osync';
 const OS_NODE = process.env.OPENSEARCH_HOST || 'http://localhost:9200';
+const EMBEDDING_SERVICE_URL = process.env.EMBEDDING_SERVICE_URL || 'http://localhost:3101';
+
+// Configurable index names
+const FOOD_ITEMS_INDEX = process.env.FOOD_ITEMS_INDEX || 'food_items_v4';
+const ECOM_ITEMS_INDEX = process.env.ECOM_ITEMS_INDEX || 'ecom_items';
+const FOOD_STORES_INDEX = process.env.FOOD_STORES_INDEX || 'food_stores';
+const ECOM_STORES_INDEX = process.env.ECOM_STORES_INDEX || 'ecom_stores';
+const ENABLE_AUTO_VECTORIZATION = process.env.ENABLE_AUTO_VECTORIZATION !== 'false'; // Default true
 
 const kafka = new Kafka({ brokers: [KAFKA_BROKER] });
 const consumer = kafka.consumer({ groupId: GROUP_ID });
 const os = new Client({ node: OS_NODE, ssl: { rejectUnauthorized: false } });
 
 const TOPICS = {
-  items: 'mangwale.migrated_db.items',
-  stores: 'mangwale.migrated_db.stores',
-  categories: 'mangwale.migrated_db.categories',
+  items: 'mangwale.mangwale_db.items',
+  stores: 'mangwale.mangwale_db.stores',
+  categories: 'mangwale.mangwale_db.categories',
 };
 
 // In-memory caches for enrichment
@@ -79,6 +88,54 @@ function stringifyJsonFields(doc) {
     }
   }
   return doc;
+}
+
+// Generate embedding vector for item text
+async function generateEmbedding(text, modelType = 'food') {
+  if (!ENABLE_AUTO_VECTORIZATION) {
+    console.log('⚠️  Auto-vectorization disabled');
+    return null;
+  }
+  
+  try {
+    const response = await axios.post(
+      `${EMBEDDING_SERVICE_URL}/embed`,
+      { texts: [text], model_type: modelType },
+      { timeout: 5000 }
+    );
+
+    if (response.data && response.data.embeddings && response.data.embeddings.length > 0) {
+      console.log(`✅ Generated ${response.data.dimensions}-dim embedding for: ${text.substring(0, 50)}...`);
+      return response.data.embeddings[0];
+    }
+    
+    console.warn('⚠️  No embeddings returned from service');
+    return null;
+  } catch (error) {
+    console.error(`❌ Failed to generate embedding: ${error.message}`);
+    return null;
+  }
+}
+
+// Build searchable text from item data
+function buildItemText(item) {
+  const parts = [];
+  if (item.name) parts.push(item.name);
+  if (item.description) parts.push(item.description);
+  if (item.category_name) parts.push(item.category_name);
+  if (item.store_name) parts.push(item.store_name);
+  
+  // Add tags if present
+  if (item.tags) {
+    try {
+      const tags = typeof item.tags === 'string' ? JSON.parse(item.tags) : item.tags;
+      if (Array.isArray(tags)) {
+        parts.push(...tags.map(t => typeof t === 'string' ? t : t.tag || '').filter(Boolean));
+      }
+    } catch (e) { /* ignore parse errors */ }
+  }
+  
+  return parts.filter(Boolean).join(' ');
 }
 
 function toDocFromItem(after) {
@@ -197,8 +254,28 @@ function toDocFromStore(s) {
   return doc;
 }
 
-async function upsert(index, id, doc) {
-  await os.index({ index, id: String(id), body: doc, refresh: 'true' });
+async function upsert(index, id, doc, isItem = false) {
+  try {
+    // Generate vector for items if auto-vectorization is enabled
+    if (isItem && ENABLE_AUTO_VECTORIZATION && (index === FOOD_ITEMS_INDEX || index === ECOM_ITEMS_INDEX)) {
+      const itemText = buildItemText(doc);
+      if (itemText) {
+        const modelType = index === FOOD_ITEMS_INDEX ? 'food' : 'general';
+        const embedding = await generateEmbedding(itemText, modelType);
+        if (embedding && embedding.length > 0) {
+          doc.embedding = embedding;
+          console.log(`✅ Added ${embedding.length}-dim vector to item ${id}`);
+        } else {
+          console.warn(`⚠️  Failed to generate vector for item ${id}, indexing without embedding`);
+        }
+      }
+    }
+    
+    await os.index({ index, id: String(id), body: doc, refresh: 'true' });
+  } catch (error) {
+    console.error(`❌ Failed to upsert item ${id} to ${index}:`, error.message);
+    // Don't throw - log and continue to avoid stopping CDC pipeline
+  }
 }
 
 async function remove(index, id) {
@@ -206,7 +283,7 @@ async function remove(index, id) {
     await os.delete({ index, id: String(id), refresh: 'true' }); 
   } catch (e) {
     if (e?.body?.result === 'not_found') return; 
-    throw e;
+    console.error(`❌ Failed to delete item ${id} from ${index}:`, e.message);
   }
 }
 
@@ -222,7 +299,22 @@ async function run() {
   console.log('🚀 Starting CDC consumer...');
   console.log(`   Kafka: ${KAFKA_BROKER}`);
   console.log(`   OpenSearch: ${OS_NODE}`);
+  console.log(`   Embedding Service: ${EMBEDDING_SERVICE_URL}`);
   console.log(`   Group ID: ${GROUP_ID}`);
+  console.log(`   Food Items Index: ${FOOD_ITEMS_INDEX}`);
+  console.log(`   Ecom Items Index: ${ECOM_ITEMS_INDEX}`);
+  console.log(`   Auto-Vectorization: ${ENABLE_AUTO_VECTORIZATION ? '✅ ENABLED' : '❌ DISABLED'}`);
+  
+  // Health check for embedding service if auto-vectorization is enabled
+  if (ENABLE_AUTO_VECTORIZATION) {
+    try {
+      const healthCheck = await axios.get(`${EMBEDDING_SERVICE_URL}/health`, { timeout: 5000 });
+      console.log('✅ Embedding service is healthy');
+    } catch (error) {
+      console.warn('⚠️  Embedding service health check failed - will continue but vectors may not be generated');
+      console.warn('   Error:', error.message);
+    }
+  }
   
   await consumer.connect();
   await consumer.subscribe({ topic: TOPICS.items, fromBeginning: true });
@@ -262,8 +354,8 @@ async function run() {
         
         const doc = toDocFromStore(s);
         const mod = s.module_id != null ? Number(s.module_id) : undefined;
-        if (mod === 4) await upsert('food_stores', id, doc);
-        if (mod === 5) await upsert('ecom_stores', id, doc);
+        if (mod === 4) await upsert(FOOD_STORES_INDEX, id, doc);
+        if (mod === 5) await upsert(ECOM_STORES_INDEX, id, doc);
         return;
       }
       
@@ -288,8 +380,8 @@ async function run() {
         if (op === 'd') {
           const id = before?.id;
           if (id != null) { 
-            await remove('food_items', id); 
-            await remove('ecom_items', id); 
+            await remove(FOOD_ITEMS_INDEX, id); 
+            await remove(ECOM_ITEMS_INDEX, id); 
           }
           return;
         }
@@ -299,8 +391,9 @@ async function run() {
         if (modi !== 4 && modi !== 5) return;
         const id = row.id;
         const doc = toDocFromItem(row);
-        if (modi === 4) await upsert('food_items', id, doc);
-        if (modi === 5) await upsert('ecom_items', id, doc);
+        // Pass isItem=true to enable automatic vectorization
+        if (modi === 4) await upsert(FOOD_ITEMS_INDEX, id, doc, true);
+        if (modi === 5) await upsert(ECOM_ITEMS_INDEX, id, doc, true);
         return;
       }
     },
