@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { SearchController } from './search.controller';
+import { StatsController } from './stats.controller';
 import { SearchService } from './search.service';
 import { ModuleService } from './module.service';
 import { AnalyticsService } from '../modules/analytics.service';
@@ -10,7 +11,7 @@ import { ImageService } from '../modules/image.service';
 import { QueryParserService } from './query-parser.service';
 
 @Module({
-  controllers: [SearchController],
+  controllers: [SearchController, StatsController],
   providers: [SearchService, ModuleService, AnalyticsService, EmbeddingService, SearchCacheService, ZoneService, ImageService, QueryParserService],
   exports: [ImageService],
 })

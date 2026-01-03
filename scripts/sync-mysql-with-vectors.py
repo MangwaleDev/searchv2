@@ -127,11 +127,8 @@ INDEX_MAPPING = {
             "unit_id": {"type": "long"},
             
             # === PARSED JSON FIELDS FOR FILTERING/SEARCH ===
-            "variations_parsed": {"type": "object", "enabled": True},
-            "food_variations_parsed": {"type": "object", "enabled": True},
-            "add_ons_parsed": {"type": "object", "enabled": True},
-            "attributes_parsed": {"type": "object", "enabled": True},
-            "choice_options_parsed": {"type": "object", "enabled": True},
+            # Note: Only add these fields if not null, don't map them in schema
+            # This prevents mapping errors on null values
             
             # === EXTRACTED VARIATION DATA ===
             "available_sizes": {"type": "keyword"},
@@ -610,7 +607,7 @@ class MangwaleAISync:
             return result
         
         for variation in food_variations_parsed:
-            if not isinstance(variation, dict):
+            if not variation or not isinstance(variation, dict):
                 continue
                 
             name = variation.get('name', '').lower()
@@ -647,10 +644,39 @@ class MangwaleAISync:
             except:
                 pass
         
-        # Build image URLs
+        # Build comprehensive image URLs with proper paths
         image = self.convert_value(item.get('image')) or ''
+        images_json = self.convert_value(item.get('images')) or '[]'
+        
+        # Primary image URLs (Minio primary, S3 fallback)
         image_full_url = f"https://storage.mangwale.ai/mangwale/product/{image}" if image else ""
         image_fallback_url = f"https://mangwale.s3.ap-south-1.amazonaws.com/product/{image}" if image else ""
+        image_cdn_url = f"https://cdn.mangwale.ai/product/{image}" if image else ""
+        
+        # Additional images array
+        additional_images = []
+        try:
+            images_list = json.loads(images_json) if isinstance(images_json, str) else (images_json if isinstance(images_json, list) else [])
+            for img in images_list:
+                if img and img != 'null':
+                    additional_images.append({
+                        'primary': f"https://storage.mangwale.ai/mangwale/product/{img}",
+                        'fallback': f"https://mangwale.s3.ap-south-1.amazonaws.com/product/{img}",
+                        'cdn': f"https://cdn.mangwale.ai/product/{img}",
+                        'filename': img
+                    })
+        except:
+            pass
+        
+        # Store images
+        store_logo = self.convert_value(item.get('store_logo')) or ''
+        store_cover = self.convert_value(item.get('store_cover_photo')) or ''
+        
+        store_logo_url = f"https://storage.mangwale.ai/mangwale/store/{store_logo}" if store_logo else ""
+        store_logo_fallback = f"https://mangwale.s3.ap-south-1.amazonaws.com/store/{store_logo}" if store_logo else ""
+        
+        store_cover_url = f"https://storage.mangwale.ai/mangwale/store/{store_cover}" if store_cover else ""
+        store_cover_fallback = f"https://mangwale.s3.ap-south-1.amazonaws.com/store/{store_cover}" if store_cover else ""
         
         # Extract values with defaults
         price = float(item.get('price') or 0)
@@ -760,11 +786,14 @@ class MangwaleAISync:
         # Continue with rest of document
         doc.update({
             
-            # Item images
+            # Item images - comprehensive with all URLs
             "image": image,
             "images": self.convert_value(item.get('images')),
             "image_full_url": image_full_url,
             "image_fallback_url": image_fallback_url,
+            "image_cdn_url": image_cdn_url,
+            "additional_images": additional_images,
+            "total_images": 1 + len(additional_images) if image else len(additional_images),
             
             # Timestamps
             "created_at": self.convert_value(created_at),
@@ -786,8 +815,14 @@ class MangwaleAISync:
             "store_phone": self.convert_value(item.get('store_phone')),
             "store_email": self.convert_value(item.get('store_email')),
             "store_address": self.convert_value(item.get('store_address')),
-            "store_logo": self.convert_value(item.get('store_logo')),
-            "store_cover_photo": self.convert_value(item.get('store_cover_photo')),
+            
+            # Store images - comprehensive with all URLs
+            "store_logo": store_logo,
+            "store_logo_url": store_logo_url,
+            "store_logo_fallback": store_logo_fallback,
+            "store_cover_photo": store_cover,
+            "store_cover_url": store_cover_url,
+            "store_cover_fallback": store_cover_fallback,
             
             # Store location
             "store_location": store_location,

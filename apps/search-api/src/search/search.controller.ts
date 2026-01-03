@@ -20,6 +20,9 @@ export class SearchController {
       version: '2.0.0',
       endpoints: {
         health: '/health',
+        // Statistics
+        stats: '/stats/system',
+        statsHealth: '/stats/health',
         // Legacy endpoints (module type based)
         foodSearch: '/search/food?q=kofta',
         foodStores: '/search/food/stores?lat=19.9975&lon=73.7898&radius_km=5',

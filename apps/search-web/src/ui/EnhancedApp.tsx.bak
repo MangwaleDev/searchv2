@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react'
 import './styles.css'
+import './enhanced-styles.css'
 
 // ============================================================================
 // TYPES & CONSTANTS
@@ -76,7 +77,8 @@ type Store = {
   distance_km?: number
   rating?: number | string
   avg_rating?: number | string
-  category?: string
+  image_cdn_url?: string
+  images_cdn_url?: string[]
   module?: string
   theater_name?: string
   delivery_time?: string
@@ -122,43 +124,168 @@ type SearchResp = {
   meta: { total: number; page: number; size: number }
 }
 
+type APICall = {
+  id: string
+  timestamp: number
+  method: string
+  url: string
+  params: Record<string, any>
+  status: 'pending' | 'success' | 'error'
+  duration?: number
+  response?: any
+  error?: string
+}
+
+class APIMonitor {
+  private calls: APICall[] = []
+  private listeners: Array<(calls: APICall[]) => void> = []
+
+  subscribe(listener: (calls: APICall[]) => void) {
+    this.listeners.push(listener)
+    return () => {
+      this.listeners = this.listeners.filter(l => l !== listener)
+    }
+  }
+
+  notify() {
+    this.listeners.forEach(l => l([...this.calls]))
+  }
+
+  startCall(method: string, url: string, params: Record<string, any>): string {
+    const id = `${Date.now()}_${Math.random()}`
+    this.calls.unshift({
+      id,
+      timestamp: Date.now(),
+      method,
+      url,
+      params,
+      status: 'pending'
+    })
+    if (this.calls.length > 100) this.calls.pop()
+    this.notify()
+    return id
+  }
+
+  endCall(id: string, success: boolean, response?: any, error?: string) {
+    const call = this.calls.find(c => c.id === id)
+    if (call) {
+      call.status = success ? 'success' : 'error'
+      call.duration = Date.now() - call.timestamp
+      if (response !== undefined) call.response = response
+      if (error) call.error = error
+      this.notify()
+    }
+  }
+
+  clear() {
+    this.calls = []
+    this.notify()
+  }
+
+  getCalls() {
+    return [...this.calls]
+  }
+}
+
+const apiMonitor = new APIMonitor()
+
 // ============================================================================
 // API LAYER
 // ============================================================================
 
 const API = {
-  suggest: (moduleId: number, q: string, geo?: { lat?: number; lon?: number }) => {
+  suggest: async (moduleId: number, q: string, geo?: { lat?: number; lon?: number }) => {
     const params = new URLSearchParams({ q, module_id: String(moduleId) })
     if (geo?.lat != null) params.append('lat', String(geo.lat))
     if (geo?.lon != null) params.append('lon', String(geo.lon))
-    return fetch(`/v2/search/suggest?${params.toString()}`).then(r => r.json() as Promise<SuggestResp>)
+    const url = `/v2/search/suggest?${params.toString()}`
+    const callId = apiMonitor.startCall('GET', url, Object.fromEntries(params))
+    try {
+      const r = await fetch(url)
+      const data = await r.json()
+      apiMonitor.endCall(callId, r.ok, data)
+      return data as SuggestResp
+    } catch (e: any) {
+      apiMonitor.endCall(callId, false, undefined, e?.message || String(e))
+      throw e
+    }
   },
   
-  searchItems: (moduleId: number, params: Record<string, any>) => {
+  searchItems: async (moduleId: number, params: Record<string, any>) => {
     const allParams = { ...params, module_id: moduleId }
-    return fetch(`/v2/search/items?${new URLSearchParams(allParams as any).toString()}`).then(r => r.json() as Promise<SearchResp>)
+    const url = `/v2/search/items?${new URLSearchParams(allParams as any).toString()}`
+    const callId = apiMonitor.startCall('GET', url, allParams)
+    try {
+      const r = await fetch(url)
+      const data = await r.json()
+      apiMonitor.endCall(callId, r.ok, data)
+      return data as SearchResp
+    } catch (e: any) {
+      apiMonitor.endCall(callId, false, undefined, e?.message || String(e))
+      throw e
+    }
   },
   
-  searchStores: (moduleId: number, params: Record<string, any>) => {
+  searchStores: async (moduleId: number, params: Record<string, any>) => {
     const allParams = { ...params, module_id: moduleId }
-    return fetch(`/v2/search/stores?${new URLSearchParams(allParams as any).toString()}`).then(r => r.json())
+    const url = `/v2/search/stores?${new URLSearchParams(allParams as any).toString()}`
+    const callId = apiMonitor.startCall('GET', url, allParams)
+    try {
+      const r = await fetch(url)
+      const data = await r.json()
+      apiMonitor.endCall(callId, r.ok, data)
+      return data
+    } catch (e: any) {
+      apiMonitor.endCall(callId, false, undefined, e?.message || String(e))
+      throw e
+    }
   },
   
-  recommendations: (itemId: string, moduleId: number, storeId?: string, limit: number = 5) => {
+  recommendations: async (itemId: string, moduleId: number, storeId?: string, limit: number = 5) => {
     const params = new URLSearchParams({ module_id: String(moduleId), limit: String(limit) })
     if (storeId) params.append('store_id', storeId)
-    return fetch(`/search/recommendations/${itemId}?${params.toString()}`).then(r => r.json())
+    const url = `/search/recommendations/${itemId}?${params.toString()}`
+    const callId = apiMonitor.startCall('GET', url, Object.fromEntries(params))
+    try {
+      const r = await fetch(url)
+      const data = await r.json()
+      apiMonitor.endCall(callId, r.ok, data)
+      return data
+    } catch (e: any) {
+      apiMonitor.endCall(callId, false, undefined, e?.message || String(e))
+      throw e
+    }
   },
   
-  trending: (moduleId: number, window = '7d', time_of_day?: string) =>
-    fetch(`/analytics/trending?module_id=${moduleId}&window=${window}${time_of_day ? `&time_of_day=${time_of_day}` : ''}`).then(r => r.json()),
+  trending: async (moduleId: number, window = '7d', time_of_day?: string) => {
+    const url = `/analytics/trending?module_id=${moduleId}&window=${window}${time_of_day ? `&time_of_day=${time_of_day}` : ''}`
+    const callId = apiMonitor.startCall('GET', url, { module_id: moduleId, window, time_of_day })
+    try {
+      const r = await fetch(url)
+      const data = await r.json()
+      apiMonitor.endCall(callId, r.ok, data)
+      return data
+    } catch (e: any) {
+      apiMonitor.endCall(callId, false, undefined, e?.message || String(e))
+      throw e
+    }
+  },
   
   asr: async (blob: Blob) => {
     const fd = new FormData()
     fd.append('audio', blob, 'audio.webm')
-    const res = await fetch('/search/asr', { method: 'POST', body: fd })
-    if (!res.ok) throw new Error('ASR failed')
-    return res.json() as Promise<{ transcript?: string; text?: string }>
+    const url = '/search/asr'
+    const callId = apiMonitor.startCall('POST', url, { audio: 'webm' })
+    try {
+      const res = await fetch(url, { method: 'POST', body: fd })
+      if (!res.ok) throw new Error('ASR failed')
+      const data = await res.json()
+      apiMonitor.endCall(callId, true, data)
+      return data as { transcript?: string; text?: string }
+    } catch (e: any) {
+      apiMonitor.endCall(callId, false, undefined, e?.message || String(e))
+      throw e
+    }
   },
 }
 
@@ -193,6 +320,111 @@ function useLocalStorage<T>(key: string, defaultValue: T): [T, (v: T) => void] {
   }, [key])
   
   return [value, setStoredValue]
+}
+
+function useAPIMonitor() {
+  const [calls, setCalls] = useState<APICall[]>([])
+
+  useEffect(() => apiMonitor.subscribe(setCalls), [])
+
+  return calls
+}
+
+// ============================================================================
+// DEVELOPER CONSOLE
+// ============================================================================
+
+const DeveloperConsole: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ isOpen, onClose }) => {
+  const calls = useAPIMonitor()
+  const [selectedCall, setSelectedCall] = useState<APICall | null>(null)
+  const [filter, setFilter] = useState<'all' | 'success' | 'error' | 'pending'>('all')
+
+  useEffect(() => {
+    if (!selectedCall && calls.length > 0) setSelectedCall(calls[0])
+  }, [calls, selectedCall])
+
+  const filteredCalls = calls.filter(c => filter === 'all' || c.status === filter)
+
+  if (!isOpen) return null
+
+  const buildCurl = (call: APICall) => {
+    const origin = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3100'
+    return `curl -X ${call.method} "${origin}${call.url}" -H "Content-Type: application/json"`
+  }
+
+  return (
+    <div className="dev-console">
+      <div className="dev-console-header">
+        <h3>🔧 Developer Console</h3>
+        <div className="dev-console-actions">
+          <button onClick={() => apiMonitor.clear()}>Clear</button>
+          <button onClick={onClose}>×</button>
+        </div>
+      </div>
+      
+      <div className="dev-console-filters">
+        <button className={filter === 'all' ? 'active' : ''} onClick={() => setFilter('all')}>All ({calls.length})</button>
+        <button className={filter === 'success' ? 'active' : ''} onClick={() => setFilter('success')}>✓ Success ({calls.filter(c => c.status === 'success').length})</button>
+        <button className={filter === 'error' ? 'active' : ''} onClick={() => setFilter('error')}>✗ Error ({calls.filter(c => c.status === 'error').length})</button>
+        <button className={filter === 'pending' ? 'active' : ''} onClick={() => setFilter('pending')}>⏳ Pending ({calls.filter(c => c.status === 'pending').length})</button>
+      </div>
+      
+      <div className="dev-console-content">
+        <div className="dev-console-list">
+          {filteredCalls.map(call => (
+            <div
+              key={call.id}
+              className={`dev-call-item ${call.status} ${selectedCall?.id === call.id ? 'selected' : ''}`}
+              onClick={() => setSelectedCall(call)}
+            >
+              <div className="dev-call-status">
+                {call.status === 'success' && '✓'}
+                {call.status === 'error' && '✗'}
+                {call.status === 'pending' && '⏳'}
+              </div>
+              <div className="dev-call-info">
+                <div className="dev-call-url">{call.method} {call.url}</div>
+                <div className="dev-call-meta">
+                  {new Date(call.timestamp).toLocaleTimeString()}
+                  {call.duration != null && ` • ${call.duration}ms`}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+        
+        {selectedCall && (
+          <div className="dev-call-details">
+            <h4>Request Details</h4>
+            <div className="dev-detail-section">
+              <strong>URL:</strong>
+              <code>{selectedCall.url}</code>
+            </div>
+            <div className="dev-detail-section">
+              <strong>Parameters:</strong>
+              <pre>{JSON.stringify(selectedCall.params, null, 2)}</pre>
+            </div>
+            {selectedCall.response && (
+              <div className="dev-detail-section">
+                <strong>Response:</strong>
+                <pre>{JSON.stringify(selectedCall.response, null, 2)}</pre>
+              </div>
+            )}
+            {selectedCall.error && (
+              <div className="dev-detail-section error">
+                <strong>Error:</strong>
+                <pre>{selectedCall.error}</pre>
+              </div>
+            )}
+            <div className="dev-detail-section">
+              <strong>cURL Command:</strong>
+              <pre className="curl-command">{buildCurl(selectedCall)}</pre>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  )
 }
 
 // ============================================================================
@@ -242,8 +474,9 @@ const ItemCard: React.FC<{
   item: SearchItem; 
   module: ModuleKey;
   onRecommend?: () => void;
-  onClick?: () => void;
-}> = ({ item, module, onRecommend, onClick }) => {
+  onShowDetails?: () => void;
+  onGoToStore?: () => void;
+}> = ({ item, module, onRecommend, onShowDetails, onGoToStore }) => {
   const isVeg = item.veg === 1 || item.veg === true
   const isNonVeg = item.veg === 0 || item.veg === false
   const isAvailable = item.status !== 0
@@ -275,7 +508,7 @@ const ItemCard: React.FC<{
     (item.image ? `https://mangwale.s3.ap-south-1.amazonaws.com/product/${item.image}` : undefined)
   
   return (
-    <div className={`item-card ${!isAvailable || !inStock ? 'unavailable' : ''}`} onClick={onClick} style={{ cursor: onClick ? 'pointer' : 'default' }}>
+    <div className={`item-card ${!isAvailable || !inStock ? 'unavailable' : ''}`} onClick={onShowDetails} style={{ cursor: onShowDetails ? 'pointer' : 'default' }}>
       {/* Image Section */}
       <div className="item-card-image">
         <ItemImage src={primaryImage} fallback={fallbackImage} alt={item.name} />
@@ -287,7 +520,7 @@ const ItemCard: React.FC<{
             <span className="badge-discount">
               {item.discount_type === 'percent' ? `${discount}% OFF` : `₹${discount} OFF`}
             </span>
-          )}
+            image_cdn_status?: string
         </div>
         
         {/* Veg/Non-Veg indicator */}
@@ -295,10 +528,12 @@ const ItemCard: React.FC<{
           <div className="veg-indicator">
             <span className={isVeg ? 'veg' : 'non-veg'}>●</span>
           </div>
-        )}
+            logo_fallback_url?: string
+            logo_cdn_url?: string
         
         {/* Unavailable overlay - only show if status is 0 */}
-        {!isAvailable && (
+            cover_fallback_url?: string
+            cover_cdn_url?: string
           <div className="unavailable-overlay">
             <span>Unavailable</span>
           </div>
@@ -316,6 +551,15 @@ const ItemCard: React.FC<{
         </div>
         
         {/* Tags */}
+            schedule?: Array<{
+              day: number
+              day_name?: string
+              opening_time: string
+              closing_time: string
+            }>
+            phone?: string
+            email?: string
+            address?: string
         <div className="item-tags">
           {isHalal && <span className="tag halal">🌙 Halal</span>}
           {isOrganic && <span className="tag organic">🌿 Organic</span>}
@@ -357,6 +601,14 @@ const ItemCard: React.FC<{
           {onRecommend && (module === 'food' || module === 'ecom') && (
             <button className="btn-secondary" onClick={onRecommend}>💡 Similar</button>
           )}
+          {onGoToStore && item.store_name && (
+            <button 
+              className="btn-secondary" 
+              onClick={(e) => { e.stopPropagation(); onGoToStore(); }}
+            >
+              🏪 View Store
+            </button>
+          )}
           <button className="btn-primary" disabled={!isAvailable || !inStock}>
             {isAvailable && inStock ? 'Add +' : 'N/A'}
           </button>
@@ -370,7 +622,7 @@ const ItemCard: React.FC<{
 // STORE CARD COMPONENT
 // ============================================================================
 
-const StoreCard: React.FC<{ store: Store; onClick?: () => void }> = ({ store, onClick }) => {
+const StoreCard: React.FC<{ store: Store; onOpenDetails?: () => void; onSelectStore?: () => void }> = ({ store, onOpenDetails, onSelectStore }) => {
   const isOpen = store.status !== 0 && store.active !== 0
   const isVegOnly = store.veg === 1 && store.non_veg === 0
   const isFeatured = store.featured === 1
@@ -391,7 +643,7 @@ const StoreCard: React.FC<{ store: Store; onClick?: () => void }> = ({ store, on
   const logoUrl = store.logo_full_url || (store.logo ? (store.logo.startsWith('http') ? store.logo : `${STORE_IMAGE_URL}${store.logo}`) : null)
   
   return (
-    <div className={`store-card ${!isOpen ? 'closed' : ''}`} onClick={onClick} style={{ cursor: onClick ? 'pointer' : 'default' }}>
+    <div className={`store-card ${!isOpen ? 'closed' : ''}`} onClick={onOpenDetails} style={{ cursor: onOpenDetails ? 'pointer' : 'default' }}>
       <div className="store-logo-wrapper">
         {logoUrl && !logoError ? (
           <img
@@ -436,6 +688,293 @@ const StoreCard: React.FC<{ store: Store; onClick?: () => void }> = ({ store, on
         )}
         
         {!isOpen && <div className="closed-badge">Closed</div>}
+        {onSelectStore && (
+          <div className="store-actions">
+            <button className="btn-secondary" onClick={(e) => { e.stopPropagation(); onSelectStore(); }}>
+              View Items
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+// ============================================================================
+// DETAIL MODALS
+// ============================================================================
+
+const StoreDetailsModal: React.FC<{ store: Store; onClose: () => void; onViewItems: () => void }> = ({ store, onClose, onViewItems }) => {
+  const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-content store-modal" onClick={e => e.stopPropagation()}>
+        <button className="modal-close" onClick={onClose}>×</button>
+        
+        <div className="store-modal-header">
+          {store.cover_photo_full_url && (
+            <img src={store.cover_photo_full_url} alt="Cover" className="store-cover" />
+          )}
+          <div className="store-modal-title">
+            {store.logo_full_url && <img src={store.logo_full_url} alt="Logo" className="store-modal-logo" />}
+            <div>
+              <h2>{store.name}</h2>
+              {store.category && <p className="store-category">{store.category}</p>}
+            </div>
+          </div>
+        </div>
+        
+        <div className="store-modal-body">
+          <div className="store-stats-grid">
+            {store.avg_rating && (
+              <div className="stat-item">
+                <span className="stat-icon">⭐</span>
+                <div>
+                  <div className="stat-value">{Number(store.avg_rating).toFixed(1)}</div>
+                  <div className="stat-label">Rating</div>
+                </div>
+              </div>
+            )}
+            {store.distance_km != null && (
+              <div className="stat-item">
+                <span className="stat-icon">📍</span>
+                <div>
+                  <div className="stat-value">{Number(store.distance_km).toFixed(1)} km</div>
+                  <div className="stat-label">Distance</div>
+                </div>
+              </div>
+            )}
+            {store.delivery_time && (
+              <div className="stat-item">
+                <span className="stat-icon">🚚</span>
+                <div>
+                  <div className="stat-value">{store.delivery_time}</div>
+                  <div className="stat-label">Delivery</div>
+                </div>
+              </div>
+            )}
+            {store.minimum_order != null && store.minimum_order > 0 && (
+              <div className="stat-item">
+                <span className="stat-icon">💰</span>
+                <div>
+                  <div className="stat-value">₹{store.minimum_order}</div>
+                  <div className="stat-label">Min Order</div>
+                </div>
+              </div>
+            )}
+          </div>
+          
+          {store.schedule && store.schedule.length > 0 && (
+            <div className="schedule-section">
+              <h3>🕐 Opening Hours</h3>
+              <div className="schedule-list">
+                {store.schedule.map((sch, idx) => (
+                  <div key={idx} className="schedule-item">
+                    <span className="schedule-day">{dayNames[sch.day] || sch.day_name || 'Day'}</span>
+                    <span className="schedule-hours">{sch.opening_time} - {sch.closing_time}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          
+          {(store.phone || store.email || store.address) && (
+            <div className="contact-section">
+              <h3>📞 Contact</h3>
+              {store.phone && <p>📱 {store.phone}</p>}
+              {store.email && <p>📧 {store.email}</p>}
+              {store.address && <p>📍 {store.address}</p>}
+            </div>
+          )}
+          
+          <details className="dev-info">
+            <summary>🔧 Image URLs</summary>
+            <div className="url-list">
+              {store.logo_full_url && <p><strong>Logo Primary:</strong> <code>{store.logo_full_url}</code></p>}
+              {store.logo_fallback_url && <p><strong>Logo Fallback:</strong> <code>{store.logo_fallback_url}</code></p>}
+              {store.logo_cdn_url && <p><strong>Logo CDN:</strong> <code>{store.logo_cdn_url}</code></p>}
+              {store.cover_photo_full_url && <p><strong>Cover Primary:</strong> <code>{store.cover_photo_full_url}</code></p>}
+              {store.cover_fallback_url && <p><strong>Cover Fallback:</strong> <code>{store.cover_fallback_url}</code></p>}
+              {store.cover_cdn_url && <p><strong>Cover CDN:</strong> <code>{store.cover_cdn_url}</code></p>}
+            </div>
+          </details>
+        </div>
+        
+        <div className="modal-footer">
+          <button className="btn-primary btn-large" onClick={() => { onViewItems(); onClose(); }}>
+            View Menu / Items
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+const ItemDetailsModal: React.FC<{ item: SearchItem; onClose: () => void; onViewStore?: () => void }> = ({ item, onClose, onViewStore }) => {
+  const [activeImageIndex, setActiveImageIndex] = useState(0)
+  const allImages = [
+    item.image_full_url,
+    ...(item.images_full_url || []),
+    item.image_cdn_url,
+    ...(item.images_cdn_url || [])
+  ].filter(Boolean) as string[]
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-content item-modal" onClick={e => e.stopPropagation()}>
+        <button className="modal-close" onClick={onClose}>×</button>
+        
+        <div className="item-modal-images">
+          {allImages.length > 0 && (
+            <>
+              <img src={allImages[activeImageIndex]} alt={item.name} className="item-modal-main-image" />
+              {allImages.length > 1 && (
+                <div className="item-modal-thumbnails">
+                  {allImages.map((img, idx) => (
+                    <img 
+                      key={idx} 
+                      src={img} 
+                      alt="" 
+                      className={`thumbnail ${idx === activeImageIndex ? 'active' : ''}`}
+                      onClick={() => setActiveImageIndex(idx)}
+                    />
+                  ))}
+                </div>
+              )}
+            </>
+          )}
+        </div>
+        
+        <div className="item-modal-body">
+          <h2>{item.name}</h2>
+          {item.description && <p className="item-description">{item.description}</p>}
+          <div className="item-tags-row">
+            {item.veg === 1 && <span className="tag veg">🟢 Veg</span>}
+            {item.veg === 0 && <span className="tag non-veg">🔴 Non-Veg</span>}
+            {item.is_halal === 1 && <span className="tag halal">🌙 Halal</span>}
+            {item.organic === 1 && <span className="tag organic">🌿 Organic</span>}
+            {item.recommended === 1 && <span className="tag recommended">⭐ Recommended</span>}
+          </div>
+          <div className="item-price-large">
+            ₹{item.price || item.base_price || 0}
+            {item.tax != null && item.tax > 0 && (
+              <span className="tax-info">+{item.tax_type === 'percent' ? `${item.tax}%` : `₹${item.tax}`} tax</span>
+            )}
+          </div>
+          {(item.available_time_starts || item.available_time_ends) && (
+            <div className="availability-info">
+              <strong>🕐 Available:</strong> {item.available_time_starts} - {item.available_time_ends}
+            </div>
+          )}
+          {item.store_name && (
+            <div className="item-store-info">
+              <strong>🏪 Store:</strong> {item.store_name}
+              {item.distance_km != null && <span> • {Number(item.distance_km).toFixed(1)} km</span>}
+              {onViewStore && (
+                <button className="btn-secondary inline-btn" onClick={onViewStore}>View Store</button>
+              )}
+            </div>
+          )}
+          {item.avg_rating != null && item.avg_rating > 0 && (
+            <div className="item-rating-info">
+              <strong>⭐ Rating:</strong> {Number(item.avg_rating).toFixed(1)}
+              {item.rating_count != null && ` (${item.rating_count} reviews)`}
+            </div>
+          )}
+          {item.variations && (
+            <details open>
+              <summary>🎨 Variations</summary>
+              <pre className="json-display">{JSON.stringify(item.variations, null, 2)}</pre>
+            </details>
+          )}
+          {item.add_ons && (
+            <details>
+              <summary>➕ Add-ons</summary>
+              <pre className="json-display">{JSON.stringify(item.add_ons, null, 2)}</pre>
+            </details>
+          )}
+          <details className="dev-info">
+            <summary>🔧 Technical Details</summary>
+            <div className="tech-details">
+              <p><strong>Item ID:</strong> {item.id}</p>
+              <p><strong>Category ID:</strong> {item.category_id}</p>
+              <p><strong>Category:</strong> {item.category_name}</p>
+              <p><strong>Store ID:</strong> {item.store_id}</p>
+              <p><strong>Status:</strong> {item.status === 1 ? 'Active' : 'Inactive'}</p>
+              <p><strong>Stock:</strong> {item.stock ?? 'Unlimited'}</p>
+              {item.image_full_url && <p><strong>Image Primary:</strong> <code>{item.image_full_url}</code></p>}
+              {item.image_fallback_url && <p><strong>Image Fallback:</strong> <code>{item.image_fallback_url}</code></p>}
+              {item.image_cdn_url && <p><strong>Image CDN:</strong> <code>{item.image_cdn_url}</code></p>}
+            </div>
+          </details>
+        </div>
+        <div className="modal-footer">
+          <button className="btn-primary btn-large">Add to Cart</button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ============================================================================
+// QUICK TEST PANEL
+// ============================================================================
+
+type QuickTestStatus = 'idle' | 'running' | 'success' | 'error'
+
+const QuickTestPanel: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ isOpen, onClose }) => {
+  const [statuses, setStatuses] = useState<Record<string, { status: QuickTestStatus; duration?: number; message?: string }>>({})
+
+  const tests: Array<{ id: string; label: string; run: () => Promise<any> }> = [
+    { id: 'search-food', label: 'Search Food (pizza)', run: () => API.searchItems(4, { q: 'pizza', page: 1, size: 5 }) },
+    { id: 'stores-nearby', label: 'Search Stores', run: () => API.searchStores(4, { q: 'cafe', page: 1, size: 3 }) },
+    { id: 'trending', label: 'Trending Queries', run: () => API.trending(4, '7d') },
+  ]
+
+  const runTest = async (id: string, fn: () => Promise<any>) => {
+    const start = performance.now()
+    setStatuses(prev => ({ ...prev, [id]: { status: 'running' } }))
+    try {
+      await fn()
+      setStatuses(prev => ({ ...prev, [id]: { status: 'success', duration: Math.round(performance.now() - start) } }))
+    } catch (e: any) {
+      setStatuses(prev => ({ ...prev, [id]: { status: 'error', duration: Math.round(performance.now() - start), message: e?.message || 'Error' } }))
+    }
+  }
+
+  if (!isOpen) return null
+
+  return (
+    <div className="dev-console" style={{ right: 'auto', left: 0 }}>
+      <div className="dev-console-header">
+        <h3>🧪 Quick Tests</h3>
+        <div className="dev-console-actions">
+          <button onClick={onClose}>×</button>
+        </div>
+      </div>
+      <div className="quick-tests-list">
+        {tests.map(test => {
+          const st = statuses[test.id]?.status || 'idle'
+          const duration = statuses[test.id]?.duration
+          return (
+            <div key={test.id} className={`quick-test-item ${st}`}>
+              <div className="quick-test-label">{test.label}</div>
+              <div className="quick-test-actions">
+                <button onClick={() => runTest(test.id, test.run)} disabled={st === 'running'}>
+                  {st === 'running' ? 'Running...' : 'Run'}
+                </button>
+                <span className="quick-test-status">
+                  {st === 'idle' && '⏳ Idle'}
+                  {st === 'running' && '🏃 Running'}
+                  {st === 'success' && `✅ ${duration ?? ''}ms`}
+                  {st === 'error' && `❌ ${duration ?? ''}ms`}
+                </span>
+              </div>
+              {statuses[test.id]?.message && <div className="quick-test-message">{statuses[test.id]?.message}</div>}
+            </div>
+          )
+        })}
       </div>
     </div>
   )
@@ -584,12 +1123,14 @@ export default function App() {
   const [loading, setLoading] = useState(false)
   const [page, setPage] = useState(1)
   const [hasMore, setHasMore] = useState(true)
-  const [storesPage, setStoresPage] = useState(1)
-  const [storesPerPage] = useState(10) // Show 10 stores at a time
   const [showFilters, setShowFilters] = useState(false)
   const [recommendations, setRecommendations] = useState<any>(null)
   const [selectedItemForRecs, setSelectedItemForRecs] = useState<string | null>(null)
   const [trending, setTrending] = useState<string[]>([])
+  const [selectedStore, setSelectedStore] = useState<Store | null>(null)
+  const [selectedItem, setSelectedItem] = useState<SearchItem | null>(null)
+  const [devConsoleOpen, setDevConsoleOpen] = useState(false)
+  const [testPanelOpen, setTestPanelOpen] = useState(false)
   
   const [voiceState, setVoiceState] = useState<'idle' | 'listening' | 'processing' | 'error'>('idle')
   const [voiceSeconds, setVoiceSeconds] = useState(0)
@@ -893,6 +1434,11 @@ export default function App() {
           <button className="location-btn" onClick={getLocation}>
             📍 {lat && lon ? 'Located' : 'Location'}
           </button>
+
+          <div className="dev-actions">
+            <button className="btn-secondary" onClick={() => setDevConsoleOpen(true)}>🔧 Console</button>
+            <button className="btn-secondary" onClick={() => setTestPanelOpen(true)}>🧪 Tests</button>
+          </div>
         </div>
         
         {/* Search Bar */}
@@ -945,10 +1491,10 @@ export default function App() {
                 </div>
               )}
               
-              {/* Show stores FIRST if store intent detected */}
-              {suggest?.intent === 'store_first' && (suggest?.stores?.length ?? 0) > 0 && (
+              {/* Show stores FIRST - always prioritize if stores exist */}
+              {(suggest?.stores?.length ?? 0) > 0 && (
                 <div className="suggest-group">
-                  <div className="suggest-header">🏪 Restaurants & Stores (Top Match)</div>
+                  <div className="suggest-header">🏪 Restaurants & Stores</div>
                   {suggest?.stores?.slice(0, 6).map(st => (
                     <div key={st.id} className="suggest-item" onClick={() => onSelectSuggestion(st.name, 'store', st.id)}>🏪 {st.name}</div>
                   ))}
@@ -957,12 +1503,10 @@ export default function App() {
               
               {(suggest?.items?.length ?? 0) > 0 && (
                 <div className="suggest-group">
-                  <div className="suggest-header">
-                    {suggest?.intent === 'store_first' ? 'Menu Items' : 'Items'}
-                  </div>
-                  {suggest?.items?.slice(0, suggest?.intent === 'store_first' ? 3 : 5).map(it => (
+                  <div className="suggest-header">Items</div>
+                  {suggest?.items?.slice(0, 5).map(it => (
                     <div key={it.id} className="suggest-item with-image" onClick={() => onSelectSuggestion(it.name, 'item')}>
-                      {it.image && <img src={`${IMAGE_BASE_URL}${it.image}`} alt="" onError={e => (e.target as HTMLImageElement).style.display = 'none'} />}
+                      {it.image && <img src={it.image.startsWith('http') ? it.image : `${IMAGE_BASE_URL}${it.image}`} alt="" onError={e => (e.target as HTMLImageElement).style.display = 'none'} />}
                       <div className="suggest-info">
                         <span className="suggest-name">{it.name}</span>
                         {it.store_name && <span className="suggest-meta">{it.store_name}</span>}
@@ -973,15 +1517,7 @@ export default function App() {
                 </div>
               )}
               
-              {/* Show stores in regular position if NOT store intent */}
-              {suggest?.intent !== 'store_first' && (suggest?.stores?.length ?? 0) > 0 && (
-                <div className="suggest-group">
-                  <div className="suggest-header">Stores</div>
-                  {suggest?.stores?.slice(0, 4).map(st => (
-                    <div key={st.id} className="suggest-item" onClick={() => onSelectSuggestion(st.name, 'store')}>🏪 {st.name}</div>
-                  ))}
-                </div>
-              )}
+              {/* Don't show duplicate stores - removed second store section */}
               
               {/* Don't show categories if specific_item_specific_store intent */}
               {suggest?.intent !== 'specific_item_specific_store' && (suggest?.categories?.length ?? 0) > 0 && (
@@ -1056,7 +1592,8 @@ export default function App() {
                 </div>
                 <StoreCard 
                   store={(searchResp as any).resolved_store}
-                  onClick={() => {
+                  onOpenDetails={() => setSelectedStore((searchResp as any).resolved_store)}
+                  onSelectStore={() => {
                     const resolvedStore = (searchResp as any).resolved_store
                     if (resolvedStore) {
                       setQ(resolvedStore.name)
@@ -1071,19 +1608,17 @@ export default function App() {
               </div>
             )}
             
-            {/* Top Stores - Always show if available */}
-            {!loading && searchResp?.stores && searchResp.stores.length > 0 && !(searchResp as any)?.resolved_store && (
+            {/* Top Stores - Only show if no resolved store */}
+            {!(searchResp as any)?.resolved_store && (searchResp?.stores?.length ?? 0) > 0 && (
               <div className="stores-row">
-                <h3>
-                  {module === 'food' ? '🏪 Matching Restaurants' : '🏬 Matching Stores'} 
-                  <span className="stores-count">({searchResp.stores.length} found)</span>
-                </h3>
+                <h3>{module === 'food' ? '🏪 Top Restaurants' : '🏬 Featured'}</h3>
                 <div className="stores-scroll">
-                  {searchResp.stores.slice(0, storesPage * storesPerPage).map((st) => (
+                  {searchResp?.stores?.map(st => (
                     <StoreCard 
                       key={st.id} 
                       store={st}
-                      onClick={() => {
+                      onOpenDetails={() => setSelectedStore(st)}
+                      onSelectStore={() => {
                         setQ(st.name)
                         setFilters({...filters, storeId: String(st.id)})
                         setPage(1)
@@ -1091,25 +1626,6 @@ export default function App() {
                     />
                   ))}
                 </div>
-                {searchResp.stores.length > storesPage * storesPerPage && (
-                  <div style={{ textAlign: 'center', margin: '16px 0' }}>
-                    <button 
-                      onClick={() => setStoresPage(p => p + 1)}
-                      style={{
-                        padding: '10px 24px',
-                        background: 'var(--primary)',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '8px',
-                        cursor: 'pointer',
-                        fontSize: '14px',
-                        fontWeight: '500'
-                      }}
-                    >
-                      Show More Stores ({searchResp.stores.length - (storesPage * storesPerPage)} remaining)
-                    </button>
-                  </div>
-                )}
               </div>
             )}
             
@@ -1132,7 +1648,8 @@ export default function App() {
                   item={item} 
                   module={module} 
                   onRecommend={() => handleRecommendation(item)}
-                  onClick={() => {
+                  onShowDetails={() => setSelectedItem(item)}
+                  onGoToStore={() => {
                     if (item.store_name && item.store_id) {
                       setQ(item.store_name)
                       setFilters({...filters, storeId: String(item.store_id)})
@@ -1173,7 +1690,8 @@ export default function App() {
               <StoreCard 
                 key={st.id} 
                 store={st}
-                onClick={() => {
+                onOpenDetails={() => setSelectedStore(st)}
+                onSelectStore={() => {
                   setQ(st.name)
                   setFilters({...filters, storeId: String(st.id)})
                   manualTabSetRef.current = true
@@ -1222,6 +1740,43 @@ export default function App() {
           </div>
         </div>
       )}
+
+      {selectedStore && (
+        <StoreDetailsModal 
+          store={selectedStore} 
+          onClose={() => setSelectedStore(null)} 
+          onViewItems={() => {
+            setFilters(prev => ({ ...prev, storeId: String(selectedStore.id || '') }))
+            manualTabSetRef.current = true
+            setActiveTab('items')
+            setPage(1)
+          }}
+        />
+      )}
+
+      {selectedItem && (
+        <ItemDetailsModal 
+          item={selectedItem} 
+          onClose={() => setSelectedItem(null)}
+          onViewStore={() => {
+            if (selectedItem.store_id) {
+              setFilters(prev => ({ ...prev, storeId: String(selectedItem.store_id) }))
+              manualTabSetRef.current = true
+              setActiveTab('items')
+              setPage(1)
+            }
+            setSelectedItem(null)
+          }}
+        />
+      )}
+
+      <DeveloperConsole isOpen={devConsoleOpen} onClose={() => setDevConsoleOpen(false)} />
+      <QuickTestPanel isOpen={testPanelOpen} onClose={() => setTestPanelOpen(false)} />
+
+      <div className="dev-fab-stack">
+        <button className="fab-btn" onClick={() => setDevConsoleOpen(true)}>🔧</button>
+        <button className="fab-btn" onClick={() => setTestPanelOpen(true)}>🧪</button>
+      </div>
       
       {/* Voice Modal */}
       {voiceState !== 'idle' && (

@@ -44,7 +44,30 @@ export class QueryParserService {
     
     // Others
     'wow', 'wow momos', 'faaso', 'faasos', 'behrouz',
-    'oven story', 'box8', 'freshmenu', 'biryani blues'
+    'oven story', 'box8', 'freshmenu', 'biryani blues',
+    
+    // Local Store Names (auto-generated from database - significant 4+ letter words)
+    'aadhi', 'aaichi', 'aditya', 'ambika', 'annapurna', 'anvit', 'aroma', 'asha', 'asian', 'assal',
+    'athavan', 'athvan', 'bakers', 'bapus', 'bhagat', 'bhagwati', 'bhakri', 'bhandar', 'bhole', 'bholes',
+    'birista', 'biryani', 'bistro', 'boys', 'brand', 'budha', 'burger', 'cake', 'cassava', 'centre',
+    'chan', 'chat', 'cheesecake', 'chef', 'chinese', 'chocolate', 'chulivarchi', 'circle', 'cloud',
+    'cream', 'curry', 'darbar', 'dear', 'delighto', 'demo', 'dhaba', 'dhinchak', 'dingores', 'dolce',
+    'dosa', 'eatery', 'ecstasy', 'empire', 'eversweet', 'factory', 'fresh', 'friendship', 'front',
+    'gaarwa', 'gajanan', 'ganesh', 'graduate', 'greenfield', 'grill', 'halwai', 'hari', 'hariom',
+    'haste', 'healthy', 'hello', 'home', 'house', 'icecream', 'inayat', 'italian', 'jalsa', 'jehan',
+    'jilebiwale', 'juice', 'junction', 'kachori', 'kadhi', 'kaka', 'kamod', 'kantara', 'kathiyawadi',
+    'katta', 'khairnar', 'kichen', 'kitchens', 'kokni', 'krishna', 'kulfi', 'kwality', 'lassi',
+    'leaves', 'leela', 'lifestyle', 'lollypop', 'lovers', 'lunch', 'madras', 'magic', 'maharaja',
+    'maharashtra', 'malvan', 'malvani', 'marathmol', 'marion', 'mart', 'mauli', 'mayur', 'meher',
+    'mind', 'misal', 'mithaiwale', 'momos', 'monginis', 'murali', 'mutton', 'nagar', 'namste', 'nand',
+    'nashik', 'nashta', 'padma', 'page', 'parantha', 'parlour', 'pathardi', 'patissiere', 'perfect',
+    'peshwa', 'phata', 'pizza', 'potoba', 'raja', 'rasoi', 'ratanji', 'rawail', 'razzle', 'renuka',
+    'resto', 'restro', 'resturant', 'rock', 'rolls', 'roti', 'sadhana', 'sakshee', 'samarth',
+    'samosa', 'sandwich', 'satwik', 'satyam', 'seble', 'second', 'shagun', 'shegaon', 'shidori',
+    'shop', 'shradha', 'shree', 'shreepad', 'shri', 'skpsampoorna', 'snacks', 'sonali', 'spice',
+    'spicy', 'star', 'station', 'surti', 'swad', 'swami', 'sweet', 'sweets', 'tadka', 'tarachand',
+    'thick', 'vadapav', 'vakratund', 'veggie', 'waale', 'wafers', 'waffle', 'waghya', 'yaahoo',
+    'yard', 'yogi', 'zorko'
   ];
   
   // Store-type keywords
@@ -95,9 +118,14 @@ export class QueryParserService {
     }
 
     // Check for known brands (exact or partial match)
-    const hasKnownBrand = this.knownBrands.some((brand) => 
-      normalizedLower.includes(brand.replace(/\s+/g, ''))
-    );
+    const queryNoSpaces = normalizedLower.replace(/\s+/g, '');
+    const hasKnownBrand = this.knownBrands.some((brand) => {
+      const brandNoSpaces = brand.replace(/\s+/g, '');
+      return normalizedLower === brand || 
+             queryNoSpaces === brandNoSpaces ||
+             normalizedLower.includes(brand) ||
+             queryNoSpaces.includes(brandNoSpaces);
+    });
     
     // Check for store keywords (exact and partial matches for incomplete typing)
     const hasStoreKeyword = this.storeKeywords.some((kw) => lowered.includes(kw));
@@ -150,9 +178,13 @@ export class QueryParserService {
     );
     
     // Find which brand was detected (if any)
-    const detectedBrand = this.knownBrands.find((brand) => 
-      normalizedLower.includes(brand.replace(/\s+/g, ''))
-    );
+    const detectedBrand = this.knownBrands.find((brand) => {
+      const brandNoSpaces = brand.replace(/\s+/g, '');
+      return normalizedLower === brand || 
+             queryNoSpaces === brandNoSpaces ||
+             normalizedLower.includes(brand) ||
+             queryNoSpaces.includes(brandNoSpaces);
+    });
     
     // Store-first if:
     // 1. Has known brand name

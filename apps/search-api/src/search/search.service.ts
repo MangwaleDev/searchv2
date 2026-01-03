@@ -23,9 +23,249 @@ export class SearchService {
   }
 
   /**
+   * Multi-index search with store boosting (Option B - Industry Standard)
+   * Queries both stores and items simultaneously, boosts stores 10x
+   * No hardcoded brand list needed - OpenSearch handles the ranking
+   */
+  async searchWithStoreBoosting(q: string, filters: Record<string, any>) {
+    const moduleId = filters.module_id || filters.moduleId || 4;
+    
+    // Determine indices based on module
+    const itemsIndex = moduleId === 4 ? this.FOOD_ITEMS_INDEX : this.ECOM_ITEMS_INDEX;
+    const storesIndex = moduleId === 4 ? this.FOOD_STORES_INDEX : this.ECOM_STORES_INDEX;
+    
+    const page = parseInt(filters.page as any) || 1;
+    const size = Math.min(parseInt(filters.size as any) || 20, 100);
+    const from = (page - 1) * size;
+
+    try {
+      // Build query that searches both indices
+      const searchBody: any = {
+        from: from,
+        size: size * 2, // Get more results to ensure we have both stores and items
+        query: {
+          function_score: {
+            query: {
+              bool: {
+                should: [
+                  {
+                    multi_match: {
+                      query: q,
+                      fields: ['name^3', 'description', 'store_name^2'],
+                      type: 'best_fields',
+                      fuzziness: 'AUTO'
+                    }
+                  }
+                ],
+                filter: []
+              }
+            },
+            functions: [
+              {
+                // Boost stores 10x higher than items
+                filter: { term: { _index: storesIndex } },
+                weight: 10.0
+              },
+              {
+                // Items get base score (1.0)
+                filter: { term: { _index: itemsIndex } },
+                weight: 1.0
+              }
+            ],
+            score_mode: 'multiply',
+            boost_mode: 'multiply'
+          }
+        },
+        // Aggregate by index type
+        aggs: {
+          by_type: {
+            terms: {
+              field: '_index',
+              size: 10
+            }
+          }
+        }
+      };
+
+      // Apply filters
+      const boolFilters = searchBody.query.function_score.query.bool.filter;
+      
+      // Status filters
+      if (moduleId === 4) {
+        // Food: status=1, is_approved=1 for items, status=1 for stores
+        boolFilters.push({
+          bool: {
+            should: [
+              {
+                bool: {
+                  must: [
+                    { term: { _index: itemsIndex } },
+                    { term: { status: 1 } },
+                    { term: { is_approved: 1 } }
+                  ]
+                }
+              },
+              {
+                bool: {
+                  must: [
+                    { term: { _index: storesIndex } },
+                    { term: { status: 1 } }
+                  ]
+                }
+              }
+            ]
+          }
+        });
+      }
+
+      // Veg filter
+      if (filters.veg === '1' || filters.veg === 'true' || filters.veg === 'veg') {
+        boolFilters.push({ term: { veg: 1 } });
+      } else if (filters.veg === '0' || filters.veg === 'false' || filters.veg === 'non-veg') {
+        boolFilters.push({ term: { veg: 0 } });
+      }
+
+      // Price range (items only)
+      if (filters.price_min) {
+        boolFilters.push({
+          bool: {
+            should: [
+              { term: { _index: storesIndex } },
+              {
+                bool: {
+                  must: [
+                    { term: { _index: itemsIndex } },
+                    { range: { price: { gte: parseFloat(filters.price_min) } } }
+                  ]
+                }
+              }
+            ]
+          }
+        });
+      }
+      if (filters.price_max) {
+        boolFilters.push({
+          bool: {
+            should: [
+              { term: { _index: storesIndex } },
+              {
+                bool: {
+                  must: [
+                    { term: { _index: itemsIndex } },
+                    { range: { price: { lte: parseFloat(filters.price_max) } } }
+                  ]
+                }
+              }
+            ]
+          }
+        });
+      }
+
+      // Zone filter
+      if (filters.zone_id) {
+        boolFilters.push({ term: { zone_id: parseInt(filters.zone_id) } });
+      }
+
+      // Execute multi-index search
+      const response = await this.client.search({
+        index: [storesIndex, itemsIndex],
+        body: searchBody
+      });
+
+      const hits = response.body.hits.hits || [];
+      
+      // Separate stores and items
+      const stores = hits
+        .filter((h: any) => h._index === storesIndex)
+        .slice(0, 20) // Top 20 stores
+        .map((h: any) => ({
+          id: h._source.id,
+          name: h._source.name,
+          logo_url: h._source.logo_url || h._source.logo_fallback,
+          rating: h._source.rating || 0,
+          distance: h._source.distance,
+          _score: h._score,
+          _source: h._source
+        }));
+
+      const items = hits
+        .filter((h: any) => h._index === itemsIndex)
+        .slice(0, size) // Requested page size
+        .map((h: any) => ({
+          id: h._source.id,
+          name: h._source.name,
+          store_name: h._source.store_name,
+          store_id: h._source.store_id,
+          price: h._source.price,
+          image_url: h._source.image_url || h._source.image_fallback,
+          veg: h._source.veg,
+          rating: h._source.rating || 0,
+          _score: h._score,
+          _source: h._source
+        }));
+
+      const total = response.body.hits.total?.value || 0;
+      const totalStores = stores.length;
+      const totalItems = total - totalStores;
+
+      // NEW FEATURE: If no stores found by name match, extract unique stores from top items
+      // This ensures "paneer tikka" shows stores that sell paneer tikka items
+      let finalStores = stores;
+      if (stores.length === 0 && items.length > 0) {
+        const storeMap = new Map();
+        items.forEach((item: any) => {
+          if (item.store_id && item.store_name && !storeMap.has(item.store_id)) {
+            storeMap.set(item.store_id, {
+              id: item.store_id,
+              name: item.store_name,
+              logo_url: item._source?.store_logo_url || null,
+              rating: item._source?.store_rating || 0,
+              distance: item._source?.store_distance || null,
+              _score: item._score * 0.8, // Slightly lower score since it's derived from items
+              _source: {
+                id: item.store_id,
+                name: item.store_name,
+                logo_url: item._source?.store_logo_url,
+                cover_url: item._source?.store_cover_url,
+                rating: item._source?.store_rating || 0,
+                derived_from_items: true // Flag to indicate this is extracted from items
+              }
+            });
+          }
+        });
+        finalStores = Array.from(storeMap.values()).slice(0, 20);
+        this.logger.log(`🏪 Extracted ${finalStores.length} stores from ${items.length} items for query "${q}"`);
+      }
+
+      return {
+        query: q,
+        intent: finalStores.length > 0 ? 'store_first' : 'generic',
+        stores: finalStores,
+        items: items,
+        meta: {
+          total_stores: finalStores.length,
+          total_items: totalItems,
+          total: total,
+          page: page,
+          size: size,
+          search_method: 'multi_index_boosting',
+          stores_derived_from_items: stores.length === 0 && finalStores.length > 0
+        },
+        filters: filters
+      };
+
+    } catch (error: any) {
+      this.logger.error(`[searchWithStoreBoosting] Error: ${error?.message || String(error)}`);
+      throw error;
+    }
+  }
+
+  /**
    * - specific_item_specific_store: find store by name, then search items within that store
    * - store_first: find store by name and return its menu
    * - generic: fallback to existing module-aware search
+   * 
+   * NEW: Uses multi-index boosting by default (Option B) - no hardcoded brands needed
    */
   async searchItemsByIntent(q: string, filters: Record<string, any>) {
     // Respect explicit store filter from caller; no intent parsing needed
@@ -33,40 +273,14 @@ export class SearchService {
       return this.searchItemsByModule(q, filters);
     }
 
-    const parsed = this.queryParser.parse(q);
-
-    if (parsed.intent === 'specific_item_specific_store') {
-      const storeMatch = await this.findTopStoreMatch(parsed.storeQuery || '', filters);
-      if (storeMatch.storeId) {
-        const nextFilters = { ...filters, store_id: storeMatch.storeId };
-        const itemQuery = parsed.itemQuery || q;
-        const scoped = await this.searchItemsByModule(itemQuery, nextFilters);
-        if ((scoped?.items?.length ?? 0) > 0 || (scoped?.meta?.total ?? 0) > 0) {
-          return scoped;
-        }
-        return this.searchItemsByModule(q, filters);
-      }
-      // If store not found, fallback to generic search with original query
-      return this.searchItemsByModule(q, filters);
+    // NEW APPROACH: Use multi-index search with store boosting
+    // This replaces the hardcoded brand matching approach
+    // OpenSearch automatically ranks stores higher (10x boost)
+    if (q && q.trim()) {
+      return this.searchWithStoreBoosting(q, filters);
     }
 
-    if (parsed.intent === 'store_first') {
-      const storeMatch = await this.findTopStoreMatch(parsed.storeQuery || parsed.raw, filters);
-      if (storeMatch.storeId) {
-        const nextFilters = { ...filters, store_id: storeMatch.storeId, _original_query: q } as any;
-        // Empty query returns menu items for the matched store
-        const menu = await this.searchItemsByModule('', nextFilters);
-        if ((menu?.items?.length ?? 0) > 0 || (menu?.meta?.total ?? 0) > 0) {
-          return menu;
-        }
-        // If store match has no menu items indexed, fall back to generic item search
-        return this.searchItemsByModule(q, filters);
-      }
-      // Fallback to generic search if store not found
-      return this.searchItemsByModule(q, filters);
-    }
-
-    // Generic
+    // Fallback for empty query
     return this.searchItemsByModule(q, filters);
   }
   private client: Client;
@@ -76,8 +290,25 @@ export class SearchService {
   // Index names - food_items_v4 has 768-dim vectors + complete store data
   private readonly FOOD_ITEMS_INDEX = 'food_items_v4';
   private readonly ECOM_ITEMS_INDEX = 'ecom_items';
-  private readonly FOOD_STORES_INDEX = 'food_stores';
+  private readonly FOOD_STORES_INDEX = 'food_stores_v6'; // v6 includes status and active fields
   private readonly ECOM_STORES_INDEX = 'ecom_stores';
+
+  // Zone configuration for multi-zone search
+  // Maps zone_id to adjacent zone_ids for proximity boosting
+  private readonly ZONE_NEIGHBORS: Record<number, number[]> = {
+    4: [2],      // Nashik New -> Nashik (Zone 2)
+    2: [4],      // Nashik -> Nashik New
+    7: [4, 11],  // Road Jailroad -> Nashik New, RTO
+    8: [4, 12],  // Collage Road -> Nashik New, Panchvati
+    9: [4],      // Satpur -> Nashik New
+    10: [4],     // Cidco -> Nashik New
+    11: [4, 7],  // RTO -> Nashik New, Road Jailroad
+    12: [4, 8],  // Panchvati -> Nashik New, Collage Road
+  };
+
+  // Zone proximity boost factors
+  private readonly ZONE_BOOST_SAME = 3.0;     // 3x boost for same zone
+  private readonly ZONE_BOOST_ADJACENT = 1.5; // 1.5x boost for adjacent zones
 
   constructor(
     private readonly config: ConfigService, 
@@ -114,6 +345,53 @@ export class SearchService {
 
   private toRadians(degrees: number): number {
     return degrees * (Math.PI / 180);
+  }
+
+  /**
+   * Get zone-aware boost factor for a result
+   * @param resultZoneId - The zone_id of the search result (store or item)
+   * @param userZoneId - The user's current zone_id (from filters)
+   * @returns Boost multiplier (3.0 for same zone, 1.5 for adjacent, 1.0 for other)
+   */
+  private getZoneBoostFactor(resultZoneId: number | null | undefined, userZoneId: number | null | undefined): number {
+    if (!userZoneId || !resultZoneId) {
+      return 1.0; // No boost if zone info missing
+    }
+
+    if (resultZoneId === userZoneId) {
+      return this.ZONE_BOOST_SAME; // 3x boost for same zone
+    }
+
+    const neighbors = this.ZONE_NEIGHBORS[userZoneId] || [];
+    if (neighbors.includes(resultZoneId)) {
+      return this.ZONE_BOOST_ADJACENT; // 1.5x boost for adjacent zones
+    }
+
+    return 1.0; // No boost for distant zones
+  }
+
+  /**
+   * Build zone filter query for OpenSearch
+   * Prefers same zone, includes adjacent zones with lower priority
+   * @param userZoneId - The user's current zone_id
+   * @param includeAdjacentZones - Whether to include adjacent zones in results
+   * @returns OpenSearch bool query for zone filtering
+   */
+  private buildZoneFilter(userZoneId: number | null | undefined, includeAdjacentZones: boolean = true): any {
+    if (!userZoneId) {
+      return null; // No zone filtering if user zone unknown
+    }
+
+    if (!includeAdjacentZones) {
+      // Strict zone filtering: only same zone
+      return { term: { zone_id: userZoneId } };
+    }
+
+    // Include same zone + adjacent zones
+    const neighbors = this.ZONE_NEIGHBORS[userZoneId] || [];
+    const allowedZones = [userZoneId, ...neighbors];
+
+    return { terms: { zone_id: allowedZones } };
   }
 
   // Time-based category boosting for meal times
@@ -889,8 +1167,9 @@ export class SearchService {
     // Store ID filter (primary filter)
     filterClauses.push({ terms: { id: storeIds } });
 
-    // Status filter (only active stores)
-    filterClauses.push({ term: { status: 1 } });
+    // Status filters (only active AND approved stores)
+    filterClauses.push({ term: { status: 1 } }); // status=1 means active
+    filterClauses.push({ term: { active: 1 } }); // active=1 means approved
 
     // Vegetarian filter
     const veg = filters?.veg;
@@ -935,13 +1214,18 @@ export class SearchService {
       filterClauses.push({ geo_distance: { distance: `${radiusKm}km`, location: { lat, lon } } });
     }
 
-    // Zone validation
+    // Zone-aware filtering and boosting
+    let userZoneId: number | null = null;
     if (hasGeo) {
       try {
-        const zoneId = await this.zoneService.getZoneId(lat, lon);
-        if (zoneId) {
-          filterClauses.push({ term: { zone_id: zoneId } });
-          this.logger.debug(`[searchStoresCategory] Applied zone filter: zone_id=${zoneId}`);
+        userZoneId = await this.zoneService.getZoneId(lat, lon);
+        if (userZoneId) {
+          // Add zone filter: prefer same zone + adjacent zones
+          const zoneFilter = this.buildZoneFilter(userZoneId, true);
+          if (zoneFilter) {
+            filterClauses.push(zoneFilter);
+            this.logger.debug(`[searchStoresCategory] Zone filter applied: user zone ${userZoneId} + adjacent zones`);
+          }
         }
       } catch (error) {
         this.logger.warn(`[searchStoresCategory] Failed to get zone ID: ${(error as any)?.message || String(error)}`);
@@ -1009,7 +1293,7 @@ export class SearchService {
     const res = await this.client.search({ index: storeAlias, body });
     const hits = (res.body.hits?.hits || []) as Array<{ _id: string; _source: any; fields?: any; _score?: number }>;
 
-    // Map results with distance and recalculated delivery times
+    // Map results with distance, zone boost, and recalculated delivery times
     const stores = hits.map(h => {
       const source = h._source || {};
       let distance = (h.fields as any)?.distance_km?.[0];
@@ -1033,6 +1317,16 @@ export class SearchService {
         }
       }
 
+      // Apply zone-aware score boosting
+      let finalScore = h._score;
+      if (userZoneId && source.zone_id) {
+        const zoneBoost = this.getZoneBoostFactor(source.zone_id, userZoneId);
+        if (zoneBoost > 1.0) {
+          finalScore = (finalScore || 0) * zoneBoost;
+          this.logger.debug(`[searchStoresCategory] Store ${h._id} zone boost: ${zoneBoost}x (zone ${source.zone_id} vs user ${userZoneId})`);
+        }
+      }
+
       // Recalculate delivery time if distance is available
       let recalculatedDeliveryTime = source.delivery_time;
       if (distance && source.delivery_time) {
@@ -1042,7 +1336,8 @@ export class SearchService {
 
       return { 
         id: h._id, 
-        score: h._score, 
+        score: finalScore, 
+        original_score: h._score,
         distance_km: distance ?? 0,
         delivery_time: recalculatedDeliveryTime,
         ...source,
@@ -1742,7 +2037,7 @@ export class SearchService {
             ]
           }
         },
-        size: 5 // Limit to top 5 stores
+        size: 20 // Limit to top 20 stores
       };
 
       // Add geo sorting if available
@@ -2496,7 +2791,7 @@ export class SearchService {
               ]
             }
           },
-          size: 5 // Limit to top 5 stores
+          size: 20 // Limit to top 20 stores
         };
 
         // Add geo sorting if available
@@ -2553,8 +2848,8 @@ export class SearchService {
             stores.sort((a, b) => (b._score || 0) - (a._score || 0));
           }
           
-          // Limit to top 5
-          stores = stores.slice(0, 5);
+          // Limit to top 20
+          stores = stores.slice(0, 20);
           
         } catch (e) {
           this.logger.warn(`Failed to search stores in unified search: ${(e as any).message}`);
@@ -2764,18 +3059,29 @@ export class SearchService {
       });
     }
 
-    // Zone validation
+    // Zone-aware filtering and boosting
+    let userZoneId: number | null = null;
     if (hasGeo) {
       try {
-        const zoneId = await this.zoneService.getZoneId(lat, lon);
-        if (zoneId) {
-          filterClauses.push({ term: { zone_id: zoneId } });
-          this.logger.debug(`[searchStores] Applied zone filter: zone_id=${zoneId}`);
+        userZoneId = await this.zoneService.getZoneId(lat, lon);
+        if (userZoneId) {
+          // Add zone filter: prefer same zone + adjacent zones
+          const zoneFilter = this.buildZoneFilter(userZoneId, true);
+          if (zoneFilter) {
+            filterClauses.push(zoneFilter);
+            this.logger.debug(`[searchStores] Zone filter applied: user zone ${userZoneId} + adjacent zones`);
+          }
         }
       } catch (error) {
         this.logger.warn(`[searchStores] Failed to get zone ID: ${(error as any)?.message || String(error)}`);
       }
     }
+
+    // Status filters (only active AND approved stores)
+    // Only show stores with status=1 (active) AND active=1 (approved)
+    filterClauses.push({ term: { status: 1 } });
+    filterClauses.push({ term: { active: 1 } });
+    this.logger.debug(`[searchStores] Applied status=1, active=1 filter`);
 
     // Veg/Non-Veg filter
     const vegFilter = filters?.veg;
@@ -3036,6 +3342,20 @@ export class SearchService {
             }
           }
         });
+
+        // Apply zone-aware score boosting
+        if (userZoneId) {
+          allStores.forEach((store: any) => {
+            const storeZoneId = store._source?.zone_id;
+            const zoneBoost = this.getZoneBoostFactor(storeZoneId, userZoneId);
+            if (zoneBoost > 1.0) {
+              store.zone_boost = zoneBoost;
+              store.original_score = store._score || 0;
+              store._score = (store._score || 0) * zoneBoost;
+              this.logger.debug(`[searchStores] Store ${store._id} zone boost: ${zoneBoost}x (zone ${storeZoneId} vs user ${userZoneId})`);
+            }
+          });
+        }
         
         allStores
           .sort((a: any, b: any) => {
@@ -3737,19 +4057,27 @@ export class SearchService {
       query: {
         bool: {
           should: [
-            { match: { name: { query: trimmed, boost: 10, operator: 'and' } } },
-            { match: { slug: { query: trimmed.toLowerCase(), boost: 8, operator: 'and' } } },
-            { match_phrase: { name: { query: trimmed, boost: 6 } } },
-            { match_phrase: { slug: { query: trimmed.toLowerCase(), boost: 5 } } },
+            // Exact matches (highest priority)
+            { term: { 'name.keyword': { value: trimmed, boost: 20, case_insensitive: true } } },
+            { term: { 'slug.keyword': { value: trimmed.toLowerCase(), boost: 18 } } },
+            // Very close matches
+            { match: { name: { query: trimmed, boost: 15, operator: 'and' } } },
+            { match: { slug: { query: trimmed.toLowerCase(), boost: 12, operator: 'and' } } },
+            { match_phrase: { name: { query: trimmed, boost: 10, slop: 0 } } },
+            { match_phrase: { slug: { query: trimmed.toLowerCase(), boost: 8, slop: 0 } } },
+            // Partial word matches for single-word queries
+            { prefix: { name: { value: trimmed.toLowerCase(), boost: 7 } } },
+            { prefix: { slug: { value: trimmed.toLowerCase(), boost: 6 } } },
+            // Fuzzy matches
             { multi_match: {
               query: trimmed,
-              fields: ['name^3', 'slug^2', 'address'],
+              fields: ['name^5', 'slug^3', 'address^1'],
               type: 'best_fields',
               operator: 'or',
               fuzziness: 'AUTO',
             }},
-            { wildcard: { name: { value: `*${trimmed.toLowerCase()}*`, boost: 2 } } },
-            { wildcard: { slug: { value: `*${trimmed.toLowerCase()}*`, boost: 1.5 } } },
+            { wildcard: { name: { value: `*${trimmed.toLowerCase()}*`, boost: 3 } } },
+            { wildcard: { slug: { value: `*${trimmed.toLowerCase()}*`, boost: 2 } } },
           ],
           minimum_should_match: 1,
         },
@@ -4894,6 +5222,10 @@ export class SearchService {
       });
     }
 
+    // Item status/approval filter: show approved, active items even if is_visible is unset/0 in DB
+    filterClauses.push({ term: { status: 1 } });
+    filterClauses.push({ term: { is_approved: 1 } });
+
     // Veg filter
     const veg = filters?.veg;
     if (veg === '1' || veg === 'true' || veg === 'veg') {
@@ -4932,19 +5264,23 @@ export class SearchService {
       filterClauses.push({ geo_distance: { distance: `${radiusKm}km`, store_location: { lat, lon } } });
     }
 
-    // Zone validation - DISABLED for items as they don't have zone_id indexed
-    /*
+    // Zone-aware filtering (items have zone_id indexed)
+    let userZoneId: number | null = null;
     if (hasGeo) {
       try {
-        const zoneId = await this.zoneService.getZoneId(lat, lon);
-        if (zoneId) {
-          filterClauses.push({ term: { zone_id: Number(zoneId) } });
+        userZoneId = await this.zoneService.getZoneId(lat, lon);
+        if (userZoneId) {
+          // Add zone filter: prefer same zone + adjacent zones
+          const zoneFilter = this.buildZoneFilter(userZoneId, true);
+          if (zoneFilter) {
+            filterClauses.push(zoneFilter);
+            this.logger.debug(`[searchItemsByModule] Zone filter applied: user zone ${userZoneId} + adjacent zones`);
+          }
         }
       } catch (error) {
         this.logger.warn(`[searchItemsByModule] Failed to get zone ID: ${(error as any)?.message || String(error)}`);
       }
     }
-    */
 
     // Pagination
     const size = Math.max(1, Math.min(Number(filters?.size ?? 20) || 20, 100));
@@ -5517,8 +5853,22 @@ export class SearchService {
         item.matchType = itemIdsFromNameSearch.has(item.id) ? 'item_name' : 'none';
       }
     });
+
+    // Apply zone-aware score boosting
+    if (userZoneId) {
+      allItems.forEach(item => {
+        const zoneBoost = this.getZoneBoostFactor(item.zone_id, userZoneId);
+        if (zoneBoost > 1.0) {
+          // Apply zone boost to score
+          item.zone_boost = zoneBoost;
+          item.original_score = item.score || 0;
+          item.score = (item.score || 0) * zoneBoost;
+          this.logger.debug(`[searchItemsByModule] Item ${item.id} zone boost: ${zoneBoost}x (zone ${item.zone_id} vs user ${userZoneId})`);
+        }
+      });
+    }
     
-    // Sort with proper priority: 1) Match type (item_name > store_name), 2) Score, 3) Distance
+    // Sort with proper priority: 1) Match type (item_name > store_name), 2) Score (with zone boost), 3) Distance
     const matchTypePriority = { 'item_name': 1, 'store_name': 1, 'none': 3 };
     
     allItems.sort((a, b) => {
@@ -6145,8 +6495,8 @@ export class SearchService {
         
         // Use module_type to determine indices
         if (moduleType === 'food') {
-          storeIndices = ['food_stores'];
-          itemIndices = ['food_items'];
+          storeIndices = [this.FOOD_STORES_INDEX];
+          itemIndices = [this.FOOD_ITEMS_INDEX];
           catIndices = ['food_categories'];
         } else if (moduleType === 'ecommerce' || moduleType === 'grocery') {
           storeIndices = ['ecom_stores'];
@@ -6203,15 +6553,22 @@ export class SearchService {
       must.push({
         bool: {
           should: [
-            { term: { name: { value: q, boost: 10 } } },
-            { term: { slug: { value: q.toLowerCase(), boost: 8 } } },
-            { match_phrase: { name: { query: q, boost: 6 } } },
-            { match_phrase: { slug: { query: q.toLowerCase(), boost: 5 } } },
-            // Extra typo tolerance for short store-name queries (keeps low boost to avoid noisy matches)
-            { match: { name: { query: q, boost: 2, fuzziness: 2 } } },
+            // Exact keyword matches (highest priority)
+            { term: { 'name.keyword': { value: q, boost: 20, case_insensitive: true } } },
+            { term: { 'slug.keyword': { value: q.toLowerCase(), boost: 18 } } },
+            // Very close matches
+            { match: { name: { query: q, boost: 15, operator: 'and' } } },
+            { match: { slug: { query: q.toLowerCase(), boost: 12, operator: 'and' } } },
+            { match_phrase: { name: { query: q, boost: 10, slop: 0 } } },
+            { match_phrase: { slug: { query: q.toLowerCase(), boost: 8, slop: 0 } } },
+            // Partial/prefix matches for single-word queries
+            { prefix: { name: { value: q.toLowerCase(), boost: 7 } } },
+            { prefix: { slug: { value: q.toLowerCase(), boost: 6 } } },
+            // Fuzzy matches
+            { match: { name: { query: q, boost: 5, fuzziness: 'AUTO' } } },
             { multi_match: {
               query: q,
-              fields: ['name^3', 'slug^2', 'address'],
+              fields: ['name^4', 'slug^3', 'address^1'],
               type: 'best_fields',
               operator: 'and',
               fuzziness: 'AUTO',
@@ -6261,6 +6618,11 @@ export class SearchService {
     } else if (hasGeo) {
       this.logger.log(`[searchStoresByModule] Geo coordinates provided but no radius_km, will sort by distance only (no filtering)`);
     }
+
+    // Status filters - Only show active AND approved stores
+    filterClauses.push({ term: { status: 1 } });  // status=1 means active
+    filterClauses.push({ term: { active: 1 } });  // active=1 means approved
+    this.logger.debug(`[searchStoresByModule] Applied status=1, active=1 filter`);
 
     // Veg/Non-Veg filter
     const vegFilter = filters?.veg;
@@ -6340,7 +6702,7 @@ export class SearchService {
         'logo', 'cover_photo', 'image', 'images',
         'address', 'location', 'latitude', 'longitude',
         'rating', 'avg_rating', 'rating_count', 'order_count',
-        'delivery_time', 'active', 'open', 'veg', 'non_veg',
+        'delivery_time', 'status', 'active', 'open', 'veg', 'non_veg',
         'featured', 'zone_id', 'module_id',
       ],
       script_fields: (hasGeo && (radiusKm !== undefined || filters?.sort === 'distance')) ? {

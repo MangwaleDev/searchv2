@@ -131,14 +131,14 @@ export class ModuleService {
 
     // Fallback to module_type mapping
     const typeMap: Record<string, string> = {
-      food: target === 'stores' ? 'food_stores' : 'food_items',
+      food: target === 'stores' ? 'food_stores_v6' : 'food_items_v4', // Updated to v6/v4 indices
       ecommerce: target === 'stores' ? 'ecom_stores' : 'ecom_items',
       grocery: target === 'stores' ? 'ecom_stores' : 'ecom_items', // Grocery uses ecom indices
       parcel: 'parcel_items', // Placeholder - needs index creation
       pharmacy: 'pharmacy_items', // Placeholder - needs index creation
     };
 
-    return typeMap[module.module_type] || 'food_items';
+    return typeMap[module.module_type] || 'food_items_v4';
   }
 
   /**

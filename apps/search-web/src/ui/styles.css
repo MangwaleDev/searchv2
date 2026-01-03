@@ -514,6 +514,19 @@ body {
   font-size: 16px;
   font-weight: 600;
   margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.stores-count {
+  font-size: 14px;
+  font-weight: normal;
+  color: var(--text-secondary);
+  background: var(--bg-card);
+  padding: 2px 10px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--border);
 }
 
 .stores-scroll {
