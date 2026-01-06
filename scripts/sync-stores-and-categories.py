@@ -17,13 +17,35 @@ MYSQL_CONFIG = {
     'port': int(os.getenv("MYSQL_PORT", 3306)),
     'user': os.getenv("MYSQL_USER", "root"),
     'password': os.getenv("MYSQL_PASSWORD", "root_password"),
-    'database': os.getenv("MYSQL_DATABASE", "mangwale_db")
+    'database': os.getenv("MYSQL_DATABASE", "mangwale_db"),
+    'ssl_disabled': True  # Disable SSL to avoid Python 3.12+ compatibility issues
 }
 
-def create_index_mapping(index_name, mapping_config):
-    """Create OpenSearch index with proper mapping"""
+def get_actual_index_name(alias_name):
+    """Get the actual index name from an alias"""
     try:
-        # Delete existing index
+        response = requests.get(f"{OPENSEARCH_URL}/_alias/{alias_name}", timeout=10)
+        if response.status_code == 200:
+            aliases = response.json()
+            # Get the first index that has this alias
+            for index_name in aliases.keys():
+                return index_name
+        return None
+    except:
+        return None
+
+def create_index_mapping(index_name, mapping_config):
+    """Create OpenSearch index with proper mapping or use existing alias"""
+    # Check if it's an alias and get the actual index
+    actual_index = get_actual_index_name(index_name)
+    
+    if actual_index:
+        print(f"ℹ️  {index_name} is an alias pointing to {actual_index}, will use bulk indexing")
+        return True  # Alias exists, we can bulk index to it
+    
+    # Not an alias, try to create the index
+    try:
+        # Delete existing index if it exists (not an alias)
         requests.delete(f"{OPENSEARCH_URL}/{index_name}", timeout=10)
     except:
         pass  # Index may not exist
@@ -86,15 +108,19 @@ def sync_stores(module_id, index_name):
         
         query = """
         SELECT 
-            id, name, slug, phone, email, logo, cover_photo,
-            latitude, longitude, address,
-            status, active, veg, non_veg, delivery, take_away,
-            delivery_time, zone_id, module_id,
-            order_count, total_order, featured,
-            rating,
-            created_at, updated_at
-        FROM stores 
-        WHERE status = 1 AND module_id = %s
+            s.id, s.name, s.slug, s.phone, s.email, s.logo, s.cover_photo,
+            s.latitude, s.longitude, s.address,
+            s.status, s.active, s.veg, s.non_veg, s.delivery, s.take_away,
+            s.delivery_time, s.zone_id, s.module_id,
+            s.order_count, s.total_order, s.featured,
+            s.rating, s.vendor_id,
+            s.created_at, s.updated_at,
+            v.f_name as vendor_f_name, 
+            v.l_name as vendor_l_name,
+            v.image as vendor_image
+        FROM stores s
+        LEFT JOIN vendors v ON s.vendor_id = v.id
+        WHERE s.status = 1 AND s.module_id = %s
         """
         
         cursor.execute(query, (module_id,))
@@ -111,6 +137,14 @@ def sync_stores(module_id, index_name):
         # Transform stores for OpenSearch
         documents = []
         for store in stores:
+            # Build partner name from vendor first and last name
+            partner_name = None
+            if store.get('vendor_f_name'):
+                partner_name = f"{store['vendor_f_name']}"
+                if store.get('vendor_l_name'):
+                    partner_name += f" {store['vendor_l_name']}"
+                partner_name = partner_name.strip()
+            
             doc = {
                 "id": store['id'],
                 "name": store['name'] or "",
@@ -138,6 +172,9 @@ def sync_stores(module_id, index_name):
                 "rating": store['rating'] if store['rating'] else None,  # Keep as JSON string or None
                 "avg_rating": 0.0,  # Default to 0.0 (can be calculated from rating JSON if needed)
                 "rating_count": 0,  # Default to 0 if not available
+                "vendor_id": int(store['vendor_id']) if store.get('vendor_id') else None,
+                "partner_name": partner_name,
+                "partner_logo": store.get('vendor_image') or None,
             }
             
             if store.get('created_at'):
@@ -182,6 +219,9 @@ def sync_stores(module_id, index_name):
                     "rating": {"type": "float"},
                     "avg_rating": {"type": "float"},
                     "rating_count": {"type": "integer"},
+                    "vendor_id": {"type": "long"},
+                    "partner_name": {"type": "text", "fields": {"keyword": {"type": "keyword"}}},
+                    "partner_logo": {"type": "keyword"},
                     "created_at": {"type": "date"},
                     "updated_at": {"type": "date"}
                 }

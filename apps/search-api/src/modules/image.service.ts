@@ -47,10 +47,12 @@ export class ImageService {
   };
   
   // Working image date ranges (images available in storage)
-  // MinIO: 2025-03 to 2025-11, S3: 2025-04 to 2025-10 (fully accessible)
+  // MinIO: 2025-03-23 to 2026-01-04 (12,089 images synced)
+  // S3: Not accessible (403 errors)
+  // Images from 2024 and earlier are NOT in MinIO storage
   private readonly workingDateRanges = {
-    minio: { start: '2025-03', end: '2025-11' },
-    s3: { start: '2025-04', end: '2025-10' },
+    minio: { start: '2025-03', end: '2026-01' }, // Only 2025 images available
+    s3: { start: '2099-01', end: '2099-01' }, // S3 not accessible
   };
 
   constructor(private readonly config: ConfigService) {
@@ -61,7 +63,8 @@ export class ImageService {
     this.s3Url = this.config.get<string>('S3_URL') || 'https://mangwale.s3.ap-south-1.amazonaws.com';
     
     // MinIO configuration (for self-hosted S3-compatible storage)
-    this.minioUrl = this.config.get<string>('MINIO_URL') || 'http://localhost:9000';
+    // Use MINIO_PUBLIC_URL for external access, fallback to MINIO_URL for internal
+    this.minioUrl = this.config.get<string>('MINIO_PUBLIC_URL') || this.config.get<string>('MINIO_URL') || 'http://localhost:9000';
     
     // Bucket name (same for both S3 and MinIO)
     this.bucket = this.config.get<string>('MINIO_BUCKET') || this.config.get<string>('S3_BUCKET') || 'mangwale';
@@ -136,8 +139,12 @@ export class ImageService {
     
     const datePrefix = dateMatch[1];
     const range = this.workingDateRanges[storage];
+    const isAvailable = datePrefix >= range.start && datePrefix <= range.end;
     
-    return datePrefix >= range.start && datePrefix <= range.end;
+    // TEMP DEBUG
+    this.logger.log(`[isImageLikelyAvailable] filename=${filename}, storage=${storage}, datePrefix=${datePrefix}, range=${range.start} to ${range.end}, isAvailable=${isAvailable}`);
+    
+    return isAvailable;
   }
   
   /**

@@ -178,31 +178,44 @@ export class SearchService {
       const stores = hits
         .filter((h: any) => h._index === storesIndex)
         .slice(0, 20) // Top 20 stores
-        .map((h: any) => ({
-          id: h._source.id,
-          name: h._source.name,
-          logo_url: h._source.logo_url || h._source.logo_fallback,
-          rating: h._source.rating || 0,
-          distance: h._source.distance,
-          _score: h._score,
-          _source: h._source
-        }));
+        .map((h: any) => {
+          const store = this.imageService.transformStoreImages(h._source);
+          return {
+            id: store.id,
+            name: store.name,
+            logo: store.logo,
+            logo_url: store.logo_full_url,
+            logo_full_url: store.logo_full_url,
+            cover_photo: store.cover_photo,
+            cover_url: store.cover_full_url,
+            rating: store.rating || 0,
+            distance: store.distance,
+            _score: h._score,
+            _source: store
+          };
+        });
 
       const items = hits
         .filter((h: any) => h._index === itemsIndex)
         .slice(0, size) // Requested page size
-        .map((h: any) => ({
-          id: h._source.id,
-          name: h._source.name,
-          store_name: h._source.store_name,
-          store_id: h._source.store_id,
-          price: h._source.price,
-          image_url: h._source.image_url || h._source.image_fallback,
-          veg: h._source.veg,
-          rating: h._source.rating || 0,
-          _score: h._score,
-          _source: h._source
-        }));
+        .map((h: any) => {
+          const item = this.imageService.transformItemImages(h._source);
+          return {
+            id: item.id,
+            name: item.name,
+            store_name: item.store_name,
+            store_id: item.store_id,
+            price: item.price,
+            image: item.image,
+            image_url: item.image_full_url,
+            image_full_url: item.image_full_url,
+            image_fallback_url: item.image_fallback_url,
+            veg: item.veg,
+            rating: item.rating || 0,
+            _score: h._score,
+            _source: item
+          };
+        });
 
       const total = response.body.hits.total?.value || 0;
       const totalStores = stores.length;
@@ -2832,9 +2845,11 @@ export class SearchService {
                    distance = this.calculateDistance(lat!, lon!, parseFloat(source.location.lat), parseFloat(source.location.lon));
                 }
 
+                // Transform store images
+                const transformedStore = this.imageService.transformStoreImages(source);
                 stores.push({
                   id: h._id,
-                  ...source,
+                  ...transformedStore,
                   distance_km: distance
                 });
               });
@@ -2869,6 +2884,8 @@ export class SearchService {
           distance_km: h.fields?.distance_km?.[0],
         }));
         totalHits = res.body.hits?.total?.value ?? 0;
+        
+        // Note: No pagination here - handled after transformation below
       } else {
         // Multi-index search using msearch
         const searches: any[] = [];
@@ -2915,14 +2932,18 @@ export class SearchService {
         allItems = allItems.slice(from, from + size);
       }
 
-      // Enrich items with module names
+      // Enrich items with module names and transform images
+      this.logger.log(`🖼️  Transforming ${allItems.length} items with image URLs`);
       const moduleMap = new Map(modules.map(m => [m.id, m]));
       allItems = allItems.map(item => {
         const module = moduleMap.get(item.module_id);
+        const transformedItem = this.imageService.transformItemImages(item);
         return {
-          ...item,
+          ...transformedItem,
           module_name: module?.name || `Module ${item.module_id}`,
           module_type: module?.module_type,
+          // Add convenience field for backward compatibility
+          image_url: transformedItem.image_full_url,
         };
       });
 
@@ -2942,6 +2963,12 @@ export class SearchService {
       }
 
       this.logger.log(`✅ Unified search returned ${allItems.length} items from ${totalHits} total`);
+      
+      // DEBUG: Log first item structure to verify transformation
+      if (allItems.length > 0) {
+        this.logger.log(`📋 Sample item keys: ${Object.keys(allItems[0]).join(', ')}`);
+        this.logger.log(`🖼️  Sample item image fields: image=${allItems[0].image}, image_full_url=${allItems[0].image_full_url}, image_url=${allItems[0].image_url}`);
+      }
 
       return {
         q,

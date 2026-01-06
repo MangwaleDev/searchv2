@@ -40,6 +40,7 @@ type SearchItem = {
   image_full_url?: string
   image_fallback_url?: string
   images_full_url?: string[]
+  image_status?: 'available' | 'fallback' | 'missing'
   price?: number
   discount?: number
   discount_type?: string
@@ -268,11 +269,13 @@ const ItemCard: React.FC<{
   }
   
   // Use full URLs from API, with fallback chain
-  const primaryImage: string | undefined = item.image_full_url || 
+  // If image_status is 'missing', don't use any URL (show placeholder)
+  const shouldShowImage = item.image_status !== 'missing'
+  const primaryImage: string | undefined = shouldShowImage ? (item.image_full_url || 
     (item.images_full_url && item.images_full_url[0]) || 
-    (item.image ? `https://storage.mangwale.ai/mangwale/product/${item.image}` : undefined)
-  const fallbackImage: string | undefined = item.image_fallback_url || 
-    (item.image ? `https://mangwale.s3.ap-south-1.amazonaws.com/product/${item.image}` : undefined)
+    (item.image ? `https://storage.mangwale.ai/mangwale/product/${item.image}` : undefined)) : undefined
+  const fallbackImage: string | undefined = shouldShowImage ? (item.image_fallback_url || 
+    (item.image ? `https://mangwale.s3.ap-south-1.amazonaws.com/product/${item.image}` : undefined)) : undefined
   
   return (
     <div className={`item-card ${!isAvailable || !inStock ? 'unavailable' : ''}`} onClick={onClick} style={{ cursor: onClick ? 'pointer' : 'default' }}>

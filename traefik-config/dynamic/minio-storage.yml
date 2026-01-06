@@ -28,4 +28,4 @@ http:
     minio-service:
       loadBalancer:
         servers:
-          - url: "http://mangwale_dev_minio:9000"
+          - url: "http://mangwale_minio:9000"

@@ -1,17 +1,18 @@
 http:
   routers:
-    # HTTP to HTTPS Redirect
-    search-redirect:
-      rule: "Host(`opensearch.mangwale.ai`)"
-      entryPoints:
-        - web
-      service: noop@internal
-      middlewares:
-        - https-redirect
+    # HTTP to HTTPS Redirect (only for direct access, not from nginx proxy)
+    # Note: Disabled since nginx handles SSL termination
+    # search-redirect:
+    #   rule: "Host(`search.test.mangwale.ai`)"
+    #   entryPoints:
+    #     - web
+    #   service: noop@internal
+    #   middlewares:
+    #     - https-redirect
 
     # API Router (HTTPS)
     search-api:
-      rule: "Host(`opensearch.mangwale.ai`) && (PathPrefix(`/search`) || PathPrefix(`/analytics`) || PathPrefix(`/health`) || PathPrefix(`/docs`) || PathPrefix(`/api-docs`) || PathPrefix(`/v2`))"
+      rule: "Host(`search.test.mangwale.ai`) && (PathPrefix(`/search`) || PathPrefix(`/analytics`) || PathPrefix(`/health`) || PathPrefix(`/docs`) || PathPrefix(`/api-docs`) || PathPrefix(`/v2`) || PathPrefix(`/sync`))"
       service: search-api-service
       entryPoints:
         - websecure
@@ -21,7 +22,7 @@ http:
 
     # Fix for Legacy Suggest Endpoint
     search-suggest-fix:
-      rule: "Host(`opensearch.mangwale.ai`) && PathPrefix(`/search/suggest`)"
+      rule: "Host(`search.test.mangwale.ai`) && PathPrefix(`/search/suggest`)"
       service: search-api-service
       entryPoints:
         - websecure
@@ -33,7 +34,7 @@ http:
 
     # Frontend Router (HTTPS)
     search-frontend:
-      rule: "Host(`opensearch.mangwale.ai`)"
+      rule: "Host(`search.test.mangwale.ai`)"
       service: search-frontend-service
       entryPoints:
         - websecure
@@ -41,11 +42,26 @@ http:
       tls:
         certResolver: letsencrypt
 
+    # Frontend Router (HTTP - for nginx proxy)
+    search-frontend-http:
+      rule: "Host(`search.test.mangwale.ai`)"
+      service: search-frontend-service
+      entryPoints:
+        - web
+      priority: 2
+      middlewares:
+        - trust-forwarded-proto
+
   middlewares:
     https-redirect:
       redirectScheme:
         scheme: https
         permanent: true
+    
+    trust-forwarded-proto:
+      headers:
+        customRequestHeaders:
+          X-Forwarded-Proto: "https"
     
     suggest-rewrite:
       replacePathRegex:

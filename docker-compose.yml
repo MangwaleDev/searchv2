@@ -9,13 +9,17 @@ services:
   # ============================================
   
   traefik:
-    image: traefik:v2.10
+    image: traefik:v2.11
     container_name: search-traefik
     command:
       - "--api.insecure=true"
-      - "--providers.docker=true"
-      - "--providers.docker.exposedbydefault=false"
       - "--providers.file.directory=/etc/traefik/dynamic"
+      - "--providers.file.watch=true"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+      - "--certificatesresolvers.letsencrypt.acme.tlschallenge=true"
+      - "--certificatesresolvers.letsencrypt.acme.email=devops@mangwale.ai"
+      - "--certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json"
       - "--entrypoints.web.address=:80"
       - "--entrypoints.websecure.address=:443"
       - "--certificatesresolvers.letsencrypt.acme.tlschallenge=true"
@@ -286,6 +290,7 @@ services:
       - S3_BUCKET=${S3_BUCKET:-mangwale}
       - S3_REGION=${S3_REGION:-ap-south-1}
       - MINIO_URL=${MINIO_URL:-https://storage.mangwale.ai}
+      - MINIO_PUBLIC_URL=${MINIO_PUBLIC_URL:-https://storage.mangwale.ai}
       - MINIO_BUCKET=${MINIO_BUCKET:-mangwale}
       - IMAGE_FALLBACK_ENABLED=${IMAGE_FALLBACK_ENABLED:-true}
     # ports:
