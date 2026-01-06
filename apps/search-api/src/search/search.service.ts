@@ -38,41 +38,107 @@ export class SearchService {
     const size = Math.min(parseInt(filters.size as any) || 20, 100);
     const from = (page - 1) * size;
 
+    // Store-First Search Strategy: Find stores matching the query first
+    let matchingStoreIds: number[] = [];
+    if (q && q.trim()) {
+      try {
+        const storeSearchBody: any = {
+          query: {
+            bool: {
+              should: [
+                { term: { 'name.keyword': { value: q, case_insensitive: true } } },
+                { match_phrase: { name: { query: q, slop: 0 } } },
+                { match: { name: { query: q, operator: 'and' } } },
+                { prefix: { name: { value: q.toLowerCase() } } },
+                { wildcard: { name: { value: `*${q.toLowerCase()}*` } } }
+              ],
+              minimum_should_match: 1
+            }
+          },
+          size: 10,
+          _source: ['id', 'name']
+        };
+        
+        if (moduleId) {
+          storeSearchBody.query.bool.filter = [{ term: { module_id: Number(moduleId) } }];
+        }
+        
+        const storeSearchResult = await this.client.search({
+          index: storesIndex,
+          body: storeSearchBody
+        }).catch(() => ({ body: { hits: { hits: [] } } }));
+        
+        storeSearchResult.body.hits?.hits?.forEach((h: any) => {
+          const storeId = h._source?.id || h._id;
+          if (storeId && !matchingStoreIds.includes(Number(storeId))) {
+            matchingStoreIds.push(Number(storeId));
+          }
+        });
+        
+        if (matchingStoreIds.length > 0) {
+          this.logger.log(`[searchWithStoreBoosting] Found ${matchingStoreIds.length} stores matching "${q}": [${matchingStoreIds.join(', ')}]`);
+        }
+      } catch (error: any) {
+        this.logger.warn(`[searchWithStoreBoosting] Failed to search stores: ${error?.message || String(error)}`);
+      }
+    }
+
     try {
+      // Build base query
+      const baseQuery: any = {
+        bool: {
+          should: [
+            {
+              multi_match: {
+                query: q,
+                fields: ['name^3', 'description', 'store_name^2'],
+                type: 'best_fields',
+                fuzziness: 'AUTO'
+              }
+            }
+          ],
+          filter: []
+        }
+      };
+      
+      // Build boost functions for store-first strategy
+      const boostFunctions: any[] = [
+        {
+          // Boost stores 10x higher than items
+          filter: { term: { _index: storesIndex } },
+          weight: 10.0
+        },
+        {
+          // Items get base score (1.0)
+          filter: { term: { _index: itemsIndex } },
+          weight: 1.0
+        }
+      ];
+      
+      // Add store-first boosting: Boost items from matching stores
+      if (matchingStoreIds.length > 0) {
+        boostFunctions.push({
+          filter: {
+            bool: {
+              must: [
+                { term: { _index: itemsIndex } },
+                { terms: { store_id: matchingStoreIds } }
+              ]
+            }
+          },
+          weight: 100.0  // Very high boost (100x) for items from matching stores
+        });
+      }
+      
       // Build query that searches both indices
       const searchBody: any = {
         from: from,
         size: size * 2, // Get more results to ensure we have both stores and items
         query: {
           function_score: {
-            query: {
-              bool: {
-                should: [
-                  {
-                    multi_match: {
-                      query: q,
-                      fields: ['name^3', 'description', 'store_name^2'],
-                      type: 'best_fields',
-                      fuzziness: 'AUTO'
-                    }
-                  }
-                ],
-                filter: []
-              }
-            },
-            functions: [
-              {
-                // Boost stores 10x higher than items
-                filter: { term: { _index: storesIndex } },
-                weight: 10.0
-              },
-              {
-                // Items get base score (1.0)
-                filter: { term: { _index: itemsIndex } },
-                weight: 1.0
-              }
-            ],
-            score_mode: 'multiply',
+            query: baseQuery,
+            functions: boostFunctions,
+            score_mode: 'sum',
             boost_mode: 'multiply'
           }
         },
@@ -203,7 +269,7 @@ export class SearchService {
       
       // Lookup store names for all items
       const storeNames = await this.getStoreNames(itemStoreIds, moduleId === 4 ? 'food' : 'ecom');
-      
+
       const items = hits
         .filter((h: any) => h._index === itemsIndex)
         .slice(0, size) // Requested page size
@@ -289,7 +355,7 @@ export class SearchService {
         if (!item.store_id) return true;
         // If item has store_id, it must have a valid store_name
         return item.store_name && item.store_name !== '';
-      });
+        });
 
       const total = response.body.hits.total?.value || 0;
       const totalStores = stores.length;
@@ -5380,8 +5446,64 @@ export class SearchService {
     }
 
     // Query text
+    let baseQuery: any = null;
+    let matchingStoreIds: number[] = [];
+    
     if (q && q.trim()) {
-      must.push({
+      // Store-First Search Strategy: First, find stores matching the query
+      // Then boost items from those stores by store_id (more reliable than text matching)
+      try {
+        const storeIndices = filters?.module_id === 4 
+          ? [this.FOOD_STORES_INDEX] 
+          : filters?.module_id === 5 
+            ? ['ecom_stores'] 
+            : this.getAllStoreIndices();
+        
+        const storeSearchBody: any = {
+          query: {
+            bool: {
+              should: [
+                { term: { 'name.keyword': { value: q, case_insensitive: true } } },
+                { match_phrase: { name: { query: q, slop: 0 } } },
+                { match: { name: { query: q, operator: 'and' } } },
+                { prefix: { name: { value: q.toLowerCase() } } },
+                { wildcard: { name: { value: `*${q.toLowerCase()}*` } } }
+              ],
+              minimum_should_match: 1
+            }
+          },
+          size: 10,  // Get top 10 matching stores
+          _source: ['id', 'name']
+        };
+        
+        if (filters?.module_id) {
+          storeSearchBody.query.bool.filter = [{ term: { module_id: Number(filters.module_id) } }];
+        }
+        
+        const storeSearchResults = await Promise.all(
+          storeIndices.map(index => 
+            this.client.search({ index, body: storeSearchBody }).catch(() => ({ body: { hits: { hits: [] } } }))
+          )
+        );
+        
+        storeSearchResults.forEach(res => {
+          const hits = res.body.hits?.hits || [];
+          hits.forEach((h: any) => {
+            const storeId = h._source?.id || h._id;
+            if (storeId && !matchingStoreIds.includes(Number(storeId))) {
+              matchingStoreIds.push(Number(storeId));
+            }
+          });
+        });
+        
+        if (matchingStoreIds.length > 0) {
+          this.logger.log(`[searchItemsByModule] Found ${matchingStoreIds.length} stores matching "${q}": [${matchingStoreIds.join(', ')}]`);
+        }
+      } catch (error: any) {
+        this.logger.warn(`[searchItemsByModule] Failed to search stores for query "${q}": ${error?.message || String(error)}`);
+      }
+      
+      baseQuery = {
         bool: {
           should: [
             { term: { name: { value: q, boost: 10 } } },
@@ -5402,7 +5524,72 @@ export class SearchService {
           ],
           minimum_should_match: 1,
         },
-      });
+      };
+      
+      // Store-First Search Strategy: Boost items from stores matching the query
+      // Use store_id matching (more reliable) if we found matching stores
+      const boostFunctions: any[] = [];
+      
+      if (matchingStoreIds.length > 0) {
+        // Boost items from matching stores by store_id (most reliable)
+        boostFunctions.push({
+          filter: {
+            terms: { store_id: matchingStoreIds }
+          },
+          weight: 100.0  // Very high boost (100x) for items from matching stores
+        });
+      }
+      
+      // Also boost by store_name text matching (fallback)
+      boostFunctions.push(
+        {
+          filter: {
+            bool: {
+              should: [
+                { term: { 'store_name.keyword': { value: q, case_insensitive: true } } },
+                { match_phrase: { store_name: { query: q, slop: 0 } } }
+              ],
+              minimum_should_match: 1
+            }
+          },
+          weight: 50.0  // High boost (50x) for exact store name match
+        },
+        {
+          filter: {
+            match_phrase: { store_name: { query: q, slop: 2 } }
+          },
+          weight: 30.0  // High boost (30x) for phrase match
+        },
+        {
+          filter: {
+            match: { store_name: { query: q, operator: 'and' } }
+          },
+          weight: 20.0  // High boost (20x) for store name match with all terms
+        },
+        {
+          filter: {
+            prefix: { store_name: { value: q.toLowerCase() } }
+          },
+          weight: 15.0  // High boost (15x) for store name prefix match
+        },
+        {
+          filter: {
+            wildcard: { store_name: { value: `*${q.toLowerCase()}*` } }
+          },
+          weight: 10.0  // Boost (10x) for store name substring match
+        }
+      );
+      
+      const storeBoostQuery = {
+        function_score: {
+          query: baseQuery,
+          functions: boostFunctions,
+          score_mode: 'sum',  // Sum all matching boosts
+          boost_mode: 'multiply'  // Multiply with base query score
+        }
+      };
+      
+      must.push(storeBoostQuery);
     }
 
     // Item status/approval filter: show approved, active items even if is_visible is unset/0 in DB
@@ -5483,23 +5670,54 @@ export class SearchService {
     switch (sortOrder) {
       case 'distance':
         if (hasGeo) {
-          sort = [{ _geo_distance: { store_location: { lat, lon }, order: 'asc', unit: 'km' } }];
+          // Store-First Strategy: When query is provided, prioritize relevance (store match) over distance
+          // This ensures items from matching stores appear first, even if slightly farther
+          if (q && q.trim()) {
+            // Combined sort: relevance first, then distance
+            sort = [
+              '_score',  // First by relevance (store name match gets higher score)
+              { _geo_distance: { store_location: { lat, lon }, order: 'asc', unit: 'km' } }
+            ];
+          } else {
+            // No query: just sort by distance
+            sort = [{ _geo_distance: { store_location: { lat, lon }, order: 'asc', unit: 'km' } }];
+          }
         } else {
           sort = [{ order_count: { order: 'desc' } }];
         }
         break;
       case 'price_asc':
-        sort = [{ price: { order: 'asc' } }];
+        // When query is provided, prioritize relevance over price
+        if (q && q.trim()) {
+          sort = ['_score', { price: { order: 'asc' } }];
+        } else {
+          sort = [{ price: { order: 'asc' } }];
+        }
         break;
       case 'price_desc':
-        sort = [{ price: { order: 'desc' } }];
+        // When query is provided, prioritize relevance over price
+        if (q && q.trim()) {
+          sort = ['_score', { price: { order: 'desc' } }];
+        } else {
+          sort = [{ price: { order: 'desc' } }];
+        }
         break;
       case 'rating':
-        sort = [{ avg_rating: { order: 'desc' } }, { order_count: { order: 'desc' } }];
+        // When query is provided, prioritize relevance over rating
+        if (q && q.trim()) {
+          sort = ['_score', { avg_rating: { order: 'desc' } }, { order_count: { order: 'desc' } }];
+        } else {
+          sort = [{ avg_rating: { order: 'desc' } }, { order_count: { order: 'desc' } }];
+        }
         break;
       case 'popularity':
       default:
-        sort = [{ order_count: { order: 'desc' } }, { avg_rating: { order: 'desc' } }];
+        // When query is provided, prioritize relevance over popularity
+        if (q && q.trim()) {
+          sort = ['_score', { order_count: { order: 'desc' } }, { avg_rating: { order: 'desc' } }];
+        } else {
+          sort = [{ order_count: { order: 'desc' } }, { avg_rating: { order: 'desc' } }];
+        }
         break;
     }
 
@@ -5590,12 +5808,12 @@ export class SearchService {
             convertedFields.available_time_ends = this.convertMillisecondsToTime(convertedFields.available_time_ends);
           }
           
-          allItems.push({
-            id: h._id,
-            score: h._score,
-            distance_km: h.fields?.distance_km?.[0],
+            allItems.push({
+              id: h._id,
+              score: h._score,
+              distance_km: h.fields?.distance_km?.[0],
             ...convertedFields,
-          });
+            });
           });
         });
 
@@ -5643,6 +5861,7 @@ export class SearchService {
     }
 
     // Regular keyword search
+    // Note: If query was provided, must already contains the function_score query with store boosting
     const body: any = {
       query: {
         bool: {
@@ -6449,14 +6668,14 @@ export class SearchService {
           }
           if (convertedFields.available_time_ends !== undefined && convertedFields.available_time_ends !== null) {
             convertedFields.available_time_ends = this.convertMillisecondsToTime(convertedFields.available_time_ends);
-          }
-          
-          fallbackItems.push({
-            id: h._id,
-            score: h._score,
-            distance_km: distance !== undefined && distance !== null ? distance : undefined,
+              }
+              
+              fallbackItems.push({
+                id: h._id,
+                score: h._score,
+                distance_km: distance !== undefined && distance !== null ? distance : undefined,
             ...convertedFields,
-          });
+              });
             });
           });
           
@@ -6550,7 +6769,7 @@ export class SearchService {
             if (!item.store_id) return true;
             return item.store_name && item.store_name !== '';
           });
-
+          
           return {
             q,
             filters,
@@ -7084,14 +7303,65 @@ export class SearchService {
       sort = [{ order_count: { order: 'desc' } }];
     }
 
-    const body: any = {
-      query: {
-        bool: {
-          must: must.length ? must : [{ match_all: {} }],
-          filter: filterClauses,
-          must_not: mustNotClauses.length > 0 ? mustNotClauses : undefined,
-        },
+    // Store-First Search Strategy: Boost stores that match the query exactly
+    let finalQuery: any = {
+      bool: {
+        must: must.length ? must : [{ match_all: {} }],
+        filter: filterClauses,
+        must_not: mustNotClauses.length > 0 ? mustNotClauses : undefined,
       },
+    };
+    
+    // If query is provided, apply function_score to boost exact matches
+    if (q && q.trim()) {
+      finalQuery = {
+        function_score: {
+          query: finalQuery,
+          functions: [
+            // Highest boost for exact name match (case-insensitive)
+            {
+              filter: {
+                term: { 'name.keyword': { value: q, case_insensitive: true } }
+              },
+              weight: 10.0  // 10x boost for exact match
+            },
+            // High boost for exact slug match
+            {
+              filter: {
+                term: { 'slug.keyword': { value: q.toLowerCase() } }
+              },
+              weight: 8.0  // 8x boost for exact slug match
+            },
+            // Boost for phrase match in name
+            {
+              filter: {
+                match_phrase: { name: { query: q, slop: 0 } }
+              },
+              weight: 6.0  // 6x boost for phrase match
+            },
+            // Boost for name starting with query
+            {
+              filter: {
+                prefix: { name: { value: q.toLowerCase() } }
+              },
+              weight: 4.0  // 4x boost for prefix match
+            },
+            // Boost for name containing query
+            {
+              filter: {
+                match: { name: { query: q, operator: 'and' } }
+              },
+              weight: 3.0  // 3x boost for name match
+            }
+          ],
+          score_mode: 'sum',  // Sum all matching boosts
+          boost_mode: 'multiply'  // Multiply with base query score
+        }
+      };
+    }
+
+    const body: any = {
+      query: finalQuery,
       size,
       from,
       sort,
