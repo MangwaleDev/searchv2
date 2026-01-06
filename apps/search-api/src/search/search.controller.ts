@@ -817,4 +817,61 @@ export class SearchController {
 
     return this.searchService.searchStoresByModule(q, filters);
   }
+
+  @Get('/v2/search/categories')
+  @ApiTags('Module ID Search')
+  @ApiOperation({ 
+    summary: 'Categories Search', 
+    description: 'Search for available categories. When store_id is provided, returns categories served by that store with item counts. When module_id is provided, returns categories for that module only. Supports geo filtering and text search.' 
+  })
+  @ApiQuery({ name: 'q', required: false, description: 'Search query text for category name', example: 'pizza' })
+  @ApiQuery({ name: 'module_id', required: false, description: 'Filter by module ID (module-wise search)', example: 4 })
+  @ApiQuery({ name: 'store_id', required: false, description: 'Filter by store ID (returns categories served by this store with item counts)', example: 111 })
+  @ApiQuery({ name: 'lat', required: false, description: 'Latitude for geo-distance filtering', example: 19.9975 })
+  @ApiQuery({ name: 'lon', required: false, description: 'Longitude for geo-distance filtering', example: 73.7898 })
+  @ApiQuery({ name: 'radius_km', required: false, description: 'Radius in kilometers', example: 5 })
+  @ApiQuery({ name: 'page', required: false, description: 'Page number (1-based)', example: 1 })
+  @ApiQuery({ name: 'size', required: false, description: 'Results per page (1-100)', example: 20 })
+  @ApiResponse({ 
+    status: 200, 
+    description: 'Search results with categories',
+    schema: {
+      example: {
+        q: 'pizza',
+        filters: { module_id: 4, store_id: 111 },
+        categories: [
+          { 
+            id: 288, 
+            name: 'Pizza', 
+            module_id: 4,
+            item_count: 15,
+            image: 'pizza.jpg',
+            slug: 'pizza'
+          }
+        ],
+        meta: { total: 10, page: 1, size: 20 }
+      }
+    }
+  })
+  async searchCategoriesByModule(
+    @Query('q') q: string = '',
+    @Query('module_id') moduleId?: string,
+    @Query('store_id') storeId?: string,
+    @Query('lat') lat?: string,
+    @Query('lon') lon?: string,
+    @Query('radius_km') radiusKm?: string,
+    @Query('page') page?: string,
+    @Query('size') size?: string,
+  ) {
+    const filters: any = {};
+    if (moduleId) filters.module_id = Number(moduleId);
+    if (storeId) filters.store_id = Number(storeId);
+    if (lat) filters.lat = Number(lat);
+    if (lon) filters.lon = Number(lon);
+    if (radiusKm) filters.radius_km = Number(radiusKm);
+    if (page) filters.page = Number(page);
+    if (size) filters.size = Number(size);
+
+    return this.searchService.searchCategoriesByModule(q, filters);
+  }
 }

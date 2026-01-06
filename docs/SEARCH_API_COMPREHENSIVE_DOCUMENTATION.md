@@ -11,6 +11,7 @@
 8. [Vector Search & Semantic Search](#vector-search--semantic-search)
 9. [Data Filtering & Enrichment](#data-filtering--enrichment)
 10. [Examples & Use Cases](#examples--use-cases)
+11. [Categories Search API](#categories-search-api)
 
 ---
 
@@ -1105,6 +1106,91 @@ GET /v2/search/stores?module_id=4&category_id=288
 - **Semantic Search**: ~50-150ms (including embedding generation)
 - **Throughput**: ~200 queries/second per node
 - **Index Size**: ~100 MB per 10K items (with vectors)
+
+---
+
+## Categories Search API
+
+### 11. `/v2/search/categories`
+
+**Purpose**: Search and retrieve available categories with optional filtering by module, store, location, and text query.
+
+**Endpoint**: `GET /v2/search/categories`
+
+**Query Parameters**:
+
+| Parameter | Type | Required | Description | Example |
+|-----------|------|----------|-------------|---------|
+| `q` | string | No | Search query text for category name | `"pizza"` |
+| `module_id` | number | No | Filter by module ID (4=Food, 5=E-com) | `4` |
+| `store_id` | number | No | Filter by store ID (returns categories with item counts) | `13` |
+| `lat` | number | No | Latitude for geo-distance filtering | `19.9527` |
+| `lon` | number | No | Longitude for geo-distance filtering | `73.8362` |
+| `radius_km` | number | No | Search radius in kilometers | `5` |
+| `page` | number | No | Page number (1-based) | `1` |
+| `size` | number | No | Results per page (1-100, default: 20) | `20` |
+
+**Response Structure**:
+```json
+{
+  "q": "pizza",
+  "filters": {
+    "module_id": 4,
+    "store_id": 13
+  },
+  "categories": [
+    {
+      "id": 120,
+      "name": "Chaat",
+      "slug": "chaat",
+      "image": "2025-06-11-68496fe601c8c.png",
+      "image_full_url": "https://storage.mangwale.ai/mangwale/category/2025-06-11-68496fe601c8c.png",
+      "image_fallback_url": "https://mangwale.s3.ap-south-1.amazonaws.com/category/2025-06-11-68496fe601c8c.png",
+      "module_id": 4,
+      "parent_id": null,
+      "priority": null,
+      "featured": 0,
+      "item_count": 12
+    }
+  ],
+  "meta": {
+    "total": 16,
+    "page": 1,
+    "size": 20,
+    "total_pages": 1,
+    "has_more": false
+  }
+}
+```
+
+**Key Features**:
+- **Module Filtering**: When `module_id` is provided, returns categories for that module only
+- **Store-Specific Categories**: When `store_id` is provided, returns categories served by that store with `item_count`
+- **Availability Filtering**: Only returns categories that have available/open items
+- **Geo Filtering**: When `lat`/`lon` are provided, filters categories by items within geo radius
+- **Text Search**: When `q` is provided, searches category names and slugs
+
+**Examples**:
+```bash
+# Get all categories for module 4
+GET /v2/search/categories?module_id=4
+
+# Get categories for store 13 with item counts
+GET /v2/search/categories?module_id=4&store_id=13
+
+# Search categories by name
+GET /v2/search/categories?module_id=4&q=pizza
+
+# Get store categories with location
+GET /v2/search/categories?module_id=4&store_id=13&lat=19.9527&lon=73.8362
+```
+
+**Sorting**: Categories are sorted by:
+1. Item count (descending) - when `store_id` is provided
+2. Priority (descending)
+3. Name (ascending)
+
+**For detailed integration guide, see**: `/docs/CATEGORIES_SEARCH_API_DOCUMENTATION.md`
 
 ---
 

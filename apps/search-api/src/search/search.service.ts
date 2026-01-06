@@ -35,7 +35,10 @@ export class SearchService {
     const storesIndex = moduleId === 4 ? this.FOOD_STORES_INDEX : this.ECOM_STORES_INDEX;
     
     const page = parseInt(filters.page as any) || 1;
-    const size = Math.min(parseInt(filters.size as any) || 20, 100);
+    // For category searches (with or without query), use larger default size (100) to show all items
+    const hasCategoryFilter = filters?.category_id !== undefined && filters?.category_id !== null;
+    const defaultSize = hasCategoryFilter ? 100 : 20;
+    const size = Math.min(parseInt(filters.size as any) || defaultSize, 100);
     const from = (page - 1) * size;
 
     // Store-First Search Strategy: Find stores matching the query first
@@ -5659,7 +5662,11 @@ export class SearchService {
     }
 
     // Pagination
-    const size = Math.max(1, Math.min(Number(filters?.size ?? 20) || 20, 100));
+    // For category searches (with or without query), use larger default size (100) to show all items
+    // This ensures category browsing shows complete results
+    const hasCategoryFilter = filters?.category_id !== undefined && filters?.category_id !== null;
+    const defaultSize = hasCategoryFilter ? 100 : 20;
+    const size = Math.max(1, Math.min(Number(filters?.size ?? defaultSize) || defaultSize, 100));
     const page = Math.max(1, Number(filters?.page ?? 1) || 1);
     const from = (page - 1) * size;
 
@@ -8754,5 +8761,295 @@ export class SearchService {
     }
     
     return response;
+  }
+
+  /**
+   * NEW: Categories search with module_id/store_id support
+   * Returns available categories with item counts when store_id is provided
+   */
+  async searchCategoriesByModule(
+    q: string,
+    filters: {
+      module_id?: number;
+      store_id?: number;
+      lat?: number;
+      lon?: number;
+      radius_km?: number;
+      page?: number;
+      size?: number;
+    }
+  ): Promise<{
+    q: string;
+    filters: any;
+    categories: any[];
+    meta: {
+      total: number;
+      page: number;
+      size: number;
+      total_pages: number;
+      has_more: boolean;
+    };
+  }> {
+    this.logger.log(`[searchCategoriesByModule] START: q="${q}", filters=${JSON.stringify(filters)}`);
+
+    // Determine category indices based on module_id
+    let categoryIndices: string[] = [];
+    let itemIndices: string[] = [];
+    
+    if (filters?.module_id) {
+      this.logger.log(`[searchCategoriesByModule] Fetching module ${filters.module_id} from database`);
+      let module: any = null;
+      try {
+        module = await this.moduleService.getModuleById(filters.module_id);
+      } catch (error: any) {
+        this.logger.warn(`[searchCategoriesByModule] Failed to fetch module from database: ${error?.message || String(error)}. Using fallback mapping.`);
+      }
+      
+      if (!module) {
+        // Fallback: Use common module_id to module_type mappings
+        const moduleTypeMap: Record<number, string> = {
+          4: 'food',
+          5: 'ecommerce',
+          6: 'grocery',
+        };
+        const moduleType = moduleTypeMap[filters.module_id] || 'food';
+        this.logger.log(`[searchCategoriesByModule] Using fallback mapping: module_id=${filters.module_id} -> module_type=${moduleType}`);
+        
+        if (moduleType === 'food') {
+          categoryIndices = ['food_categories'];
+          itemIndices = [this.FOOD_ITEMS_INDEX];
+        } else if (moduleType === 'ecommerce' || moduleType === 'grocery') {
+          categoryIndices = ['ecom_categories'];
+          itemIndices = ['ecom_items'];
+        } else {
+          categoryIndices = [`${moduleType}_categories`];
+          itemIndices = [`${moduleType}_items`];
+        }
+      } else {
+        this.logger.log(`[searchCategoriesByModule] Module found: id=${module.id}, name=${module.name}, type=${module.module_type}`);
+        
+        // Use module service to get indices
+        const moduleType = module.module_type;
+        if (moduleType === 'food') {
+          categoryIndices = ['food_categories'];
+          itemIndices = [this.FOOD_ITEMS_INDEX];
+        } else if (moduleType === 'ecommerce' || moduleType === 'grocery') {
+          categoryIndices = ['ecom_categories'];
+          itemIndices = ['ecom_items'];
+        } else {
+          categoryIndices = [`${moduleType}_categories`];
+          itemIndices = [`${moduleType}_items`];
+        }
+      }
+    } else {
+      // No module_id, search all category indices
+      categoryIndices = this.getAllCategoryIndices();
+      itemIndices = this.getAllItemIndices();
+      this.logger.log(`[searchCategoriesByModule] No module_id provided, searching all indices: categories=[${categoryIndices.join(', ')}]`);
+    }
+
+    const must: any[] = [];
+    const filterClauses: any[] = [];
+
+    // Module filter
+    if (filters?.module_id) {
+      filterClauses.push({ term: { module_id: Number(filters.module_id) } });
+    }
+
+    // Query text for category name search
+    if (q && q.trim()) {
+      must.push({
+        bool: {
+          should: [
+            { term: { name: { value: q, boost: 10 } } },
+            { term: { slug: { value: q.toLowerCase(), boost: 8 } } },
+            { match_phrase: { name: { query: q, boost: 6 } } },
+            { match_phrase: { slug: { query: q.toLowerCase(), boost: 5 } } },
+            { match: { name: { query: q, boost: 4, operator: 'and' } } },
+            { multi_match: {
+              query: q,
+              fields: ['name^3', 'slug^2'],
+              type: 'best_fields',
+              operator: 'and',
+              fuzziness: 'AUTO',
+              lenient: true,
+            }},
+            { wildcard: { name: { value: `*${q.toLowerCase()}*`, boost: 2 } } },
+            { wildcard: { slug: { value: `*${q.toLowerCase()}*`, boost: 1.5 } } },
+          ],
+          minimum_should_match: 1,
+        },
+      });
+    }
+
+    // Status filter - only active categories
+    filterClauses.push({ term: { status: 1 } });
+
+    // Pagination
+    const size = Math.max(1, Math.min(Number(filters?.size ?? 20) || 20, 100));
+    const page = Math.max(1, Number(filters?.page ?? 1) || 1);
+    const from = (page - 1) * size;
+
+    // Build category search query
+    const categoryBody: any = {
+      query: {
+        bool: {
+          must: must.length ? must : [{ match_all: {} }],
+          filter: filterClauses,
+        },
+      },
+      size: 1000, // Get more categories to filter by availability
+      from: 0,
+      _source: ['id', 'name', 'slug', 'image', 'parent_id', 'module_id', 'priority', 'featured'],
+    };
+
+    this.logger.log(`[searchCategoriesByModule] Searching categories in indices: ${categoryIndices.join(', ')}`);
+    
+    // Search categories
+    const categoryResults = await Promise.all(
+      categoryIndices.map(index =>
+        this.client.search({ index, body: categoryBody }).catch(() => ({ body: { hits: { hits: [], total: { value: 0 } } } }))
+      )
+    );
+
+    let allCategories: any[] = [];
+    let totalCategoryHits = 0;
+
+    categoryResults.forEach(res => {
+      const hits = res.body.hits?.hits || [];
+      totalCategoryHits += res.body.hits?.total?.value ?? 0;
+      hits.forEach((h: any) => {
+        allCategories.push({
+          id: h._id,
+          ...h._source,
+        });
+      });
+    });
+
+    this.logger.log(`[searchCategoriesByModule] Found ${allCategories.length} categories from search`);
+
+    // Now filter categories by availability (only categories that have available items/stores)
+    const categoryIds = allCategories.map(cat => Number(cat.id));
+    
+    if (categoryIds.length === 0) {
+      return {
+        q,
+        filters,
+        categories: [],
+        meta: {
+          total: 0,
+          page,
+          size,
+          total_pages: 0,
+          has_more: false,
+        },
+      };
+    }
+
+    // Build item query to find available items in these categories
+    const itemFilterClauses: any[] = [
+      { terms: { category_id: categoryIds } },
+      { term: { status: 1 } },
+      { term: { is_approved: 1 } },
+    ];
+
+    // If store_id is provided, filter items by store
+    if (filters?.store_id) {
+      itemFilterClauses.push({ term: { store_id: Number(filters.store_id) } });
+    }
+
+    // Module filter for items
+    if (filters?.module_id) {
+      itemFilterClauses.push({ term: { module_id: Number(filters.module_id) } });
+    }
+
+    // Geo filter for items (if lat/lon provided)
+    const lat = filters?.lat;
+    const lon = filters?.lon;
+    const radiusKm = filters?.radius_km;
+    const hasGeo = lat !== undefined && !Number.isNaN(lat) && lon !== undefined && !Number.isNaN(lon) && 
+                   !(lat === 0 && lon === 0);
+    
+    if (hasGeo && radiusKm !== undefined && !Number.isNaN(radiusKm) && !filters?.store_id) {
+      itemFilterClauses.push({ geo_distance: { distance: `${radiusKm}km`, store_location: { lat, lon } } });
+    }
+
+    const itemQueryBody: any = {
+      query: {
+        bool: {
+          filter: itemFilterClauses,
+        },
+      },
+      size: 0, // We only need aggregations
+      aggs: {
+        categories: {
+          terms: {
+            field: 'category_id',
+            size: 1000, // Get all categories
+          },
+        },
+      },
+    };
+
+    // Search items to get available categories with counts
+    const itemResults = await Promise.all(
+      itemIndices.map(index =>
+        this.client.search({ index, body: itemQueryBody }).catch(() => ({ body: { aggregations: { categories: { buckets: [] } } } }))
+      )
+    );
+
+    // Collect category counts from aggregations
+    const categoryCounts = new Map<number, number>();
+    itemResults.forEach(res => {
+      const buckets = res.body.aggregations?.categories?.buckets || [];
+      buckets.forEach((bucket: any) => {
+        const catId = Number(bucket.key);
+        const count = bucket.doc_count || 0;
+        categoryCounts.set(catId, (categoryCounts.get(catId) || 0) + count);
+      });
+    });
+
+    this.logger.log(`[searchCategoriesByModule] Found ${categoryCounts.size} categories with available items`);
+
+    // Filter categories to only those with available items
+    const availableCategoryIds = Array.from(categoryCounts.keys());
+    const availableCategories = allCategories
+      .filter(cat => availableCategoryIds.includes(Number(cat.id)))
+      .map(cat => ({
+        ...cat,
+        item_count: categoryCounts.get(Number(cat.id)) || 0,
+      }))
+      .sort((a, b) => {
+        // Sort by item_count (descending), then by priority, then by name
+        if (b.item_count !== a.item_count) {
+          return b.item_count - a.item_count;
+        }
+        if (a.priority !== b.priority) {
+          return (b.priority || 0) - (a.priority || 0);
+        }
+        return (a.name || '').localeCompare(b.name || '');
+      });
+
+    // Apply pagination
+    const paginatedCategories = availableCategories.slice(from, from + size);
+    const total = availableCategories.length;
+
+    // Transform image URLs
+    const transformedCategories = this.imageService.transformCategoriesWithImages(paginatedCategories);
+
+    this.logger.log(`[searchCategoriesByModule] Returning ${paginatedCategories.length} categories (page ${page}, total ${total})`);
+
+    return {
+      q,
+      filters,
+      categories: transformedCategories,
+      meta: {
+        total,
+        page,
+        size,
+        total_pages: Math.ceil(total / size),
+        has_more: page * size < total,
+      },
+    };
   }
 }
