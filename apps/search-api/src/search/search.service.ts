@@ -189,21 +189,53 @@ export class SearchService {
             cover_photo: store.cover_photo,
             cover_url: store.cover_full_url,
             rating: store.rating || 0,
-            distance: store.distance,
-            _score: h._score,
-            _source: store
+            distance: store.distance
           };
         });
 
+      // Get all store IDs from items to lookup store names
+      const itemStoreIds = [...new Set(
+        hits
+          .filter((h: any) => h._index === itemsIndex)
+          .map((h: any) => h._source?.store_id)
+          .filter(Boolean)
+      )] as string[];
+      
+      // Lookup store names for all items
+      const storeNames = await this.getStoreNames(itemStoreIds, moduleId === 4 ? 'food' : 'ecom');
+      
       const items = hits
         .filter((h: any) => h._index === itemsIndex)
         .slice(0, size) // Requested page size
         .map((h: any) => {
           const item = this.imageService.transformItemImages(h._source);
-          return {
+          
+          // Ensure store_name is populated
+          let storeName = item.store_name;
+          if (!storeName && item.store_id) {
+            const storeIdStr = String(item.store_id);
+            const storeIdNum = Number(item.store_id);
+            storeName = storeNames[storeIdStr] || 
+                       storeNames[item.store_id] || 
+                       (storeIdNum && !isNaN(storeIdNum) ? storeNames[storeIdNum] : null) ||
+                       null;
+          }
+          
+          // Convert available_time_starts and available_time_ends from milliseconds to HH:mm format
+          let availableTimeStarts = item.available_time_starts;
+          let availableTimeEnds = item.available_time_ends;
+          if (availableTimeStarts !== undefined && availableTimeStarts !== null) {
+            availableTimeStarts = this.convertMillisecondsToTime(availableTimeStarts);
+          }
+          if (availableTimeEnds !== undefined && availableTimeEnds !== null) {
+            availableTimeEnds = this.convertMillisecondsToTime(availableTimeEnds);
+          }
+          
+          // Build result object
+          const resultItem: any = {
             id: item.id,
             name: item.name,
-            store_name: item.store_name,
+            store_name: storeName || null,
             store_id: item.store_id,
             price: item.price,
             image: item.image,
@@ -211,50 +243,83 @@ export class SearchService {
             image_full_url: item.image_full_url,
             image_fallback_url: item.image_fallback_url,
             veg: item.veg,
-            rating: item.rating || 0,
-            _score: h._score,
-            _source: item
+            rating: item.rating || 0
           };
+          
+          // Add time fields if they exist
+          if (availableTimeStarts !== null) {
+            resultItem.available_time_starts = availableTimeStarts;
+          }
+          if (availableTimeEnds !== null) {
+            resultItem.available_time_ends = availableTimeEnds;
+          }
+          
+          // Copy other fields from item (excluding already set ones)
+          Object.keys(item).forEach(key => {
+            // Also explicitly exclude embedding/vector fields from API response
+            if (![
+              'id',
+              'name',
+              'store_name',
+              'store_id',
+              'price',
+              'image',
+              'image_url',
+              'image_full_url',
+              'image_fallback_url',
+              'veg',
+              'rating',
+              'available_time_starts',
+              'available_time_ends',
+              'embedding',
+              'item_vector',
+              'store_item_vector',
+              'store_vector'
+            ].includes(key)) {
+              resultItem[key] = item[key];
+            }
+          });
+          
+          return resultItem;
         });
+
+      // Filter out items with store_id but no store_name (orphaned items from non-existent stores)
+      const validItems = items.filter((item: any) => {
+        // If item has no store_id, include it
+        if (!item.store_id) return true;
+        // If item has store_id, it must have a valid store_name
+        return item.store_name && item.store_name !== '';
+      });
 
       const total = response.body.hits.total?.value || 0;
       const totalStores = stores.length;
-      const totalItems = total - totalStores;
+      const totalItems = validItems.length;
 
       // NEW FEATURE: If no stores found by name match, extract unique stores from top items
       // This ensures "paneer tikka" shows stores that sell paneer tikka items
       let finalStores = stores;
-      if (stores.length === 0 && items.length > 0) {
+      if (stores.length === 0 && validItems.length > 0) {
         const storeMap = new Map();
-        items.forEach((item: any) => {
+        validItems.forEach((item: any) => {
           if (item.store_id && item.store_name && !storeMap.has(item.store_id)) {
             storeMap.set(item.store_id, {
               id: item.store_id,
               name: item.store_name,
-              logo_url: item._source?.store_logo_url || null,
-              rating: item._source?.store_rating || 0,
-              distance: item._source?.store_distance || null,
-              _score: item._score * 0.8, // Slightly lower score since it's derived from items
-              _source: {
-                id: item.store_id,
-                name: item.store_name,
-                logo_url: item._source?.store_logo_url,
-                cover_url: item._source?.store_cover_url,
-                rating: item._source?.store_rating || 0,
-                derived_from_items: true // Flag to indicate this is extracted from items
-              }
+              logo_url: item.logo_url || null,
+              rating: item.rating || 0,
+              distance: item.distance || null
             });
           }
         });
         finalStores = Array.from(storeMap.values()).slice(0, 20);
-        this.logger.log(`🏪 Extracted ${finalStores.length} stores from ${items.length} items for query "${q}"`);
+        this.logger.log(`🏪 Extracted ${finalStores.length} stores from ${validItems.length} items for query "${q}"`);
       }
 
       return {
         query: q,
         intent: finalStores.length > 0 ? 'store_first' : 'generic',
         stores: finalStores,
-        items: items,
+        items: validItems,
         meta: {
           total_stores: finalStores.length,
           total_items: totalItems,
@@ -526,6 +591,41 @@ export class SearchService {
   }
 
   /**
+   * Convert milliseconds to HH:mm format
+   * Handles both numeric (milliseconds) and string (already formatted) values
+   */
+  private convertMillisecondsToTime(value: any): string | null {
+    if (!value && value !== 0) return null;
+    
+    // If already a string in HH:mm format, return as is
+    if (typeof value === 'string') {
+      // Check if it's already in HH:mm or HH:mm:ss format
+      if (/^\d{1,2}:\d{2}(:\d{2})?$/.test(value)) {
+        // Return just HH:mm part
+        return value.substring(0, 5);
+      }
+      // If it's a number string, try to parse it
+      const num = Number(value);
+      if (!isNaN(num)) {
+        value = num;
+      } else {
+        return null;
+      }
+    }
+    
+    // If it's a number (milliseconds), convert to HH:mm
+    if (typeof value === 'number') {
+      // Convert milliseconds to hours and minutes
+      const totalMinutes = Math.floor(value / 60000); // Convert ms to minutes
+      const hours = Math.floor(totalMinutes / 60);
+      const minutes = totalMinutes % 60;
+      return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+    }
+    
+    return null;
+  }
+
+  /**
    * Calculate store timing status and display message
    * Returns status: 'open', 'closing_soon', 'closed'
    * Uses store_schedule from database, falls back to 10 AM - 10 PM
@@ -743,32 +843,60 @@ export class SearchService {
     for (const response of results) {
       for (const doc of response.body.docs || []) {
         if (doc.found && doc._source?.name) {
-          storeNames[doc._id] = doc._source.name;
+          const name = doc._source.name;
+          // Map by _id (document ID)
+          if (doc._id) {
+            storeNames[doc._id] = name;
+            storeNames[String(doc._id)] = name;
+            const numId = Number(doc._id);
+            if (!isNaN(numId)) {
+              storeNames[numId] = name;
+            }
+          }
           // Also map by the numeric ID from the source
           if (doc._source?.id) {
-            storeNames[String(doc._source.id)] = doc._source.name;
+            const sourceId = doc._source.id;
+            storeNames[String(sourceId)] = name;
+            storeNames[sourceId] = name;
+            const numSourceId = Number(sourceId);
+            if (!isNaN(numSourceId)) {
+              storeNames[numSourceId] = name;
+            }
           }
         }
       }
     }
 
     // Fallback to MySQL for stores not found in OpenSearch
-    const missingStoreIds = storeIds.filter(id => !storeNames[id] && !storeNames[String(id)]);
+    // Check all possible key formats to determine missing stores
+    const missingStoreIds = storeIds.filter(id => {
+      const idStr = String(id);
+      const idNum = Number(id);
+      const found = storeNames[id] || storeNames[idStr] || (!isNaN(idNum) && storeNames[idNum]);
+      return !found;
+    });
+    
     if (missingStoreIds.length > 0) {
-      this.logger.debug(`[getStoreNames] ${missingStoreIds.length} stores not found in OpenSearch, fetching from MySQL`);
+      this.logger.debug(`[getStoreNames] ${missingStoreIds.length} stores not found in OpenSearch, fetching from MySQL: ${missingStoreIds.slice(0, 10).join(', ')}`);
       try {
         const mysqlStoreNames = await this.moduleService.getStoreNames(missingStoreIds);
         for (const [storeId, storeName] of mysqlStoreNames.entries()) {
           if (storeName) {
+            const idStr = String(storeId);
+            const idNum = Number(storeId);
+            // Map by all possible key formats to ensure lookup works
             storeNames[storeId] = storeName;
-            // Also map by numeric ID
-            const numericId = String(storeId);
-            if (numericId !== storeId) {
-              storeNames[numericId] = storeName;
+            if (idStr !== String(storeId)) {
+              storeNames[idStr] = storeName;
             }
+            if (!isNaN(idNum)) {
+              storeNames[idNum] = storeName;
+            }
+            // Also try the original storeId as string if it's different
+            storeNames[String(storeId)] = storeName;
           }
         }
-        this.logger.debug(`[getStoreNames] Fetched ${Object.keys(storeNames).length - (storeIds.length - missingStoreIds.length)} store names from MySQL`);
+        this.logger.debug(`[getStoreNames] Fetched ${mysqlStoreNames.size} store names from MySQL`);
       } catch (error: any) {
         this.logger.warn(`[getStoreNames] Failed to fetch store names from MySQL: ${error?.message || String(error)}`);
       }
@@ -2901,8 +3029,18 @@ export class SearchService {
           if (!res.error) {
             const hits = res.hits?.hits || [];
             hits.forEach((h: any) => {
+              // Convert available_time_starts and available_time_ends from milliseconds to HH:mm format
+              const sourceData = h._source || {};
+              const convertedFields: any = { ...sourceData };
+              if (convertedFields.available_time_starts !== undefined && convertedFields.available_time_starts !== null) {
+                convertedFields.available_time_starts = this.convertMillisecondsToTime(convertedFields.available_time_starts);
+              }
+              if (convertedFields.available_time_ends !== undefined && convertedFields.available_time_ends !== null) {
+                convertedFields.available_time_ends = this.convertMillisecondsToTime(convertedFields.available_time_ends);
+              }
+              
               allItems.push({
-                ...h._source,
+                ...convertedFields,
                 id: h._id,
                 score: h._score,
                 distance_km: h.fields?.distance_km?.[0],
@@ -4459,10 +4597,19 @@ export class SearchService {
           }
         }
         
+        // Convert available_time_starts and available_time_ends from milliseconds to HH:mm format
+        const convertedSource: any = { ...source };
+        if (convertedSource.available_time_starts !== undefined && convertedSource.available_time_starts !== null) {
+          convertedSource.available_time_starts = this.convertMillisecondsToTime(convertedSource.available_time_starts);
+        }
+        if (convertedSource.available_time_ends !== undefined && convertedSource.available_time_ends !== null) {
+          convertedSource.available_time_ends = this.convertMillisecondsToTime(convertedSource.available_time_ends);
+        }
+        
         allItems.push({
           id: h._id,
           distance_km: distance,
-          ...source,
+          ...convertedSource,
         });
       });
     });
@@ -4958,10 +5105,19 @@ export class SearchService {
                 }
               }
               
+              // Convert available_time_starts and available_time_ends from milliseconds to HH:mm format
+              const convertedSource: any = { ...source };
+              if (convertedSource.available_time_starts !== undefined && convertedSource.available_time_starts !== null) {
+                convertedSource.available_time_starts = this.convertMillisecondsToTime(convertedSource.available_time_starts);
+              }
+              if (convertedSource.available_time_ends !== undefined && convertedSource.available_time_ends !== null) {
+                convertedSource.available_time_ends = this.convertMillisecondsToTime(convertedSource.available_time_ends);
+              }
+              
               fallbackItems.push({
                 id: h._id,
                 distance_km: distance,
-                ...source,
+                ...convertedSource,
               });
             });
           });
@@ -5280,6 +5436,7 @@ export class SearchService {
     }
 
     // Geo filter
+    // When store_id is explicitly provided, don't apply geo_distance filter (user wants specific store regardless of distance)
     const lat = filters?.lat;
     const lon = filters?.lon;
     const radiusKm = filters?.radius_km ? Number(filters.radius_km) : undefined;
@@ -5287,13 +5444,16 @@ export class SearchService {
     const hasGeo = lat !== undefined && !Number.isNaN(lat) && lon !== undefined && !Number.isNaN(lon) && 
                    !(lat === 0 && lon === 0);
     
-    if (hasGeo && radiusKm !== undefined && !Number.isNaN(radiusKm)) {
+    if (hasGeo && radiusKm !== undefined && !Number.isNaN(radiusKm) && !filters?.store_id) {
       filterClauses.push({ geo_distance: { distance: `${radiusKm}km`, store_location: { lat, lon } } });
+    } else if (filters?.store_id && hasGeo && radiusKm !== undefined) {
+      this.logger.debug(`[searchItemsByModule] Geo distance filter skipped because store_id filter is provided`);
     }
 
     // Zone-aware filtering (items have zone_id indexed)
+    // When store_id is explicitly provided, don't apply zone filter (user wants specific store regardless of zone)
     let userZoneId: number | null = null;
-    if (hasGeo) {
+    if (hasGeo && !filters?.store_id) {
       try {
         userZoneId = await this.zoneService.getZoneId(lat, lon);
         if (userZoneId) {
@@ -5307,6 +5467,8 @@ export class SearchService {
       } catch (error) {
         this.logger.warn(`[searchItemsByModule] Failed to get zone ID: ${(error as any)?.message || String(error)}`);
       }
+    } else if (filters?.store_id) {
+      this.logger.debug(`[searchItemsByModule] Zone filter skipped because store_id filter is provided`);
     }
 
     // Pagination
@@ -5415,12 +5577,25 @@ export class SearchService {
           const hits = res.body.hits?.hits || [];
           totalHits += res.body.hits?.total?.value ?? 0;
           hits.forEach((h: any) => {
-            allItems.push({
-              id: h._id,
-              score: h._score,
-              distance_km: h.fields?.distance_km?.[0],
-              ...h._source,
-            });
+          // Extract _source fields but explicitly exclude _source field if it exists
+          const sourceData = h._source || {};
+          const { _source, ...sourceFields } = sourceData;
+          
+          // Convert available_time_starts and available_time_ends from milliseconds to HH:mm format
+          const convertedFields: any = { ...sourceFields };
+          if (convertedFields.available_time_starts !== undefined && convertedFields.available_time_starts !== null) {
+            convertedFields.available_time_starts = this.convertMillisecondsToTime(convertedFields.available_time_starts);
+          }
+          if (convertedFields.available_time_ends !== undefined && convertedFields.available_time_ends !== null) {
+            convertedFields.available_time_ends = this.convertMillisecondsToTime(convertedFields.available_time_ends);
+          }
+          
+          allItems.push({
+            id: h._id,
+            score: h._score,
+            distance_km: h.fields?.distance_km?.[0],
+            ...convertedFields,
+          });
           });
         });
 
@@ -5434,10 +5609,23 @@ export class SearchService {
         const storeIds = [...new Set(allItems.map(item => item.store_id).filter(Boolean))];
         const storeNames = await this.getStoreNames(storeIds, 'all'); // Search all store indices
 
-        const items = allItems.map(item => ({
-          ...item,
-          store_name: item.store_id ? storeNames[String(item.store_id)] : null,
-        }));
+        const items = allItems.map(item => {
+          // Remove _source and _score fields if they exist (shouldn't be in response)
+          const { _source, _score, score, ...cleanItem } = item;
+          // Explicitly delete these fields to ensure they're removed
+          delete (cleanItem as any)._source;
+          delete (cleanItem as any)._score;
+          
+          // Ensure store_name is always populated if store_id exists
+          let storeName = cleanItem.store_name;
+          if (!storeName && cleanItem.store_id) {
+            storeName = storeNames[String(cleanItem.store_id)] || storeNames[cleanItem.store_id] || null;
+          }
+          return {
+            ...cleanItem,
+            store_name: storeName || null, // Explicitly set to null if missing
+          };
+        });
 
         return {
           q,
@@ -5581,11 +5769,24 @@ export class SearchService {
           }
         }
         
+        // Extract _source fields but explicitly exclude _source field if it exists
+        const sourceData = h._source || {};
+        const { _source, ...sourceFields } = sourceData;
+        
+        // Convert available_time_starts and available_time_ends from milliseconds to HH:mm format
+        const convertedFields: any = { ...sourceFields };
+        if (convertedFields.available_time_starts !== undefined && convertedFields.available_time_starts !== null) {
+          convertedFields.available_time_starts = this.convertMillisecondsToTime(convertedFields.available_time_starts);
+        }
+        if (convertedFields.available_time_ends !== undefined && convertedFields.available_time_ends !== null) {
+          convertedFields.available_time_ends = this.convertMillisecondsToTime(convertedFields.available_time_ends);
+        }
+        
         allItems.push({
           id: h._id,
           score: h._score,
           distance_km: distance !== undefined && distance !== null ? distance : (hasGeo ? undefined : undefined),
-          ...h._source,
+          ...convertedFields,
         });
       });
     });
@@ -5593,7 +5794,8 @@ export class SearchService {
     this.logger.log(`[searchItemsByModule] Initial search total hits: ${totalHits}. hasGeo: ${hasGeo}, radiusKm: ${radiusKm}`);
 
     // Fallback: If no results found with radius filter, try without radius filter
-    if (totalHits === 0 && hasGeo && radiusKm) {
+    // Skip fallback if store_id is provided (user wants specific store, don't retry without filters)
+    if (totalHits === 0 && hasGeo && radiusKm && !filters?.store_id) {
       this.logger.log(`[searchItemsByModule] No results within ${radiusKm}km, retrying without radius filter`);
       
       const fallbackResults = await Promise.all(
@@ -5676,11 +5878,21 @@ export class SearchService {
             }
           }
           
+          // Convert available_time_starts and available_time_ends from milliseconds to HH:mm format
+          const sourceData = h._source || {};
+          const convertedFields: any = { ...sourceData };
+          if (convertedFields.available_time_starts !== undefined && convertedFields.available_time_starts !== null) {
+            convertedFields.available_time_starts = this.convertMillisecondsToTime(convertedFields.available_time_starts);
+          }
+          if (convertedFields.available_time_ends !== undefined && convertedFields.available_time_ends !== null) {
+            convertedFields.available_time_ends = this.convertMillisecondsToTime(convertedFields.available_time_ends);
+          }
+          
           allItems.push({
             id: h._id,
             score: h._score,
             distance_km: distance !== undefined && distance !== null ? distance : (hasGeo ? undefined : undefined),
-            ...h._source,
+            ...convertedFields,
           });
         });
       });
@@ -5859,12 +6071,25 @@ export class SearchService {
               // Use the store's match score as the item's score
               const storeScore = storeScores.get(String(h._source.store_id)) || 0;
               
+              // Extract _source fields but explicitly exclude _source field if it exists
+              const sourceData = h._source || {};
+              const { _source, ...sourceFields } = sourceData;
+              
+              // Convert available_time_starts and available_time_ends from milliseconds to HH:mm format
+              const convertedFields: any = { ...sourceFields };
+              if (convertedFields.available_time_starts !== undefined && convertedFields.available_time_starts !== null) {
+                convertedFields.available_time_starts = this.convertMillisecondsToTime(convertedFields.available_time_starts);
+              }
+              if (convertedFields.available_time_ends !== undefined && convertedFields.available_time_ends !== null) {
+                convertedFields.available_time_ends = this.convertMillisecondsToTime(convertedFields.available_time_ends);
+              }
+              
               allItems.push({
                 id: h._id,
                 score: storeScore, // Use store match score directly
                 matchType: 'store_name', // Second priority
                 distance_km: distance !== undefined && distance !== null ? distance : undefined,
-                ...h._source,
+                ...convertedFields,
               });
             });
           });
@@ -6213,12 +6438,25 @@ export class SearchService {
                 }
               }
               
-              fallbackItems.push({
-                id: h._id,
-                score: h._score,
-                distance_km: distance !== undefined && distance !== null ? distance : undefined,
-                ...h._source,
-              });
+          // Extract _source fields but explicitly exclude _source field if it exists
+          const sourceData = h._source || {};
+          const { _source, ...sourceFields } = sourceData;
+          
+          // Convert available_time_starts and available_time_ends from milliseconds to HH:mm format
+          const convertedFields: any = { ...sourceFields };
+          if (convertedFields.available_time_starts !== undefined && convertedFields.available_time_starts !== null) {
+            convertedFields.available_time_starts = this.convertMillisecondsToTime(convertedFields.available_time_starts);
+          }
+          if (convertedFields.available_time_ends !== undefined && convertedFields.available_time_ends !== null) {
+            convertedFields.available_time_ends = this.convertMillisecondsToTime(convertedFields.available_time_ends);
+          }
+          
+          fallbackItems.push({
+            id: h._id,
+            score: h._score,
+            distance_km: distance !== undefined && distance !== null ? distance : undefined,
+            ...convertedFields,
+          });
             });
           });
           
@@ -6247,10 +6485,32 @@ export class SearchService {
           const fallbackStoreIds = [...new Set(fallbackItems.map(item => item.store_id).filter(Boolean))];
           const fallbackStoreNames = await this.getStoreNames(fallbackStoreIds, 'all');
           
-          const items = fallbackItems.map(item => ({
-            ...item,
-            store_name: item.store_id ? fallbackStoreNames[String(item.store_id)] : null,
-          }));
+          const items = fallbackItems.map(item => {
+            // Remove _source and _score fields if they exist (shouldn't be in response)
+            const { _source, _score, score, ...cleanItem } = item;
+            // Explicitly delete these fields to ensure they're removed
+            delete (cleanItem as any)._source;
+            delete (cleanItem as any)._score;
+            
+            // Ensure store_name is always populated if store_id exists
+            let storeName = cleanItem.store_name;
+            if (!storeName && cleanItem.store_id) {
+              storeName = fallbackStoreNames[String(cleanItem.store_id)] || fallbackStoreNames[cleanItem.store_id] || null;
+            }
+            
+            // Convert available_time_starts and available_time_ends from milliseconds to HH:mm format
+            if (cleanItem.available_time_starts !== undefined && cleanItem.available_time_ends !== null) {
+              cleanItem.available_time_starts = this.convertMillisecondsToTime(cleanItem.available_time_starts);
+            }
+            if (cleanItem.available_time_ends !== undefined && cleanItem.available_time_ends !== null) {
+              cleanItem.available_time_ends = this.convertMillisecondsToTime(cleanItem.available_time_ends);
+            }
+            
+            return {
+              ...cleanItem,
+              store_name: storeName || null, // Explicitly set to null if missing
+            };
+          });
           
           // Log analytics
           this.analytics.logSearch({
@@ -6265,16 +6525,42 @@ export class SearchService {
             section: 'items',
           }).catch(() => {});
           
+          // Transform and clean items
+          const transformedItems = this.imageService.transformItemsWithImages(items);
+          const cleanedItems = transformedItems.map((item: any) => {
+            const cleaned: any = {};
+            for (const key in item) {
+              if (key !== '_source' && key !== '_score' && key !== 'embedding' && item.hasOwnProperty(key)) {
+                cleaned[key] = item[key];
+              }
+            }
+            Object.keys(item).forEach(key => {
+              if (key !== '_source' && key !== '_score' && key !== 'embedding' && !(key in cleaned)) {
+                cleaned[key] = item[key];
+              }
+            });
+            delete cleaned._source;
+            delete cleaned._score;
+            delete cleaned.embedding;
+            return cleaned;
+          });
+          
+          // Filter out items with store_id but no store_name
+          const validItems = cleanedItems.filter((item: any) => {
+            if (!item.store_id) return true;
+            return item.store_name && item.store_name !== '';
+          });
+
           return {
             q,
             filters,
-            items: this.imageService.transformItemsWithImages(items),
+            items: validItems,
             meta: {
-              total: fallbackTotalHits,
+              total: validItems.length,
               page,
               size,
-              total_pages: Math.ceil(fallbackTotalHits / size),
-              has_more: page * size < fallbackTotalHits,
+              total_pages: Math.ceil(validItems.length / size),
+              has_more: page * size < validItems.length,
             },
           };
         }
@@ -6319,13 +6605,45 @@ export class SearchService {
         }
       }
       
-      // Use existing store_name from item, only use lookup as fallback
-      const storeName = item.store_name || (item.store_id ? storeNames[String(item.store_id)] : null);
+      // Ensure store_name is always populated if store_id exists
+      // Priority: 1) item.store_name (from index), 2) lookup from storeNames map
+      let storeName = item.store_name;
+      if (!storeName && item.store_id) {
+        const storeIdStr = String(item.store_id);
+        const storeIdNum = Number(item.store_id);
+        // Try multiple key formats
+        storeName = storeNames[storeIdStr] || 
+                   storeNames[item.store_id] || 
+                   (storeIdNum && !isNaN(storeIdNum) ? storeNames[storeIdNum] : null) ||
+                   null;
+      }
+      
+      // Remove _source and _score fields by creating a new object
+      const cleanItem: any = {};
+      for (const key in item) {
+        if (key !== '_source' && key !== '_score' && item.hasOwnProperty(key)) {
+          cleanItem[key] = item[key];
+        }
+      }
+      // Also copy from Object.keys to ensure all enumerable properties
+      Object.keys(item).forEach(key => {
+        if (key !== '_source' && key !== '_score' && !(key in cleanItem)) {
+          cleanItem[key] = item[key];
+        }
+      });
+      
+      // Convert available_time_starts and available_time_ends from milliseconds to HH:mm format
+      if (cleanItem.available_time_starts !== undefined && cleanItem.available_time_starts !== null) {
+        cleanItem.available_time_starts = this.convertMillisecondsToTime(cleanItem.available_time_starts);
+      }
+      if (cleanItem.available_time_ends !== undefined && cleanItem.available_time_ends !== null) {
+        cleanItem.available_time_ends = this.convertMillisecondsToTime(cleanItem.available_time_ends);
+      }
       
       return {
-        ...item,
+        ...cleanItem,
         distance_km: distanceKm,
-        store_name: storeName,
+        store_name: storeName || null, // Explicitly set to null if missing
       };
     });
 
@@ -6384,11 +6702,64 @@ export class SearchService {
       }
     }
 
+    // Transform images first
+    let transformedItems = this.imageService.transformItemsWithImages(items);
+    
+    // Final cleanup: Remove internal fields (_source, _score, embedding/vector fields) from all items after transformation
+    // Create a completely new object without these fields
+    const cleanedItems = transformedItems.map(item => {
+      const cleaned: any = {};
+      // Copy all properties except internal fields
+      for (const key in item) {
+        if (
+          key !== '_source' &&
+          key !== '_score' &&
+          key !== 'embedding' &&
+          key !== 'item_vector' &&
+          key !== 'store_item_vector' &&
+          key !== 'store_vector' &&
+          item.hasOwnProperty(key)
+        ) {
+          cleaned[key] = item[key];
+        }
+      }
+      // Also use Object.keys to catch any enumerable properties
+      Object.keys(item).forEach(key => {
+        if (
+          key !== '_source' &&
+          key !== '_score' &&
+          key !== 'embedding' &&
+          key !== 'item_vector' &&
+          key !== 'store_item_vector' &&
+          key !== 'store_vector' &&
+          !(key in cleaned)
+        ) {
+          cleaned[key] = item[key];
+        }
+      });
+      // Explicitly delete in case anything slipped through
+      delete cleaned._source;
+      delete cleaned._score;
+      delete cleaned.embedding;
+      delete cleaned.item_vector;
+      delete cleaned.store_item_vector;
+      delete cleaned.store_vector;
+      return cleaned;
+    });
+
+    // Filter out items with store_id but no store_name (orphaned items from non-existent stores)
+    const validItems = cleanedItems.filter((item: any) => {
+      // If item has no store_id, include it
+      if (!item.store_id) return true;
+      // If item has store_id, it must have a valid store_name
+      return item.store_name && item.store_name !== '';
+    });
+
     return {
       q,
       filters: { ...filters, _original_query: undefined }, // Remove internal flag from response
       resolved_store: resolvedStore,
-      items: this.imageService.transformItemsWithImages(items),
+      items: validItems,
       meta: {
         total: totalHits,
         page,

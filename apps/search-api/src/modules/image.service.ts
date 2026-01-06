@@ -224,7 +224,19 @@ export class ImageService {
   transformItemImages(item: Record<string, any>): Record<string, any> {
     if (!item) return item;
     
-    const transformed = { ...item };
+    // Remove _source and _score fields by creating a new object
+    const transformed: Record<string, any> = {};
+    for (const key in item) {
+      if (key !== '_source' && key !== '_score' && item.hasOwnProperty(key)) {
+        transformed[key] = item[key];
+      }
+    }
+    // Also copy from Object.keys to ensure all enumerable properties
+    Object.keys(item).forEach(key => {
+      if (key !== '_source' && key !== '_score' && !(key in transformed)) {
+        transformed[key] = item[key];
+      }
+    });
     
     // Main image - use smart URL generation
     if (item.image) {
