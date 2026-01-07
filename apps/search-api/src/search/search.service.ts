@@ -46,7 +46,7 @@ export class SearchService {
     if (q && q.trim()) {
       try {
         const storeSearchBody: any = {
-          query: {
+            query: {
             bool: {
               should: [
                 { term: { 'name.keyword': { value: q, case_insensitive: true } } },
@@ -89,33 +89,33 @@ export class SearchService {
     try {
       // Build base query
       const baseQuery: any = {
-        bool: {
-          should: [
-            {
-              multi_match: {
-                query: q,
-                fields: ['name^3', 'description', 'store_name^2'],
-                type: 'best_fields',
-                fuzziness: 'AUTO'
+              bool: {
+                should: [
+                  {
+                    multi_match: {
+                      query: q,
+                      fields: ['name^3', 'description', 'store_name^2'],
+                      type: 'best_fields',
+                      fuzziness: 'AUTO'
+                    }
+                  }
+                ],
+                filter: []
               }
-            }
-          ],
-          filter: []
-        }
       };
       
       // Build boost functions for store-first strategy
       const boostFunctions: any[] = [
-        {
-          // Boost stores 10x higher than items
-          filter: { term: { _index: storesIndex } },
-          weight: 10.0
-        },
-        {
-          // Items get base score (1.0)
-          filter: { term: { _index: itemsIndex } },
-          weight: 1.0
-        }
+              {
+                // Boost stores 10x higher than items
+                filter: { term: { _index: storesIndex } },
+                weight: 10.0
+              },
+              {
+                // Items get base score (1.0)
+                filter: { term: { _index: itemsIndex } },
+                weight: 1.0
+              }
       ];
       
       // Add store-first boosting: Boost items from matching stores
@@ -5687,7 +5687,7 @@ export class SearchService {
             ];
           } else {
             // No query: just sort by distance
-            sort = [{ _geo_distance: { store_location: { lat, lon }, order: 'asc', unit: 'km' } }];
+          sort = [{ _geo_distance: { store_location: { lat, lon }, order: 'asc', unit: 'km' } }];
           }
         } else {
           sort = [{ order_count: { order: 'desc' } }];
@@ -5698,7 +5698,7 @@ export class SearchService {
         if (q && q.trim()) {
           sort = ['_score', { price: { order: 'asc' } }];
         } else {
-          sort = [{ price: { order: 'asc' } }];
+        sort = [{ price: { order: 'asc' } }];
         }
         break;
       case 'price_desc':
@@ -5706,7 +5706,7 @@ export class SearchService {
         if (q && q.trim()) {
           sort = ['_score', { price: { order: 'desc' } }];
         } else {
-          sort = [{ price: { order: 'desc' } }];
+        sort = [{ price: { order: 'desc' } }];
         }
         break;
       case 'rating':
@@ -5714,7 +5714,7 @@ export class SearchService {
         if (q && q.trim()) {
           sort = ['_score', { avg_rating: { order: 'desc' } }, { order_count: { order: 'desc' } }];
         } else {
-          sort = [{ avg_rating: { order: 'desc' } }, { order_count: { order: 'desc' } }];
+        sort = [{ avg_rating: { order: 'desc' } }, { order_count: { order: 'desc' } }];
         }
         break;
       case 'popularity':
@@ -5723,7 +5723,7 @@ export class SearchService {
         if (q && q.trim()) {
           sort = ['_score', { order_count: { order: 'desc' } }, { avg_rating: { order: 'desc' } }];
         } else {
-          sort = [{ order_count: { order: 'desc' } }, { avg_rating: { order: 'desc' } }];
+        sort = [{ order_count: { order: 'desc' } }, { avg_rating: { order: 'desc' } }];
         }
         break;
     }
@@ -7312,11 +7312,11 @@ export class SearchService {
 
     // Store-First Search Strategy: Boost stores that match the query exactly
     let finalQuery: any = {
-      bool: {
-        must: must.length ? must : [{ match_all: {} }],
-        filter: filterClauses,
-        must_not: mustNotClauses.length > 0 ? mustNotClauses : undefined,
-      },
+        bool: {
+          must: must.length ? must : [{ match_all: {} }],
+          filter: filterClauses,
+          must_not: mustNotClauses.length > 0 ? mustNotClauses : undefined,
+        },
     };
     
     // If query is provided, apply function_score to boost exact matches
@@ -8885,8 +8885,8 @@ export class SearchService {
     // Status filter - only active categories
     filterClauses.push({ term: { status: 1 } });
 
-    // Pagination
-    const size = Math.max(1, Math.min(Number(filters?.size ?? 20) || 20, 100));
+    // Pagination - default size is 100 for categories to return all categories by default
+    const size = Math.max(1, Math.min(Number(filters?.size ?? 100) || 100, 100));
     const page = Math.max(1, Number(filters?.page ?? 1) || 1);
     const from = (page - 1) * size;
 
@@ -9018,17 +9018,105 @@ export class SearchService {
       .map(cat => ({
         ...cat,
         item_count: categoryCounts.get(Number(cat.id)) || 0,
-      }))
-      .sort((a, b) => {
-        // Sort by item_count (descending), then by priority, then by name
-        if (b.item_count !== a.item_count) {
-          return b.item_count - a.item_count;
-        }
-        if (a.priority !== b.priority) {
-          return (b.priority || 0) - (a.priority || 0);
-        }
-        return (a.name || '').localeCompare(b.name || '');
+      }));
+
+    // Collect parent category IDs from available categories
+    const parentIds = new Set<number>();
+    const sampleCategories = availableCategories.slice(0, 5).map(c => ({ id: c.id, parent_id: c.parent_id }));
+    this.logger.log(`[searchCategoriesByModule] Sample categories: ${JSON.stringify(sampleCategories)}`);
+    
+    availableCategories.forEach(cat => {
+      const parentId = cat.parent_id;
+      if (parentId !== null && parentId !== undefined && parentId !== 'null' && parentId !== '' && Number(parentId) > 0) {
+        parentIds.add(Number(parentId));
+      }
+    });
+
+    this.logger.log(`[searchCategoriesByModule] Found ${parentIds.size} parent categories to include: [${Array.from(parentIds).join(', ')}]`);
+
+    // Fetch parent categories from OpenSearch if they exist
+    if (parentIds.size > 0) {
+      const parentIdsArray = Array.from(parentIds);
+      const parentCategoryBody: any = {
+        query: {
+          bool: {
+            filter: [
+              { terms: { _id: parentIdsArray.map(String) } },
+              { term: { status: 1 } },
+            ],
+          },
+        },
+        size: parentIdsArray.length,
+        _source: ['id', 'name', 'slug', 'image', 'parent_id', 'module_id', 'priority', 'featured'],
+      };
+
+      const parentCategoryResults = await Promise.all(
+        categoryIndices.map(index =>
+          this.client.search({ index, body: parentCategoryBody }).catch(() => ({ body: { hits: { hits: [] } } }))
+        )
+      );
+
+      const parentCategoriesMap = new Map<number, any>();
+      parentCategoryResults.forEach((res, idx) => {
+        const hits = res.body.hits?.hits || [];
+        this.logger.log(`[searchCategoriesByModule] Index ${categoryIndices[idx]}: Found ${hits.length} parent categories from OpenSearch`);
+        hits.forEach((h: any) => {
+          const parentId = Number(h._id);
+          if (!parentCategoriesMap.has(parentId)) {
+            parentCategoriesMap.set(parentId, {
+              id: h._id,
+              ...h._source,
+            });
+            this.logger.log(`[searchCategoriesByModule] Found parent category ${parentId} (${h._source?.name || 'unnamed'})`);
+          }
+        });
       });
+      
+      this.logger.log(`[searchCategoriesByModule] Total parent categories found: ${parentCategoriesMap.size} out of ${parentIds.size} requested`);
+
+      // Add parent categories to results (if not already present)
+      // Also update item_count for existing parent categories to include children's counts
+      const existingCategoryIds = new Set(availableCategories.map(cat => Number(cat.id)));
+      parentCategoriesMap.forEach((parentCat, parentId) => {
+        // Calculate item_count for parent: sum of all children's item counts
+        let parentItemCount = 0;
+        availableCategories.forEach(childCat => {
+          if (Number(childCat.parent_id) === parentId) {
+            parentItemCount += childCat.item_count || 0;
+          }
+        });
+        
+        if (!existingCategoryIds.has(parentId)) {
+          // Parent category not in results, add it
+          availableCategories.push({
+            ...parentCat,
+            item_count: parentItemCount,
+          });
+          
+          this.logger.log(`[searchCategoriesByModule] Added parent category ${parentId} with item_count ${parentItemCount}`);
+        } else {
+          // Parent category already exists, update its item_count to include children
+          const existingParentIndex = availableCategories.findIndex(cat => Number(cat.id) === parentId);
+          if (existingParentIndex >= 0) {
+            const existingItemCount = availableCategories[existingParentIndex].item_count || 0;
+            // Use the maximum of existing count and children sum (in case parent has direct items)
+            availableCategories[existingParentIndex].item_count = Math.max(existingItemCount, parentItemCount);
+            this.logger.log(`[searchCategoriesByModule] Updated parent category ${parentId} item_count from ${existingItemCount} to ${availableCategories[existingParentIndex].item_count}`);
+          }
+        }
+      });
+    }
+
+    // Sort categories: by item_count (descending), then by priority, then by name
+    availableCategories.sort((a, b) => {
+      if (b.item_count !== a.item_count) {
+        return b.item_count - a.item_count;
+      }
+      if (a.priority !== b.priority) {
+        return (b.priority || 0) - (a.priority || 0);
+      }
+      return (a.name || '').localeCompare(b.name || '');
+    });
 
     // Apply pagination
     const paginatedCategories = availableCategories.slice(from, from + size);

@@ -831,7 +831,7 @@ export class SearchController {
   @ApiQuery({ name: 'lon', required: false, description: 'Longitude for geo-distance filtering', example: 73.7898 })
   @ApiQuery({ name: 'radius_km', required: false, description: 'Radius in kilometers', example: 5 })
   @ApiQuery({ name: 'page', required: false, description: 'Page number (1-based)', example: 1 })
-  @ApiQuery({ name: 'size', required: false, description: 'Results per page (1-100)', example: 20 })
+  @ApiQuery({ name: 'size', required: false, description: 'Results per page (1-100, default: 100)', example: 100 })
   @ApiResponse({ 
     status: 200, 
     description: 'Search results with categories',
