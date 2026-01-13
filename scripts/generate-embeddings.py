@@ -8,11 +8,12 @@ import requests
 import json
 import argparse
 import time
+import os
 from typing import List, Dict, Any, Optional
 
 # Configuration
-OPENSEARCH_URL = "http://localhost:9200"
-EMBEDDING_SERVICE_URL = "http://localhost:3101"
+OPENSEARCH_URL = os.getenv("OPENSEARCH_URL", "http://localhost:9200")
+EMBEDDING_SERVICE_URL = os.getenv("EMBEDDING_SERVICE_URL", "http://localhost:3101")
 BATCH_SIZE = 100  # Process 100 documents at a time
 MAX_EMBEDDING_BATCH = 50  # Embedding service processes 50 texts at once
 
@@ -99,10 +100,10 @@ class EmbeddingGenerator:
         
         for doc in documents:
             source = doc.get("_source", {})
-            name = source.get("name", "").strip()
-            desc = source.get("description", "").strip()
-            category = source.get("category_name", "").strip()
-            brand = source.get("brand", "").strip()
+            name = (source.get("name") or "").strip()
+            desc = (source.get("description") or "").strip()
+            category = (source.get("category_name") or "").strip()
+            brand = (source.get("brand") or "").strip()
             
             # Combined: name + category + brand + description
             combined_text = name

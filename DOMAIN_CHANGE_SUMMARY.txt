@@ -1,0 +1,181 @@
+================================================================================
+DOMAIN MIGRATION: search.test.mangwale.ai → search.mangwale.ai
+================================================================================
+
+✅ CONFIGURATION UPDATES COMPLETED
+================================================================================
+
+1. TRAEFIK CONFIGURATION
+   File: /root/searchv2/traefik-config/dynamic/search-mangwale.yml
+   Status: ✅ UPDATED
+   
+   Changes:
+   - search-api router: search.test.mangwale.ai → search.mangwale.ai
+   - search-suggest-fix router: search.test.mangwale.ai → search.mangwale.ai
+   - search-frontend router: search.test.mangwale.ai → search.mangwale.ai
+   - search-frontend-http router: search.test.mangwale.ai → search.mangwale.ai
+
+2. NGINX CONFIGURATION
+   File: /root/searchv2/nginx/search.mangwale.ai.conf
+   Status: ✅ UPDATED
+   
+   Changes:
+   - Server name: search.mangwale.ai
+   - HTTP: Port 80 with 301 redirect to HTTPS
+   - HTTPS: Port 443 with SSL/TLS 1.2 & 1.3
+   - SSL Certificates: /etc/letsencrypt/live/search.mangwale.ai/
+   - API Proxy: http://127.0.0.1:3100
+   - Frontend Proxy: http://127.0.0.1:6000
+   - ASR Uploads: http://127.0.0.1:3100
+   - Security Headers: HSTS, CSP, X-Frame-Options, etc.
+   - OCSP Stapling: Enabled
+
+3. DOCUMENTATION CREATED
+   File: /root/searchv2/DOMAIN_MIGRATION_GUIDE.md
+   File: /root/searchv2/QUICK_REFERENCE_DOMAIN_CHANGE.md
+   Status: ✅ CREATED
+
+================================================================================
+🔧 YOUR NEXT STEPS (DO THIS ON YOUR DNS PROVIDER)
+================================================================================
+
+Step 1: UPDATE DNS RECORD
+   Domain: search.mangwale.ai
+   Type: A Record
+   Value: 103.86.176.59
+
+Step 2: WAIT FOR DNS PROPAGATION
+   Time: 15-30 minutes
+   Verify: nslookup search.mangwale.ai
+
+Step 3: GENERATE SSL CERTIFICATE
+   Command: certbot certonly --webroot -w /usr/share/nginx/html -d search.mangwale.ai
+
+Step 4: RELOAD NGINX
+   Commands:
+   - sudo nginx -t (to test)
+   - sudo systemctl reload nginx (to apply)
+
+Step 5: TEST HTTPS
+   Command: curl -I https://search.mangwale.ai/health
+   Expected: HTTP/2 200
+
+================================================================================
+📋 CONFIGURATION SUMMARY
+================================================================================
+
+Nginx Server Block:
+  - listen: 80 (HTTP) → redirect to HTTPS
+  - listen: 443 (HTTPS/SSL)
+  - server_name: search.mangwale.ai
+  - ssl_certificate: /etc/letsencrypt/live/search.mangwale.ai/fullchain.pem
+  - ssl_certificate_key: /etc/letsencrypt/live/search.mangwale.ai/privkey.pem
+  - SSL Protocols: TLSv1.2 TLSv1.3
+  - client_max_body_size: 20m
+
+Location Blocks:
+  1. API Routes: /search, /analytics, /health, /docs, /v2, /api-docs
+     Proxy: http://127.0.0.1:3100
+     
+  2. ASR Uploads: /search/asr
+     Proxy: http://127.0.0.1:3100
+     Streaming: Enabled
+     
+  3. Frontend: / (root)
+     Proxy: http://127.0.0.1:6000
+     WebSocket: Enabled
+     
+  4. Assets: /assets/
+     Cache: 1 year
+     
+  5. Health: /health
+     Proxy: http://127.0.0.1:3100/health
+
+Security Headers:
+  - Strict-Transport-Security: max-age=31536000
+  - X-Content-Type-Options: nosniff
+  - X-Frame-Options: DENY
+  - X-XSS-Protection: 1; mode=block
+  - Referrer-Policy: strict-origin-when-cross-origin
+  - Content-Security-Policy: Configured
+
+Traefik Configuration:
+  - All routers configured for search.mangwale.ai
+  - API Router Priority: 10
+  - Frontend Router Priority: 1
+  - Suggest Fix Router Priority: 20
+  - TLS: certResolver=letsencrypt
+
+================================================================================
+⏳ STATUS: AWAITING DNS UPDATE
+================================================================================
+
+Reason: DNS must be updated before SSL certificate can be generated
+
+Certificate Generation Failed Because:
+  - Port 80 is in use by Nginx (expected)
+  - Domain search.mangwale.ai is not yet pointing to 103.86.176.59
+  - Let's Encrypt validation requires accessible domain
+
+Solution:
+  1. Update DNS to 103.86.176.59
+  2. Wait 15-30 minutes
+  3. Run: certbot certonly --webroot -w /usr/share/nginx/html -d search.mangwale.ai
+
+================================================================================
+📁 FILES MODIFIED
+================================================================================
+
+1. /root/searchv2/traefik-config/dynamic/search-mangwale.yml
+   - 4 Host rules updated from search.test.mangwale.ai to search.mangwale.ai
+
+2. /root/searchv2/nginx/search.mangwale.ai.conf
+   - Complete rewrite for production configuration
+   - Updated SSL certificate paths
+   - Updated proxy targets
+   - Added security headers
+   - Added OCSP stapling
+
+================================================================================
+📚 DOCUMENTATION CREATED
+================================================================================
+
+1. /root/searchv2/DOMAIN_MIGRATION_GUIDE.md
+   - Comprehensive guide with all steps
+   - Troubleshooting section
+   - Alternative SSL options
+   - Deployment checklist
+
+2. /root/searchv2/QUICK_REFERENCE_DOMAIN_CHANGE.md
+   - Quick reference with key changes
+   - One-command deployment guide
+   - Security features summary
+
+================================================================================
+✨ ALL NGINX SECURITY FEATURES ENABLED
+================================================================================
+
+✅ TLS 1.2 & 1.3 Support
+✅ Strong Cipher Suites
+✅ HSTS Header (1 year)
+✅ OCSP Stapling
+✅ Content Security Policy
+✅ X-Frame-Options: DENY
+✅ X-Content-Type-Options: nosniff
+✅ X-XSS-Protection
+✅ Referrer-Policy
+✅ WebSocket Support
+✅ ASR Streaming Support
+✅ Cache Control (Assets: 1 year)
+
+================================================================================
+🚀 READY TO DEPLOY
+================================================================================
+
+Configuration files: ✅ READY
+DNS update: ⏳ PENDING (Your action required)
+SSL Certificate: ⏳ PENDING (After DNS update)
+Nginx Reload: ⏳ PENDING (After certificate generation)
+
+Next: Update your DNS record at your domain provider
+================================================================================

@@ -12,7 +12,7 @@ http:
 
     # API Router (HTTPS)
     search-api:
-      rule: "Host(`search.test.mangwale.ai`) && (PathPrefix(`/search`) || PathPrefix(`/analytics`) || PathPrefix(`/health`) || PathPrefix(`/docs`) || PathPrefix(`/api-docs`) || PathPrefix(`/v2`) || PathPrefix(`/sync`))"
+      rule: "Host(`search.mangwale.ai`) && (PathPrefix(`/search`) || PathPrefix(`/analytics`) || PathPrefix(`/health`) || PathPrefix(`/docs`) || PathPrefix(`/api-docs`) || PathPrefix(`/v2`) || PathPrefix(`/sync`))"
       service: search-api-service
       entryPoints:
         - websecure
@@ -22,7 +22,7 @@ http:
 
     # Fix for Legacy Suggest Endpoint
     search-suggest-fix:
-      rule: "Host(`search.test.mangwale.ai`) && PathPrefix(`/search/suggest`)"
+      rule: "Host(`search.mangwale.ai`) && PathPrefix(`/search/suggest`)"
       service: search-api-service
       entryPoints:
         - websecure
@@ -34,7 +34,7 @@ http:
 
     # Frontend Router (HTTPS)
     search-frontend:
-      rule: "Host(`search.test.mangwale.ai`)"
+      rule: "Host(`search.mangwale.ai`)"
       service: search-frontend-service
       entryPoints:
         - websecure
@@ -44,7 +44,7 @@ http:
 
     # Frontend Router (HTTP - for nginx proxy)
     search-frontend-http:
-      rule: "Host(`search.test.mangwale.ai`)"
+      rule: "Host(`search.mangwale.ai`)"
       service: search-frontend-service
       entryPoints:
         - web

@@ -607,11 +607,14 @@ class MangwaleAISync:
             return result
         
         for variation in food_variations_parsed:
-            if not variation or not isinstance(variation, dict):
+            if variation is None or not isinstance(variation, dict):
                 continue
-                
-            name = variation.get('name', '').lower()
-            values = variation.get('values', [])
+            
+            try:
+                name = variation.get('name', '').lower()
+                values = variation.get('values', [])
+            except (AttributeError, TypeError):
+                continue
             
             if 'size' in name or 'portion' in name:
                 for val in values:

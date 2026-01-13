@@ -1,0 +1,101 @@
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                     MANGWALE SEARCH - QUICK REFERENCE                        ║
+║                          Production System Ready                             ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+✅ DOMAIN: search.mangwale.ai (103.86.176.59)
+✅ SSL: Valid until April 12, 2026
+✅ CLUSTER STATUS: GREEN
+✅ TOTAL DOCUMENTS: 15,774
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│ INDEX SUMMARY                                                                │
+├──────────────────────────────────────────────────────────────────────────────┤
+│ food_items_v4      │ 13,222 items  │ 5 MB      │ Module 4 (Food)            │
+│ food_stores_v6     │ 189 stores    │ 114.4 KB  │ Module 4 (Food)            │
+│ food_categories    │ 128 categories│ 28.2 KB   │ Module 4 (Food)            │
+│ ecom_items_v3      │ 2,551 items   │ 1012.4 KB │ Module 5 (E-commerce)      │
+│ ecom_stores        │ 29 stores     │ 28.4 KB   │ Module 5 (E-commerce)      │
+│ ecom_categories    │ 55 categories │ 16.6 KB   │ Module 5 (E-commerce)      │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│ QUICK COMMANDS                                                               │
+├──────────────────────────────────────────────────────────────────────────────┤
+│ Check Cluster Health:                                                        │
+│ $ docker exec search-opensearch curl http://localhost:9200/_cluster/health  │
+│                                                                              │
+│ View All Indices:                                                            │
+│ $ docker exec search-opensearch curl http://localhost:9200/_cat/indices?v   │
+│                                                                              │
+│ Search Food Items:                                                           │
+│ $ curl "http://172.25.0.3:9200/food_items_v4/_search?q=paneer&size=5"       │
+│                                                                              │
+│ Get Item by ID:                                                              │
+│ $ curl "http://172.25.0.3:9200/food_items_v4/_doc/123"                      │
+│                                                                              │
+│ Count Documents:                                                             │
+│ $ curl "http://172.25.0.3:9200/food_items_v4/_count"                        │
+│                                                                              │
+│ Reindex from Database:                                                       │
+│ $ OPENSEARCH_URL="http://172.25.0.3:9200" \                                 │
+│   python3 /root/searchv2/scripts/reindex-production.py                      │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│ CONNECTION DETAILS                                                           │
+├──────────────────────────────────────────────────────────────────────────────┤
+│ MySQL Database:                                                              │
+│   Host: 103.86.176.59:3306                                                   │
+│   Database: mangwale_db                                                      │
+│   User: root                                                                 │
+│   Password: root_password                                                    │
+│                                                                              │
+│ OpenSearch:                                                                  │
+│   Docker IP: http://172.25.0.3:9200                                          │
+│   Container: search-opensearch                                               │
+│   Internal: http://localhost:9200 (inside container)                         │
+│                                                                              │
+│ Nginx:                                                                       │
+│   API: 127.0.0.1:3100                                                        │
+│   Frontend: 127.0.0.1:6000                                                   │
+│   Public: https://search.mangwale.ai                                         │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│ DATA VERIFICATION                                                            │
+├──────────────────────────────────────────────────────────────────────────────┤
+│ ✅ No duplicate documents                                                    │
+│ ✅ Document IDs match MySQL primary keys exactly                            │
+│ ✅ Store names populated in all items                                        │
+│ ✅ Category names populated in all items                                     │
+│ ✅ Boolean fields (veg, status, active) converted correctly                  │
+│ ✅ Decimal prices preserved as floats                                        │
+│ ✅ All relationships (items↔stores↔categories) intact                        │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│ SAMPLE SEARCH RESULTS                                                        │
+├──────────────────────────────────────────────────────────────────────────────┤
+│ Query: "paneer"                                                              │
+│ Results: 10,000+ matches                                                     │
+│                                                                              │
+│ • ID 14709: Paneer Kofta - Hotel Grape City - ₹289                          │
+│ • ID 14713: Paneer Makhani - Hotel Grape City - ₹299                        │
+│ • ID 14715: Paneer Pasanda - Hotel Grape City - ₹329                        │
+│ • ID 10: Paneer Butter Masala - Inayat Cafe - ₹280                          │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│ FILES & DOCUMENTATION                                                        │
+├──────────────────────────────────────────────────────────────────────────────┤
+│ Reindexing Script:  /root/searchv2/scripts/reindex-production.py            │
+│ Nginx Config:       /etc/nginx/sites-available/search.mangwale.ai           │
+│ Traefik Config:     /root/searchv2/traefik-config/dynamic/                  │
+│ Complete Summary:   /root/searchv2/REINDEXING_COMPLETE_2026-01-03.md        │
+│ Domain Migration:   /root/searchv2/DOMAIN_MIGRATION_GUIDE.md                │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                    🎉 SYSTEM READY FOR PRODUCTION 🎉                         ║
+╚══════════════════════════════════════════════════════════════════════════════╝

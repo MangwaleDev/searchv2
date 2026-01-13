@@ -79,8 +79,9 @@ services:
         condition: service_healthy
     environment:
       - OPENSEARCH_HOSTS=["http://search-opensearch:9200"]
-    # ports:
-    #   - "5601:5601"
+      - DISABLE_SECURITY_DASHBOARDS_PLUGIN=true
+    ports:
+      - "5601:5601"
     networks:
       - search-network
     restart: unless-stopped
@@ -281,7 +282,7 @@ services:
       - EMBEDDING_SERVICE_URL=http://search-embedding-service:3101
       # Configurable Index Names
       - FOOD_ITEMS_INDEX=${FOOD_ITEMS_INDEX:-food_items_v4}
-      - ECOM_ITEMS_INDEX=${ECOM_ITEMS_INDEX:-ecom_items}
+      - ECOM_ITEMS_INDEX=${ECOM_ITEMS_INDEX:-ecom_items_v3}
       - FOOD_STORES_INDEX=${FOOD_STORES_INDEX:-food_stores_v6}
       - ECOM_STORES_INDEX=${ECOM_STORES_INDEX:-ecom_stores}
       # Image Storage Configuration (MinIO primary, S3 fallback)
@@ -293,8 +294,8 @@ services:
       - MINIO_PUBLIC_URL=${MINIO_PUBLIC_URL:-https://storage.mangwale.ai}
       - MINIO_BUCKET=${MINIO_BUCKET:-mangwale}
       - IMAGE_FALLBACK_ENABLED=${IMAGE_FALLBACK_ENABLED:-true}
-    # ports:
-    #   - "3100:3100"
+    ports:
+      - "127.0.0.1:3100:3100"
     networks:
       - search-network
     restart: unless-stopped
