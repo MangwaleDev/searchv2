@@ -530,15 +530,31 @@ export class SearchService {
     }
 
     if (!includeAdjacentZones) {
-      // Strict zone filtering: only same zone
-      return { term: { zone_id: userZoneId } };
+      // Strict zone filtering: only same zone, but also include items with null zone_id
+      return {
+        bool: {
+          should: [
+            { term: { zone_id: userZoneId } },
+            { bool: { must_not: { exists: { field: 'zone_id' } } } }
+          ],
+          minimum_should_match: 1
+        }
+      };
     }
 
-    // Include same zone + adjacent zones
+    // Include same zone + adjacent zones + items with null zone_id
     const neighbors = this.ZONE_NEIGHBORS[userZoneId] || [];
     const allowedZones = [userZoneId, ...neighbors];
 
-    return { terms: { zone_id: allowedZones } };
+    return {
+      bool: {
+        should: [
+          { terms: { zone_id: allowedZones } },
+          { bool: { must_not: { exists: { field: 'zone_id' } } } }
+        ],
+        minimum_should_match: 1
+      }
+    };
   }
 
   // Time-based category boosting for meal times
@@ -1379,7 +1395,7 @@ export class SearchService {
 
     // Status filters (only active AND approved stores)
     filterClauses.push({ term: { status: true } }); // status=1 means active
-    filterClauses.push({ term: { active: 1 } }); // active=1 means approved
+    filterClauses.push({ term: { active: true } }); // active=1 means approved
 
     // Vegetarian filter
     const veg = filters?.veg;
@@ -3314,7 +3330,7 @@ export class SearchService {
     // Status filters (only active AND approved stores)
     // Only show stores with status=1 (active) AND active=1 (approved)
     filterClauses.push({ term: { status: true } });
-    filterClauses.push({ term: { active: 1 } });
+    filterClauses.push({ term: { active: true } });
     this.logger.debug(`[searchStores] Applied status=1, active=1 filter`);
 
     // Veg/Non-Veg filter
@@ -3823,7 +3839,7 @@ export class SearchService {
       size,
       sort: hasGeo ? [{ _geo_distance: { store_location: { lat, lon }, order: 'asc', unit: 'km', mode: 'min', distance_type: 'arc', ignore_unmapped: true } }] : [{ order_count: { order: 'desc' } }],
       _source: ['name', 'slug', 'logo', 'cover_photo', 'image', 'images', 'store_location', 'order_count', 'delivery_time', 'rating', 'veg', 'non_veg', 'food_type'],
-      script_fields: hasGeo ? { distance_km: { script: { source: "if (doc['store_location'].size() == 0) return null; doc['store_location'].arcDistance(params.lat, params.lon) / 1000.0", params: { lat, lon } } } } : undefined,
+      script_fields: hasGeo ? { distance_km: { script: { source: "if (!doc.containsKey('store_location') || doc['store_location'].size() == 0) return null; doc['store_location'].arcDistance(params.lat, params.lon) / 1000.0", params: { lat, lon } } } } : undefined,
     };
 
     const catBody: any = {
@@ -5140,7 +5156,7 @@ export class SearchService {
             size: size * 2,
             _source: ['name', 'slug', 'image', 'images', 'price', 'base_price', 'veg', 'category_id', 'category_name', 'store_id', 'store_location', 'module_id', 'description', 'available_time_starts', 'available_time_ends', 'rating_count', 'avg_rating', 'order_count', 'discount', 'discount_type', 'status', 'tax', 'tax_type', 'stock', 'recommended', 'is_approved', 'is_halal', 'organic'],
             script_fields: hasGeo ? {
-              distance_km: { script: { source: "if (doc['store_location'].size() == 0) return null; doc['store_location'].arcDistance(params.lat, params.lon) / 1000.0", params: { lat, lon } } },
+              distance_km: { script: { source: "if (!doc.containsKey('store_location') || doc['store_location'].size() == 0) return null; doc['store_location'].arcDistance(params.lat, params.lon) / 1000.0", params: { lat, lon } } },
             } : undefined,
           };
           
@@ -5642,8 +5658,20 @@ export class SearchService {
 
     // Zone-aware filtering (items have zone_id indexed)
     // When store_id is explicitly provided, don't apply zone filter (user wants specific store regardless of zone)
+    // When category_id is provided, don't apply zone filter (category browsing should show all items regardless of zone)
+    // Only apply zone filter when radius_km is provided (user wants nearby items)
     let userZoneId: number | null = null;
-    if (hasGeo && !filters?.store_id) {
+    
+    // IMPORTANT: Skip zone filter if category_id is provided (category browsing should show all items)
+    // Check category_id FIRST before any zone filter logic
+    this.logger.debug(`[searchItemsByModule] Zone filter check: category_id=${filters?.category_id}, hasGeo=${hasGeo}, store_id=${filters?.store_id}, radiusKm=${radiusKm}`);
+    const shouldSkipZoneFilter = filters?.category_id !== undefined && filters?.category_id !== null;
+    this.logger.debug(`[searchItemsByModule] shouldSkipZoneFilter=${shouldSkipZoneFilter}`);
+    
+    if (shouldSkipZoneFilter) {
+      this.logger.debug(`[searchItemsByModule] Zone filter skipped because category_id=${filters.category_id} is provided (category browsing)`);
+    } else if (hasGeo && !filters?.store_id && radiusKm !== undefined && !Number.isNaN(radiusKm)) {
+      // Only apply zone filter when radius_km is provided and no category_id
       try {
         userZoneId = await this.zoneService.getZoneId(lat, lon);
         if (userZoneId) {
@@ -5657,8 +5685,12 @@ export class SearchService {
       } catch (error) {
         this.logger.warn(`[searchItemsByModule] Failed to get zone ID: ${(error as any)?.message || String(error)}`);
       }
-    } else if (filters?.store_id) {
-      this.logger.debug(`[searchItemsByModule] Zone filter skipped because store_id filter is provided`);
+    } else {
+      if (filters?.store_id) {
+        this.logger.debug(`[searchItemsByModule] Zone filter skipped because store_id filter is provided`);
+      } else if (!radiusKm || Number.isNaN(radiusKm)) {
+        this.logger.debug(`[searchItemsByModule] Zone filter skipped because radius_km is not provided`);
+      }
     }
 
     // Pagination
@@ -5677,17 +5709,14 @@ export class SearchService {
     switch (sortOrder) {
       case 'distance':
         if (hasGeo) {
-          // Store-First Strategy: When query is provided, prioritize relevance (store match) over distance
-          // This ensures items from matching stores appear first, even if slightly farther
+          // Geo-distance sort is disabled for items because store_location is not mapped as geo_point.
+          // We still compute distance via script_fields when possible, but sort by relevance/popularity.
           if (q && q.trim()) {
-            // Combined sort: relevance first, then distance
-            sort = [
-              '_score',  // First by relevance (store name match gets higher score)
-              { _geo_distance: { store_location: { lat, lon }, order: 'asc', unit: 'km' } }
-            ];
+            // Query provided: prioritize relevance (score), then popularity.
+            sort = ['_score', { order_count: { order: 'desc' } }];
           } else {
-            // No query: just sort by distance
-          sort = [{ _geo_distance: { store_location: { lat, lon }, order: 'asc', unit: 'km' } }];
+            // Browsing with location: sort by popularity only.
+            sort = [{ order_count: { order: 'desc' } }];
           }
         } else {
           sort = [{ order_count: { order: 'desc' } }];
@@ -7245,7 +7274,7 @@ export class SearchService {
 
     // Status filters - Only show active AND approved stores
     filterClauses.push({ term: { status: true } });  // status=1 means active
-    filterClauses.push({ term: { active: 1 } });  // active=1 means approved
+    filterClauses.push({ term: { active: true } });  // active=1 means approved
     this.logger.debug(`[searchStoresByModule] Applied status=1, active=1 filter`);
 
     // Veg/Non-Veg filter
@@ -7455,16 +7484,22 @@ export class SearchService {
         // Find stores that have items in this category
         // Don't filter by module_id in the query - we'll filter after fetching (strict filtering)
         // This allows us to find stores that serve items in the specified category
+        // Also remove status filter - only filter by active:1 (status field might be false even for active stores)
         const categoryStoreFilterClauses = filterClauses.filter(f => {
           // Remove module_id filter, but keep other filters like geo filters
-          return !(f.term && f.term.module_id);
+          // Remove status filter - we'll only filter by active:1
+          if (f.term && f.term.module_id) return false;
+          if (f.term && f.term.status !== undefined) return false;
+          return true;
         });
+        // Only filter by active:true (stores serving items in this category should be shown)
+        categoryStoreFilterClauses.push({ term: { active: true } });
         
         const storeResBody: any = {
           query: {
             bool: {
               must: [
-                { terms: { id: Array.from(storeIdsFromCategory) } }
+                { terms: { id: Array.from(storeIdsFromCategory).map(id => Number(id)).filter(id => !Number.isNaN(id)) } }
               ],
               filter: categoryStoreFilterClauses.length > 0 ? categoryStoreFilterClauses : undefined,
               must_not: mustNotClauses.length > 0 ? mustNotClauses : undefined,
@@ -7516,16 +7551,32 @@ export class SearchService {
         this.logger.debug(`[searchStoresByModule] Searching for stores via category_id in ${storeIndicesForCategory.length} indices: ${storeIndicesForCategory.join(', ')}`);
         
         const storeResults = await Promise.all(
-          storeIndicesForCategory.map(index => 
-            this.client.search({ index, body: storeResBody }).catch(() => ({ body: { hits: { hits: [], total: { value: 0 } } } }))
-          )
+          storeIndicesForCategory.map(async (index) => {
+            try {
+              const result = await this.client.search({ index, body: storeResBody });
+              this.logger.debug(`[searchStoresByModule] Index ${index}: found ${result.body?.hits?.total?.value || 0} stores`);
+              return result;
+            } catch (error: any) {
+              this.logger.warn(`[searchStoresByModule] Error searching index ${index}: ${error?.message || String(error)}`);
+              return { body: { hits: { hits: [], total: { value: 0 } } } };
+            }
+          })
         );
         
-        storeResults.forEach(res => {
-          const hits = res.body.hits?.hits || [];
-          totalHits += res.body.hits?.total?.value ?? 0;
+        storeResults.forEach((res, idx) => {
+          // Handle both response formats: res.body.hits (OpenSearch client) or res.hits (direct response)
+          const responseBody = res.body || res;
+          const hits = responseBody?.hits?.hits || [];
+          const total = responseBody?.hits?.total?.value ?? 0;
+          totalHits += total;
+          this.logger.debug(`[searchStoresByModule] Processing results from index ${storeIndicesForCategory[idx]}: ${hits.length} hits, total: ${total}`);
           hits.forEach((h: any) => {
-            allStores.push({ ...h, matchType: q && q.trim() ? 'category_name' : 'category' });
+            const storeData = h._source || {};
+            allStores.push({ 
+              ...storeData,
+              id: storeData.id || h._id,
+              matchType: q && q.trim() ? 'category_name' : 'category' 
+            });
           });
         });
         
@@ -8109,7 +8160,7 @@ export class SearchService {
       // Keep stores found via items in the specified module, even if store's module_id differs
       // This is because if items in module 5 exist, stores serving them are relevant
       const storesFromItems = stores.filter((store: any) => {
-        return store.matchType === 'item' || store.matchType === 'category';
+        return store.matchType === 'item' || store.matchType === 'category' || store.matchType === 'category_name';
       });
       
       // Combine: stores with matching module_id + stores found via items in that module

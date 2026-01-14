@@ -227,7 +227,7 @@ export class ImageService {
     // Remove _source and _score fields by creating a new object
     const transformed: Record<string, any> = {};
     for (const key in item) {
-      if (key !== '_source' && key !== '_score' && item.hasOwnProperty(key)) {
+      if (key !== '_source' && key !== '_score' && Object.prototype.hasOwnProperty.call(item, key)) {
         transformed[key] = item[key];
       }
     }
@@ -237,6 +237,20 @@ export class ImageService {
         transformed[key] = item[key];
       }
     });
+
+    // Normalise veg flag for API consumers:
+    // - Always expose as 0/1 instead of boolean true/false
+    if (typeof transformed.veg !== 'undefined') {
+      const rawVeg = transformed.veg;
+      const isVeg =
+        rawVeg === true ||
+        rawVeg === 1 ||
+        rawVeg === '1' ||
+        rawVeg === 'veg' ||
+        rawVeg === 'true';
+
+      transformed.veg = isVeg ? 1 : 0;
+    }
     
     // Main image - use smart URL generation
     if (item.image) {
