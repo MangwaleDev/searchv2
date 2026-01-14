@@ -1,0 +1,58 @@
+name: Deploy Search Staging
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  workflow_dispatch:
+
+jobs:
+  deploy-staging:
+    name: Deploy to search.test.mangwale.ai
+    runs-on: ubuntu-latest
+
+    env:
+      REPO_DIR: /root/searchv2
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up SSH key
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: |
+            ${{ secrets.SEARCH_STAGING_SSH_KEY }}
+
+      - name: Add known hosts
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -H ${{ secrets.SEARCH_STAGING_SSH_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Sync repository to server
+        run: |
+          rsync -az --delete \
+            --exclude '.git' \
+            --exclude 'node_modules' \
+            --exclude '.env*' \
+            --exclude '*.log' \
+            ./ \
+            ${{ secrets.SEARCH_STAGING_SSH_USER }}@${{ secrets.SEARCH_STAGING_SSH_HOST }}:${REPO_DIR}
+
+      - name: Run staging deployment script on server
+        run: |
+          ssh ${{ secrets.SEARCH_STAGING_SSH_USER }}@${{ secrets.SEARCH_STAGING_SSH_HOST }} << 'EOF'
+            set -e
+            cd /root/searchv2
+            chmod +x scripts/deploy-staging.sh
+            # Non-interactive full deployment using dynamic, conflict-safe ports
+            ./scripts/deploy-staging.sh deploy
+          EOF
+
+      - name: Verify deployment
+        run: |
+          ssh ${{ secrets.SEARCH_STAGING_SSH_USER }}@${{ secrets.SEARCH_STAGING_SSH_HOST }} << 'EOF'
+            cd /root/searchv2
+            ./scripts/deploy-staging.sh health
+          EOF

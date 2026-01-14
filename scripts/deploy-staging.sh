@@ -16,11 +16,18 @@ BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 # Configuration
-COMPOSE_FILE="docker-compose.production.yml"
-ENV_FILE=".env.production"
+# Get the script directory and project root
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+COMPOSE_FILE="$PROJECT_ROOT/docker-compose.production.yml"
+ENV_FILE="$PROJECT_ROOT/.env.production"
 DOMAIN="search.test.mangwale.ai"
 
+# Change to project root
+cd "$PROJECT_ROOT" || exit 1
+
 # Port mappings with alternatives
+# Note: Redpanda Proxy and Kafka Connect need different ports
 declare -A PORT_MAPPINGS=(
     ["SEARCH_API"]="3100:3110"
     ["FRONTEND"]="6000:6010"
@@ -31,9 +38,9 @@ declare -A PORT_MAPPINGS=(
     ["CLICKHOUSE_HTTP"]="8123:8124"
     ["CLICKHOUSE_NATIVE"]="9000:9001"
     ["REDPANDA_KAFKA"]="9092:9093"
-    ["REDPANDA_PROXY"]="8082:8083"
-    ["KAFKA_CONNECT"]="8083:8084"
-    ["ADMINER"]="8085:8086"
+    ["REDPANDA_PROXY"]="8082:8084"
+    ["KAFKA_CONNECT"]="8083:8085"
+    ["ADMINER"]="8086:8087"
 )
 
 # Store actual ports used
@@ -97,15 +104,21 @@ find_available_port() {
     local alternative=$2
     local port=$preferred
     
+    # Check if port is already assigned by this script
+    if [ -n "${USED_PORTS[$preferred]}" ]; then
+        print_warning "Port $preferred already assigned by script, trying alternative" >&2
+        preferred=$alternative
+    fi
+    
     # Redirect messages to stderr so they don't get captured
-    if check_port_available $preferred; then
+    if [ -z "${USED_PORTS[$preferred]}" ] && check_port_available $preferred; then
         print_success "Port $preferred is available" >&2
         USED_PORTS["$preferred"]=1
         echo $preferred
         return 0
     else
         print_warning "Port $preferred is in use, trying alternative $alternative" >&2
-        if check_port_available $alternative; then
+        if [ -z "${USED_PORTS[$alternative]}" ] && check_port_available $alternative; then
             print_success "Port $alternative is available (using as alternative)" >&2
             USED_PORTS["$alternative"]=1
             echo $alternative
@@ -115,7 +128,7 @@ find_available_port() {
             local next_port=$alternative
             while [ $next_port -lt 65535 ]; do
                 next_port=$((next_port + 1))
-                if check_port_available $next_port; then
+                if [ -z "${USED_PORTS[$next_port]}" ] && check_port_available $next_port; then
                     print_warning "Using port $next_port (both $preferred and $alternative were in use)" >&2
                     USED_PORTS["$next_port"]=1
                     echo $next_port
@@ -131,7 +144,7 @@ find_available_port() {
 check_all_ports() {
     print_header "Checking Port Availability"
     
-    # Check and assign ports
+    # Check and assign ports (ensuring no conflicts)
     SEARCH_API_PORT=$(find_available_port 3100 3110)
     FRONTEND_PORT=$(find_available_port 6000 6010)
     EMBEDDING_PORT=$(find_available_port 3101 3111)
@@ -141,9 +154,12 @@ check_all_ports() {
     CLICKHOUSE_HTTP_PORT=$(find_available_port 8123 8124)
     CLICKHOUSE_NATIVE_PORT=$(find_available_port 9000 9001)
     REDPANDA_KAFKA_PORT=$(find_available_port 9092 9093)
-    REDPANDA_PROXY_PORT=$(find_available_port 8082 8083)
-    KAFKA_CONNECT_PORT=$(find_available_port 8083 8084)
-    ADMINER_PORT=$(find_available_port 8085 8086)
+    # Redpanda Proxy and Kafka Connect need different ports
+    REDPANDA_PROXY_PORT=$(find_available_port 8082 8084)
+    # Kafka Connect - avoid conflict with Redpanda Proxy
+    KAFKA_CONNECT_PORT=$(find_available_port 8083 8085)
+    # Adminer - avoid conflict with Kafka Connect
+    ADMINER_PORT=$(find_available_port 8086 8087)
     
     # Export for use in other functions
     export SEARCH_API_PORT FRONTEND_PORT EMBEDDING_PORT OPENSEARCH_PORT
@@ -229,19 +245,43 @@ except Exception as e:
     print(f"Error reading file: {e}", file=sys.stderr)
     sys.exit(1)
 
-# Port replacements - only replace exact port mappings
+# Port replacements - handle both with and without 127.0.0.1 binding
 replacements = [
+    # Search API
+    ('"127.0.0.1:3100:3100"', f'"127.0.0.1:{SEARCH_API_PORT}:3100"'),
     ('"3100:3100"', f'"{SEARCH_API_PORT}:3100"'),
+    # Frontend
+    ('"127.0.0.1:6000:80"', f'"127.0.0.1:{FRONTEND_PORT}:80"'),
     ('"6000:80"', f'"{FRONTEND_PORT}:80"'),
+    # Embedding
+    ('"127.0.0.1:3101:3101"', f'"127.0.0.1:{EMBEDDING_PORT}:3101"'),
     ('"3101:3101"', f'"{EMBEDDING_PORT}:3101"'),
+    # OpenSearch
+    ('"127.0.0.1:9200:9200"', f'"127.0.0.1:{OPENSEARCH_PORT}:9200"'),
     ('"9200:9200"', f'"{OPENSEARCH_PORT}:9200"'),
+    # OpenSearch Dashboards
+    ('"127.0.0.1:5601:5601"', f'"127.0.0.1:{OPENSEARCH_DASH_PORT}:5601"'),
     ('"5601:5601"', f'"{OPENSEARCH_DASH_PORT}:5601"'),
+    # MySQL
+    ('"127.0.0.1:3306:3306"', f'"127.0.0.1:{MYSQL_PORT}:3306"'),
     ('"3306:3306"', f'"{MYSQL_PORT}:3306"'),
+    # ClickHouse HTTP
+    ('"127.0.0.1:8123:8123"', f'"127.0.0.1:{CLICKHOUSE_HTTP_PORT}:8123"'),
     ('"8123:8123"', f'"{CLICKHOUSE_HTTP_PORT}:8123"'),
+    # ClickHouse Native
+    ('"127.0.0.1:9000:9000"', f'"127.0.0.1:{CLICKHOUSE_NATIVE_PORT}:9000"'),
     ('"9000:9000"', f'"{CLICKHOUSE_NATIVE_PORT}:9000"'),
+    # Redpanda Kafka
+    ('"127.0.0.1:9092:9092"', f'"127.0.0.1:{REDPANDA_KAFKA_PORT}:9092"'),
     ('"9092:9092"', f'"{REDPANDA_KAFKA_PORT}:9092"'),
+    # Redpanda Proxy
+    ('"127.0.0.1:8082:8082"', f'"127.0.0.1:{REDPANDA_PROXY_PORT}:8082"'),
     ('"8082:8082"', f'"{REDPANDA_PROXY_PORT}:8082"'),
+    # Kafka Connect
+    ('"127.0.0.1:8083:8083"', f'"127.0.0.1:{KAFKA_CONNECT_PORT}:8083"'),
     ('"8083:8083"', f'"{KAFKA_CONNECT_PORT}:8083"'),
+    # Adminer
+    ('"127.0.0.1:8085:8080"', f'"127.0.0.1:{ADMINER_PORT}:8080"'),
     ('"8085:8080"', f'"{ADMINER_PORT}:8080"'),
 ]
 
@@ -275,17 +315,29 @@ PYTHON_SCRIPT
     sed -i.bak2 's/\x1B\[[0-9;]*[JKmsu]//g' "$COMPOSE_FILE" 2>/dev/null || true
     
     sed -i.bak \
+        -e "s|\"127.0.0.1:3100:3100\"|\"127.0.0.1:${SEARCH_API_PORT}:3100\"|g" \
         -e "s|\"3100:3100\"|\"${SEARCH_API_PORT}:3100\"|g" \
+        -e "s|\"127.0.0.1:6000:80\"|\"127.0.0.1:${FRONTEND_PORT}:80\"|g" \
         -e "s|\"6000:80\"|\"${FRONTEND_PORT}:80\"|g" \
+        -e "s|\"127.0.0.1:3101:3101\"|\"127.0.0.1:${EMBEDDING_PORT}:3101\"|g" \
         -e "s|\"3101:3101\"|\"${EMBEDDING_PORT}:3101\"|g" \
+        -e "s|\"127.0.0.1:9200:9200\"|\"127.0.0.1:${OPENSEARCH_PORT}:9200\"|g" \
         -e "s|\"9200:9200\"|\"${OPENSEARCH_PORT}:9200\"|g" \
+        -e "s|\"127.0.0.1:5601:5601\"|\"127.0.0.1:${OPENSEARCH_DASH_PORT}:5601\"|g" \
         -e "s|\"5601:5601\"|\"${OPENSEARCH_DASH_PORT}:5601\"|g" \
+        -e "s|\"127.0.0.1:3306:3306\"|\"127.0.0.1:${MYSQL_PORT}:3306\"|g" \
         -e "s|\"3306:3306\"|\"${MYSQL_PORT}:3306\"|g" \
+        -e "s|\"127.0.0.1:8123:8123\"|\"127.0.0.1:${CLICKHOUSE_HTTP_PORT}:8123\"|g" \
         -e "s|\"8123:8123\"|\"${CLICKHOUSE_HTTP_PORT}:8123\"|g" \
+        -e "s|\"127.0.0.1:9000:9000\"|\"127.0.0.1:${CLICKHOUSE_NATIVE_PORT}:9000\"|g" \
         -e "s|\"9000:9000\"|\"${CLICKHOUSE_NATIVE_PORT}:9000\"|g" \
+        -e "s|\"127.0.0.1:9092:9092\"|\"127.0.0.1:${REDPANDA_KAFKA_PORT}:9092\"|g" \
         -e "s|\"9092:9092\"|\"${REDPANDA_KAFKA_PORT}:9092\"|g" \
+        -e "s|\"127.0.0.1:8082:8082\"|\"127.0.0.1:${REDPANDA_PROXY_PORT}:8082\"|g" \
         -e "s|\"8082:8082\"|\"${REDPANDA_PROXY_PORT}:8082\"|g" \
+        -e "s|\"127.0.0.1:8083:8083\"|\"127.0.0.1:${KAFKA_CONNECT_PORT}:8083\"|g" \
         -e "s|\"8083:8083\"|\"${KAFKA_CONNECT_PORT}:8083\"|g" \
+        -e "s|\"127.0.0.1:8085:8080\"|\"127.0.0.1:${ADMINER_PORT}:8080\"|g" \
         -e "s|\"8085:8080\"|\"${ADMINER_PORT}:8080\"|g" \
         $COMPOSE_FILE
     
@@ -448,12 +500,13 @@ start_infrastructure() {
     
     print_info "Starting base infrastructure..."
     docker-compose -f $COMPOSE_FILE up -d \
-        opensearch \
-        opensearch-dashboards \
-        mysql \
-        clickhouse \
-        redpanda \
-        kafka-connect
+        search-opensearch \
+        search-opensearch-dashboards \
+        search-mysql \
+        search-redis \
+        search-clickhouse \
+        search-redpanda \
+        search-kafka-connect
     
     print_success "Infrastructure services started"
     print_info "Waiting for services to be ready (60 seconds)..."
@@ -464,7 +517,7 @@ start_application() {
     print_header "Starting Application Services"
     
     print_info "Starting embedding service..."
-    docker-compose -f $COMPOSE_FILE up -d embedding-service
+    docker-compose -f $COMPOSE_FILE up -d search-embedding-service
     print_info "Waiting for embedding service to load model (30 seconds)..."
     sleep 30
     
@@ -478,7 +531,7 @@ start_application() {
     sleep 10
     
     print_info "Starting adminer..."
-    docker-compose -f $COMPOSE_FILE up -d adminer
+    docker-compose -f $COMPOSE_FILE up -d search-adminer
     
     print_success "Application services started"
 }
@@ -534,14 +587,16 @@ setup_indices() {
     echo ""
     
     print_info "Creating Food indices..."
-    if docker exec search-api node /app/dist/scripts/opensearch-setup-food.js 2>/dev/null; then
+    if docker exec search-api node /app/dist/scripts/opensearch-setup-food.js 2>/dev/null || \
+       docker exec search-api node scripts/opensearch-setup-food.js 2>/dev/null; then
         print_success "Food indices created"
     else
         print_warning "Food indices may already exist or script not found"
     fi
     
     print_info "Creating E-commerce indices..."
-    if docker exec search-api node /app/dist/scripts/opensearch-setup-ecom.js 2>/dev/null; then
+    if docker exec search-api node /app/dist/scripts/opensearch-setup-ecom.js 2>/dev/null || \
+       docker exec search-api node scripts/opensearch-setup-ecom.js 2>/dev/null; then
         print_success "E-commerce indices created"
     else
         print_warning "E-commerce indices may already exist or script not found"

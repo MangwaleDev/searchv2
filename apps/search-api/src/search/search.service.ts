@@ -169,8 +169,8 @@ export class SearchService {
                 bool: {
                   must: [
                     { term: { _index: itemsIndex } },
-                    { term: { status: true } },
-                    { term: { is_approved: true } }
+                    { term: { status: 1 } },
+                    { term: { is_approved: 1 } }
                   ]
                 }
               },
@@ -178,7 +178,7 @@ export class SearchService {
                 bool: {
                   must: [
                     { term: { _index: storesIndex } },
-                    { term: { status: true } }
+                    { term: { status: 1 } }
                   ]
                 }
               }
@@ -1072,7 +1072,7 @@ export class SearchService {
     filterClauses.push({ term: { category_id: Number(categoryId) } });
 
     // Status filter (only active items)
-    filterClauses.push({ term: { status: true } });
+    filterClauses.push({ term: { status: 1 } });
 
     // Vegetarian filter
     const veg = filters?.veg;
@@ -1338,7 +1338,7 @@ export class SearchService {
         bool: {
           must: [
             { term: { category_id: Number(categoryId) } },
-            { term: { status: true } } // Only active items
+            { term: { status: 1 } } // Only active items
           ]
         }
       },
@@ -1394,8 +1394,8 @@ export class SearchService {
     filterClauses.push({ terms: { id: storeIds } });
 
     // Status filters (only active AND approved stores)
-    filterClauses.push({ term: { status: true } }); // status=1 means active
-    filterClauses.push({ term: { active: true } }); // active=1 means approved
+    filterClauses.push({ term: { status: 1 } }); // status=1 means active
+    filterClauses.push({ term: { active: 1 } }); // active=1 means approved
 
     // Vegetarian filter
     const veg = filters?.veg;
@@ -2137,7 +2137,7 @@ export class SearchService {
   // Add status filter for food and ecom items (but not for movies/rooms/services)
   // TEMPORARILY DISABLED - status field not populated in reindexed data
   // if (module === 'food' || module === 'ecom') {
-  //   filterClauses.push({ term: { status: true } }); // Only active items
+  //   filterClauses.push({ term: { status: 1 } }); // Only active items
   // }
 
   const baseQuery: any = { bool: { must: must.length ? must : [{ match_all: {} }], filter: filterClauses } };
@@ -2259,7 +2259,7 @@ export class SearchService {
             ],
             minimum_should_match: 1,
             filter: [
-              { term: { status: true } } // Only active stores
+              { term: { status: 1 } } // Only active stores
             ]
           }
         },
@@ -2344,7 +2344,7 @@ export class SearchService {
                 bool: {
                   must: [
                     { terms: { category_id: matchingCategoryIds } },
-                    { term: { status: true } } // Only active items
+                    { term: { status: 1 } } // Only active items
                   ],
                   filter: filterClauses,
                 }
@@ -2397,7 +2397,7 @@ export class SearchService {
                 bool: {
                   must: [
                     { terms: { store_id: matchingStoreIds } },
-                    { term: { status: true } } // Only active items
+                    { term: { status: 1 } } // Only active items
                   ],
                   filter: filterClauses,
                 }
@@ -3013,7 +3013,7 @@ export class SearchService {
               ],
               minimum_should_match: 1,
               filter: [
-                { term: { status: true } } // Only active stores
+                { term: { status: 1 } } // Only active stores
               ]
             }
           },
@@ -3329,8 +3329,8 @@ export class SearchService {
 
     // Status filters (only active AND approved stores)
     // Only show stores with status=1 (active) AND active=1 (approved)
-    filterClauses.push({ term: { status: true } });
-    filterClauses.push({ term: { active: true } });
+    filterClauses.push({ term: { status: 1 } });
+    filterClauses.push({ term: { active: 1 } });
     this.logger.debug(`[searchStores] Applied status=1, active=1 filter`);
 
     // Veg/Non-Veg filter
@@ -3467,7 +3467,7 @@ export class SearchService {
                 bool: {
                   must: [
                     { terms: { category_id: matchingCategoryIds } },
-                    { term: { status: true } } // Only active items
+                    { term: { status: 1 } } // Only active items
                   ]
                 }
               },
@@ -4404,11 +4404,17 @@ export class SearchService {
   ) {
     // Validate category belongs to module if both provided
     if (filters?.category_id && filters?.module_id) {
-      const isValid = await this.moduleService.validateCategoryModule(Number(filters.category_id), filters.module_id);
-      if (!isValid) {
-        throw new BadRequestException(
-          `Category ${filters.category_id} does not exist in module ${filters.module_id}`
-        );
+      try {
+        const isValid = await this.moduleService.validateCategoryModule(Number(filters.category_id), filters.module_id);
+        if (!isValid) {
+          throw new BadRequestException(
+            `Category ${filters.category_id} does not exist in module ${filters.module_id}`
+          );
+        }
+      } catch (error: any) {
+        // If MySQL is unavailable, skip validation and proceed with search
+        if (error instanceof BadRequestException) throw error;
+        this.logger.warn(`[suggestByModule] Category validation skipped (MySQL unavailable): ${error?.message || String(error)}`);
       }
     }
 
@@ -4886,7 +4892,7 @@ export class SearchService {
               bool: {
                 must: [
                   { terms: { category_id: categoryIds } },
-                  { term: { status: true } }
+                  { term: { status: 1 } }
                 ]
               }
             },
@@ -5050,7 +5056,7 @@ export class SearchService {
               bool: {
                 must: [
                   { terms: { store_id: storeIds } },
-                  { term: { status: true } }
+                  { term: { status: 1 } }
                 ]
               }
             },
@@ -5411,18 +5417,30 @@ export class SearchService {
   ) {
     // Validate category belongs to module if both provided
     if (filters?.category_id && filters?.module_id) {
-      const isValid = await this.moduleService.validateCategoryModule(Number(filters.category_id), filters.module_id);
-      if (!isValid) {
-        // Check if category exists in another module
-        const correctModuleId = await this.moduleService.getModuleIdForCategory(Number(filters.category_id));
-        if (correctModuleId) {
-          this.logger.warn(`[searchItemsByModule] Category ${filters.category_id} belongs to module ${correctModuleId}, not ${filters.module_id}. Switching module context.`);
-          filters.module_id = correctModuleId;
-        } else {
-          throw new BadRequestException(
-            `Category ${filters.category_id} does not exist in module ${filters.module_id}`
-          );
+      try {
+        const isValid = await this.moduleService.validateCategoryModule(Number(filters.category_id), filters.module_id);
+        if (!isValid) {
+          // Check if category exists in another module
+          try {
+            const correctModuleId = await this.moduleService.getModuleIdForCategory(Number(filters.category_id));
+            if (correctModuleId) {
+              this.logger.warn(`[searchItemsByModule] Category ${filters.category_id} belongs to module ${correctModuleId}, not ${filters.module_id}. Switching module context.`);
+              filters.module_id = correctModuleId;
+            } else {
+              throw new BadRequestException(
+                `Category ${filters.category_id} does not exist in module ${filters.module_id}`
+              );
+            }
+          } catch (error: any) {
+            // If MySQL is unavailable, skip validation and proceed with search
+            if (error instanceof BadRequestException) throw error;
+            this.logger.warn(`[searchItemsByModule] Category validation skipped (MySQL unavailable): ${error?.message || String(error)}`);
+          }
         }
+      } catch (error: any) {
+        // If MySQL is unavailable, skip validation and proceed with search
+        if (error instanceof BadRequestException) throw error;
+        this.logger.warn(`[searchItemsByModule] Category validation skipped (MySQL unavailable): ${error?.message || String(error)}`);
       }
     }
 
@@ -5612,8 +5630,8 @@ export class SearchService {
     }
 
     // Item status/approval filter: show approved, active items even if is_visible is unset/0 in DB
-    filterClauses.push({ term: { status: true } });
-    filterClauses.push({ term: { is_approved: true } });
+    filterClauses.push({ term: { status: 1 } });
+    filterClauses.push({ term: { is_approved: 1 } });
 
     // Veg filter
     const veg = filters?.veg;
@@ -7105,21 +7123,33 @@ export class SearchService {
     // Validate category belongs to module if both provided
     if (filters?.category_id && filters?.module_id) {
       this.logger.debug(`[searchStoresByModule] Validating category ${filters.category_id} belongs to module ${filters.module_id}`);
-      const isValid = await this.moduleService.validateCategoryModule(Number(filters.category_id), filters.module_id);
-      if (!isValid) {
-        // Check if category exists in another module
-        const correctModuleId = await this.moduleService.getModuleIdForCategory(Number(filters.category_id));
-        if (correctModuleId) {
-          this.logger.warn(`[searchStoresByModule] Category ${filters.category_id} belongs to module ${correctModuleId}, not ${filters.module_id}. Switching module context.`);
-          filters.module_id = correctModuleId;
-        } else {
-          this.logger.warn(`[searchStoresByModule] Category ${filters.category_id} does not exist in module ${filters.module_id}`);
-          throw new BadRequestException(
-            `Category ${filters.category_id} does not exist in module ${filters.module_id}`
-          );
+      try {
+        const isValid = await this.moduleService.validateCategoryModule(Number(filters.category_id), filters.module_id);
+        if (!isValid) {
+          // Check if category exists in another module
+          try {
+            const correctModuleId = await this.moduleService.getModuleIdForCategory(Number(filters.category_id));
+            if (correctModuleId) {
+              this.logger.warn(`[searchStoresByModule] Category ${filters.category_id} belongs to module ${correctModuleId}, not ${filters.module_id}. Switching module context.`);
+              filters.module_id = correctModuleId;
+            } else {
+              this.logger.warn(`[searchStoresByModule] Category ${filters.category_id} does not exist in module ${filters.module_id}`);
+              throw new BadRequestException(
+                `Category ${filters.category_id} does not exist in module ${filters.module_id}`
+              );
+            }
+          } catch (error: any) {
+            // If MySQL is unavailable, skip validation and proceed with search
+            if (error instanceof BadRequestException) throw error;
+            this.logger.warn(`[searchStoresByModule] Category validation skipped (MySQL unavailable): ${error?.message || String(error)}`);
+          }
         }
+        this.logger.debug(`[searchStoresByModule] Category validation passed`);
+      } catch (error: any) {
+        // If MySQL is unavailable, skip validation and proceed with search
+        if (error instanceof BadRequestException) throw error;
+        this.logger.warn(`[searchStoresByModule] Category validation skipped (MySQL unavailable): ${error?.message || String(error)}`);
       }
-      this.logger.debug(`[searchStoresByModule] Category validation passed`);
     }
 
     // Get the correct store indices based on module_id
@@ -7273,8 +7303,8 @@ export class SearchService {
     }
 
     // Status filters - Only show active AND approved stores
-    filterClauses.push({ term: { status: true } });  // status=1 means active
-    filterClauses.push({ term: { active: true } });  // active=1 means approved
+    filterClauses.push({ term: { status: 1 } });  // status=1 means active
+    filterClauses.push({ term: { active: 1 } });  // active=1 means approved
     this.logger.debug(`[searchStoresByModule] Applied status=1, active=1 filter`);
 
     // Veg/Non-Veg filter
@@ -7445,7 +7475,7 @@ export class SearchService {
               categoryIdsWithChildren.length === 1
                 ? { term: { category_id: categoryIdsWithChildren[0] } }
                 : { terms: { category_id: categoryIdsWithChildren } },
-              { term: { status: true } } // Only active items
+              { term: { status: 1 } } // Only active items
             ]
           }
         },
@@ -7493,7 +7523,7 @@ export class SearchService {
           return true;
         });
         // Only filter by active:true (stores serving items in this category should be shown)
-        categoryStoreFilterClauses.push({ term: { active: true } });
+        categoryStoreFilterClauses.push({ term: { active: 1 } });
         
         const storeResBody: any = {
           query: {
@@ -7641,7 +7671,7 @@ export class SearchService {
             bool: {
               must: [
                 { term: { module_id: Number(filters.module_id) } },
-                { term: { status: true } }
+                { term: { status: 1 } }
               ]
             }
           },
@@ -7790,7 +7820,7 @@ export class SearchService {
               bool: {
                 must: [
                   { terms: { category_id: Array.from(matchingCategoryIds) } },
-                  { term: { status: true } } // Only active items
+                  { term: { status: 1 } } // Only active items
                 ]
               }
             },
@@ -8442,7 +8472,7 @@ export class SearchService {
               bool: {
                 must: [
                   { terms: { category_id: Array.from(matchingCategoryIds).map(id => Number(id)).filter(id => !Number.isNaN(id)) } },
-                  { term: { status: true } }
+                  { term: { status: 1 } }
                 ],
                 filter: []
               }
@@ -8933,7 +8963,7 @@ export class SearchService {
       });
     }
 
-    // Status filter - only active categories
+    // Status filter - only active categories (categories use boolean status, not integer)
     filterClauses.push({ term: { status: true } });
 
     // Pagination - default size is 100 for categories to return all categories by default
@@ -9000,8 +9030,8 @@ export class SearchService {
     // Build item query to find available items in these categories
     const itemFilterClauses: any[] = [
       { terms: { category_id: categoryIds } },
-      { term: { status: true } },
-      { term: { is_approved: true } },
+      { term: { status: 1 } },
+      { term: { is_approved: 1 } },
     ];
 
     // If store_id is provided, filter items by store
@@ -9093,7 +9123,7 @@ export class SearchService {
           bool: {
             filter: [
               { terms: { _id: parentIdsArray.map(String) } },
-              { term: { status: true } },
+              { term: { status: 1 } },
             ],
           },
         },
