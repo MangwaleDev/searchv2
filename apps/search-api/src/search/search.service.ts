@@ -7164,7 +7164,7 @@ export class SearchService {
     const startTime = Date.now();
     this.logger.log(`[searchStoresByModule] Cache check: cacheEnabled=${this.cacheEnabled}`);
     if (this.cacheEnabled) {
-      const cacheKey = this.cacheService.buildCacheKey({ q, ...filters });
+      const cacheKey = this.cacheService.buildCacheKey({ type: 'stores', q, ...filters });
       this.logger.log(`[searchStoresByModule] Checking cache with key: ${cacheKey.substring(0, 100)}...`);
       const cached = await this.cacheService.get(cacheKey);
 
@@ -8928,7 +8928,7 @@ export class SearchService {
 
     // Cache results if enabled
     if (this.cacheEnabled) {
-      const cacheKey = this.cacheService.buildCacheKey({ q, ...filters });
+      const cacheKey = this.cacheService.buildCacheKey({ type: 'stores', q, ...filters });
 
       // Dynamic TTL based on query type
       let ttl = 300; // Default 5 minutes
