@@ -26,7 +26,7 @@ services:
         soft: 65536
         hard: 65536
     ports:
-      - "127.0.0.1:9200:9200"  # Only localhost, will be updated by script
+      - "127.0.0.1:9210:9200"  # Only localhost, will be updated by script
     volumes:
       - opensearch-data:/usr/share/opensearch/data
     networks:
@@ -48,7 +48,7 @@ services:
       - OPENSEARCH_HOSTS=["http://search-opensearch:9200"]
       - DISABLE_SECURITY_DASHBOARDS_PLUGIN=true
     ports:
-      - "127.0.0.1:5601:5601"  # Only localhost, will be updated by script
+      - "127.0.0.1:5611:5601"  # Only localhost, will be updated by script
     networks:
       - search-network
     restart: unless-stopped
@@ -112,8 +112,8 @@ services:
         soft: 262144
         hard: 262144
     ports:
-      - "127.0.0.1:8123:8123"  # Only localhost, will be updated by script
-      - "127.0.0.1:9000:9000"  # Only localhost, will be updated by script
+      - "127.0.0.1:8124:8123"  # Only localhost, will be updated by script
+      - "127.0.0.1:9001:9000"  # Only localhost, will be updated by script
     volumes:
       - clickhouse-data:/var/lib/clickhouse
     networks:
@@ -146,7 +146,7 @@ services:
       - --rpc-addr=0.0.0.0:33145
       - --advertise-rpc-addr=search-redpanda:33145
     ports:
-      - "127.0.0.1:9092:9092"  # Only localhost, will be updated by script
+      - "127.0.0.1:9093:9092"  # Only localhost, will be updated by script
       - "127.0.0.1:8084:8082"  # Only localhost, will be updated by script
     volumes:
       - redpanda-data:/var/lib/redpanda/data
@@ -202,7 +202,7 @@ services:
       dockerfile: Dockerfile.embedding
     container_name: search-embedding-service
     ports:
-      - "127.0.0.1:3101:3101"  # Only localhost, will be updated by script
+      - "127.0.0.1:3111:3101"  # Only localhost, will be updated by script
     networks:
       - search-network
     restart: unless-stopped
@@ -262,7 +262,7 @@ services:
       - MINIO_BUCKET=${MINIO_BUCKET:-mangwale}
       - IMAGE_FALLBACK_ENABLED=${IMAGE_FALLBACK_ENABLED:-true}
     ports:
-      - "127.0.0.1:3100:3100"  # Only localhost, will be updated by script
+      - "127.0.0.1:3110:3100"  # Only localhost, will be updated by script
     networks:
       - search-network
     restart: unless-stopped
@@ -287,7 +287,7 @@ services:
       search-api:
         condition: service_healthy
     ports:
-      - "127.0.0.1:6000:80"  # Only localhost, will be updated by script
+      - "127.0.0.1:6010:80"  # Only localhost, will be updated by script
     networks:
       - search-network
     restart: unless-stopped

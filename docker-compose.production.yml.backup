@@ -26,7 +26,7 @@ services:
         soft: 65536
         hard: 65536
     ports:
-      - "127.0.0.1:9200:9200"  # Only localhost, will be updated by script
+      - "127.0.0.1:9210:9200"  # Only localhost, will be updated by script
     volumes:
       - opensearch-data:/usr/share/opensearch/data
     networks:
@@ -48,7 +48,7 @@ services:
       - OPENSEARCH_HOSTS=["http://search-opensearch:9200"]
       - DISABLE_SECURITY_DASHBOARDS_PLUGIN=true
     ports:
-      - "127.0.0.1:5601:5601"  # Only localhost, will be updated by script
+      - "127.0.0.1:5611:5601"  # Only localhost, will be updated by script
     networks:
       - search-network
     restart: unless-stopped
@@ -64,7 +64,7 @@ services:
       MYSQL_DATABASE: ${MYSQL_DATABASE:-mangwale}
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-${MYSQL_PASSWORD:-changeme_strong_password}}
     ports:
-      - "127.0.0.1:3306:3306"  # Only localhost, will be updated by script
+      - "127.0.0.1:3307:3306"  # Only localhost, will be updated by script
     command: 
       - --default-authentication-plugin=mysql_native_password
       - --binlog_format=ROW
@@ -112,8 +112,8 @@ services:
         soft: 262144
         hard: 262144
     ports:
-      - "127.0.0.1:8123:8123"  # Only localhost, will be updated by script
-      - "127.0.0.1:9000:9000"  # Only localhost, will be updated by script
+      - "127.0.0.1:8124:8123"  # Only localhost, will be updated by script
+      - "127.0.0.1:9001:9000"  # Only localhost, will be updated by script
     volumes:
       - clickhouse-data:/var/lib/clickhouse
     networks:
@@ -146,8 +146,8 @@ services:
       - --rpc-addr=0.0.0.0:33145
       - --advertise-rpc-addr=search-redpanda:33145
     ports:
-      - "127.0.0.1:9092:9092"  # Only localhost, will be updated by script
-      - "127.0.0.1:8082:8082"  # Only localhost, will be updated by script
+      - "127.0.0.1:9093:9092"  # Only localhost, will be updated by script
+      - "127.0.0.1:8084:8082"  # Only localhost, will be updated by script
     volumes:
       - redpanda-data:/var/lib/redpanda/data
     networks:
@@ -180,7 +180,7 @@ services:
       VALUE_CONVERTER_SCHEMAS_ENABLE: "false"
       PLUGIN_PATH: /kafka/connect
     ports:
-      - "127.0.0.1:8083:8083"  # Only localhost, will be updated by script
+      - "127.0.0.1:8085:8083"  # Only localhost, will be updated by script
     volumes:
       - connect-data:/data
     networks:
@@ -202,7 +202,7 @@ services:
       dockerfile: Dockerfile.embedding
     container_name: search-embedding-service
     ports:
-      - "127.0.0.1:3101:3101"  # Only localhost, will be updated by script
+      - "127.0.0.1:3111:3101"  # Only localhost, will be updated by script
     networks:
       - search-network
     restart: unless-stopped
@@ -236,11 +236,11 @@ services:
       - OPENSEARCH_HOST=http://search-opensearch:9200
       - REDIS_URL=redis://search-redis:6379/2
       - ENABLE_SEARCH_CACHE=true
-      - MYSQL_HOST=${MYSQL_HOST:-search-mysql}
+      - MYSQL_HOST=${MYSQL_HOST:-103.160.107.41}
       - MYSQL_PORT=${MYSQL_PORT:-3306}
-      - MYSQL_DATABASE=${MYSQL_DATABASE:-mangwale}
-      - MYSQL_USER=${MYSQL_USER:-root}
-      - MYSQL_PASSWORD=${MYSQL_PASSWORD:-secret}
+      - MYSQL_DATABASE=${MYSQL_DATABASE:-migrated_db}
+      - MYSQL_USER=${MYSQL_USER:-helper_31b9_mangwale_459f}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD:-39c2922b-810e-42fb-aa1e-80d1b7d62ea2}
       - KAFKA_BROKERS=search-redpanda:9092
       - CLICKHOUSE_URL=http://search-clickhouse:8123
       - CLICKHOUSE_HOST=http://search-clickhouse:8123
@@ -262,7 +262,7 @@ services:
       - MINIO_BUCKET=${MINIO_BUCKET:-mangwale}
       - IMAGE_FALLBACK_ENABLED=${IMAGE_FALLBACK_ENABLED:-true}
     ports:
-      - "127.0.0.1:3100:3100"  # Only localhost, will be updated by script
+      - "127.0.0.1:3110:3100"  # Only localhost, will be updated by script
     networks:
       - search-network
     restart: unless-stopped
@@ -287,7 +287,7 @@ services:
       search-api:
         condition: service_healthy
     ports:
-      - "127.0.0.1:6000:80"  # Only localhost, will be updated by script
+      - "127.0.0.1:6010:80"  # Only localhost, will be updated by script
     networks:
       - search-network
     restart: unless-stopped
@@ -338,7 +338,7 @@ services:
       search-mysql:
         condition: service_healthy
     ports:
-      - "127.0.0.1:8085:8080"  # Only localhost, will be updated by script
+      - "127.0.0.1:8086:8080"  # Only localhost, will be updated by script
     networks:
       - search-network
     restart: unless-stopped

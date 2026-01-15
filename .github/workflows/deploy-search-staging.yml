@@ -9,7 +9,7 @@ on:
 
 jobs:
   deploy-staging:
-    name: Deploy to search.test.mangwale.ai
+    name: Deploy to search.mangwale.ai
     runs-on: ubuntu-latest
 
     env:

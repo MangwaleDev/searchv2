@@ -16,28 +16,28 @@ export default defineConfig(({ mode }) => {
         target: process.env.API_URL || 'http://localhost:80',
         changeOrigin: true,
         headers: {
-          Host: 'search.test.mangwale.ai'
+          Host: 'search.mangwale.ai'
         }
       },
       '/analytics': {
         target: process.env.API_URL || 'http://localhost:80',
         changeOrigin: true,
         headers: {
-          Host: 'search.test.mangwale.ai'
+          Host: 'search.mangwale.ai'
         }
       },
       '/health': {
         target: process.env.API_URL || 'http://localhost:80',
         changeOrigin: true,
         headers: {
-          Host: 'search.test.mangwale.ai'
+          Host: 'search.mangwale.ai'
         }
       },
       '/v2': {
         target: process.env.API_URL || 'http://localhost:80',
         changeOrigin: true,
         headers: {
-          Host: 'search.test.mangwale.ai'
+          Host: 'search.mangwale.ai'
         }
       },
     },

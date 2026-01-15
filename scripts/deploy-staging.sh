@@ -3,7 +3,7 @@
 ###############################################################################
 # Mangwale Search - Staging Deployment Script
 # Automated deployment script for staging server with port conflict detection
-# Domain: https://search.test.mangwale.ai/
+# Domain: https://search.mangwale.ai/
 ###############################################################################
 
 set -e  # Exit on error
@@ -21,7 +21,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 COMPOSE_FILE="$PROJECT_ROOT/docker-compose.production.yml"
 ENV_FILE="$PROJECT_ROOT/.env.production"
-DOMAIN="search.test.mangwale.ai"
+DOMAIN="search.mangwale.ai"
 
 # Change to project root
 cd "$PROJECT_ROOT" || exit 1
@@ -658,11 +658,11 @@ setup_nginx_https() {
         print_info "Please run the following commands as root or with sudo:"
         echo ""
         cat << 'NGINX_CONFIG'
-# Create Nginx configuration for search.test.mangwale.ai
-sudo tee /etc/nginx/sites-available/search.test.mangwale.ai << 'EOF'
+# Create Nginx configuration for search.mangwale.ai
+sudo tee /etc/nginx/sites-available/search.mangwale.ai << 'EOF'
 server {
     listen 80;
-    server_name search.test.mangwale.ai;
+    server_name search.mangwale.ai;
     
     # Redirect HTTP to HTTPS
     return 301 https://$server_name$request_uri;
@@ -670,11 +670,11 @@ server {
 
 server {
     listen 443 ssl http2;
-    server_name search.test.mangwale.ai;
+    server_name search.mangwale.ai;
     
     # SSL Configuration (Let's Encrypt)
-    ssl_certificate /etc/letsencrypt/live/search.test.mangwale.ai/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/search.test.mangwale.ai/privkey.pem;
+    ssl_certificate /etc/letsencrypt/live/search.mangwale.ai/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/search.mangwale.ai/privkey.pem;
     
     # SSL Security Settings
     ssl_protocols TLSv1.2 TLSv1.3;
@@ -729,7 +729,7 @@ server {
 EOF
 
 # Enable site
-sudo ln -sf /etc/nginx/sites-available/search.test.mangwale.ai /etc/nginx/sites-enabled/
+sudo ln -sf /etc/nginx/sites-available/search.mangwale.ai /etc/nginx/sites-enabled/
 sudo nginx -t
 sudo systemctl reload nginx
 NGINX_CONFIG
@@ -739,12 +739,12 @@ NGINX_CONFIG
         echo "  FRONTEND_PORT=$FRONTEND_PORT"
     else
         # Create Nginx config
-        local nginx_config="/etc/nginx/sites-available/search.test.mangwale.ai"
+        local nginx_config="/etc/nginx/sites-available/search.mangwale.ai"
         
         cat > "$nginx_config" << EOF
 server {
     listen 80;
-    server_name search.test.mangwale.ai;
+    server_name search.mangwale.ai;
     
     # Redirect HTTP to HTTPS
     return 301 https://\$server_name\$request_uri;
@@ -752,11 +752,11 @@ server {
 
 server {
     listen 443 ssl http2;
-    server_name search.test.mangwale.ai;
+    server_name search.mangwale.ai;
     
     # SSL Configuration (Let's Encrypt)
-    ssl_certificate /etc/letsencrypt/live/search.test.mangwale.ai/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/search.test.mangwale.ai/privkey.pem;
+    ssl_certificate /etc/letsencrypt/live/search.mangwale.ai/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/search.mangwale.ai/privkey.pem;
     
     # SSL Security Settings
     ssl_protocols TLSv1.2 TLSv1.3;
@@ -814,8 +814,12 @@ EOF
         ln -sf "$nginx_config" /etc/nginx/sites-enabled/
         nginx -t && systemctl reload nginx
         print_success "Nginx configuration created and enabled"
-        print_warning "Make sure SSL certificates are installed at /etc/letsencrypt/live/search.test.mangwale.ai/"
-        print_info "To get SSL certificates, run: sudo certbot --nginx -d search.test.mangwale.ai"
+        print_warning "Make sure SSL certificates are installed at /etc/letsencrypt/live/search.mangwale.ai/"
+        print_info "To get SSL certificates, run: sudo certbot --nginx -d search.mangwale.ai"
+        print_info "After Certbot runs, update ports in Nginx config:"
+        print_info "  sudo sed -i 's|proxy_pass http://127.0.0.1:3100;|proxy_pass http://127.0.0.1:$SEARCH_API_PORT;|g' /etc/nginx/sites-enabled/search.mangwale.ai"
+        print_info "  sudo sed -i 's|proxy_pass http://127.0.0.1:6000;|proxy_pass http://127.0.0.1:$FRONTEND_PORT;|g' /etc/nginx/sites-enabled/search.mangwale.ai"
+        print_info "  sudo nginx -t && sudo systemctl reload nginx"
     fi
 }
 

@@ -141,9 +141,7 @@ export class ImageService {
     const range = this.workingDateRanges[storage];
     const isAvailable = datePrefix >= range.start && datePrefix <= range.end;
     
-    // TEMP DEBUG
-    this.logger.log(`[isImageLikelyAvailable] filename=${filename}, storage=${storage}, datePrefix=${datePrefix}, range=${range.start} to ${range.end}, isAvailable=${isAvailable}`);
-    
+    // DEBUG logging removed for performance
     return isAvailable;
   }
   
@@ -258,8 +256,6 @@ export class ImageService {
       transformed.image_full_url = smartUrl.primary;
       transformed.image_fallback_url = smartUrl.fallback;
       transformed.image_status = smartUrl.status;
-      // TEMP DEBUG: Remove after testing
-      this.logger.log(`[transformItemImages] item.image=${item.image}, image_full_url=${smartUrl.primary}, status=${smartUrl.status}`);
     }
     
     // Additional images array
@@ -334,7 +330,6 @@ export class ImageService {
    * Transform search results (items) with full image URLs
    */
   transformItemsWithImages(items: Record<string, any>[]): Record<string, any>[] {
-    this.logger.log(`[transformItemsWithImages] called with ${items?.length ?? 0} items`);
     if (!items || !Array.isArray(items)) return items;
     return items.map(item => this.transformItemImages(item));
   }
