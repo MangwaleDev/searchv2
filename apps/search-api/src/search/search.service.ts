@@ -420,11 +420,56 @@ export class SearchService {
       return this.searchItemsByModule(q, filters);
     }
 
+    // Check cache first for items endpoint (with type: 'items' to distinguish from stores endpoint)
+    if (this.cacheEnabled) {
+      const cacheKey = this.cacheService.buildCacheKey({ type: 'items', q, ...filters });
+      const cached = await this.cacheService.get(cacheKey);
+      if (cached) {
+        // Ensure cached response has items (not stores) - safety check
+        if (cached.items && !cached.stores) {
+          this.logger.debug(`[searchItemsByIntent] Cache HIT: q="${q}"`);
+          return cached;
+        } else if (cached.stores && !cached.items) {
+          // Old cached response with stores - skip it and regenerate
+          this.logger.warn(`[searchItemsByIntent] Invalid cache entry (has stores, not items) - skipping cache`);
+          // Continue to generate fresh response below
+        } else {
+          // Valid cache entry
+          this.logger.debug(`[searchItemsByIntent] Cache HIT: q="${q}"`);
+          return cached;
+        }
+      }
+    }
+
     // NEW APPROACH: Use multi-index search with store boosting
     // This replaces the hardcoded brand matching approach
     // OpenSearch automatically ranks stores higher (10x boost)
     if (q && q.trim()) {
-      return this.searchWithStoreBoosting(q, filters);
+      const result = await this.searchWithStoreBoosting(q, filters);
+      // For /v2/search/items endpoint, only return items (not stores)
+      // Flutter expects response to have "items" key, not "stores"
+      const transformedResponse = {
+        q: result.query || q,
+        filters: result.filters || filters,
+        items: result.items || [],
+        resolved_store: result.stores?.[0] || null, // Keep first store for reference if needed
+        meta: {
+          total: result.meta?.total_items || result.meta?.total || 0,
+          page: result.meta?.page || filters?.page || 1,
+          size: result.meta?.size || filters?.size || 20,
+          total_pages: Math.ceil((result.meta?.total_items || result.meta?.total || 0) / (result.meta?.size || filters?.size || 20)),
+          has_more: ((result.meta?.page || filters?.page || 1) * (result.meta?.size || filters?.size || 20)) < (result.meta?.total_items || result.meta?.total || 0),
+        },
+      };
+
+      // Cache the transformed response (items only, not stores)
+      if (this.cacheEnabled) {
+        const cacheKey = this.cacheService.buildCacheKey({ type: 'items', q, ...filters });
+        const ttl = (filters?.category_id || filters?.store_id) ? 60 : 300;
+        await this.cacheService.set(cacheKey, transformedResponse, ttl);
+      }
+
+      return transformedResponse;
     }
 
     // Fallback for empty query
@@ -4423,6 +4468,133 @@ export class SearchService {
   }
 
   /**
+   * Fallback method to get category with children from OpenSearch when MySQL is unavailable
+   * Recursively finds all child categories (subcategories) of a given parent category
+   */
+  private async getCategoryWithChildrenFromOpenSearch(categoryId: number, moduleId?: number): Promise<number[]> {
+    const categoryIds = new Set<number>();
+    const visited = new Set<number>();
+    
+    // Helper function to recursively find all children
+    const findChildren = async (parentId: number): Promise<void> => {
+      if (visited.has(parentId)) return; // Prevent infinite loops
+      visited.add(parentId);
+      
+      // Determine which category indices to search
+      const categoryIndices = moduleId === 4 
+        ? ['food_categories'] 
+        : moduleId === 5 
+        ? ['ecom_categories']
+        : this.getAllCategoryIndices();
+      
+      const queryBody: any = {
+        query: {
+          bool: {
+            must: [
+              { term: { parent_id: parentId } }
+            ],
+            filter: [
+              { term: { status: true } } // Only active categories
+            ]
+          }
+        },
+        size: 1000,
+        _source: ['id', 'parent_id']
+      };
+      
+      // Add module filter if provided
+      if (moduleId) {
+        queryBody.query.bool.must.push({ term: { module_id: Number(moduleId) } });
+      }
+      
+      try {
+        const results = await Promise.all(
+          categoryIndices.map(index =>
+            this.client.search({ index, body: queryBody }).catch(() => ({ body: { hits: { hits: [] } } }))
+          )
+        );
+        
+        for (const result of results) {
+          const hits = result.body?.hits?.hits || [];
+          for (const hit of hits) {
+            const childId = Number(hit._id || hit._source?.id);
+            if (childId && !categoryIds.has(childId)) {
+              categoryIds.add(childId);
+              // Recursively find children of this child
+              await findChildren(childId);
+            }
+          }
+        }
+      } catch (error: any) {
+        this.logger.warn(`[getCategoryWithChildrenFromOpenSearch] Error finding children of category ${parentId}: ${error?.message || String(error)}`);
+      }
+    };
+    
+    // First, verify the parent category exists
+    const categoryIndices = moduleId === 4 
+      ? ['food_categories'] 
+      : moduleId === 5 
+      ? ['ecom_categories']
+      : this.getAllCategoryIndices();
+    
+    const parentQueryBody: any = {
+      query: {
+        bool: {
+          must: [
+            { term: { id: categoryId } }
+          ],
+          filter: [
+            { term: { status: true } } // Only active categories
+          ]
+        }
+      },
+      size: 1,
+      _source: ['id', 'module_id']
+    };
+    
+    if (moduleId) {
+      parentQueryBody.query.bool.must.push({ term: { module_id: Number(moduleId) } });
+    }
+    
+    try {
+      const parentResults = await Promise.all(
+        categoryIndices.map(index =>
+          this.client.search({ index, body: parentQueryBody }).catch(() => ({ body: { hits: { hits: [] } } }))
+        )
+      );
+      
+      let parentFound = false;
+      for (const result of parentResults) {
+        const hits = result.body?.hits?.hits || [];
+        if (hits.length > 0) {
+          parentFound = true;
+          break;
+        }
+      }
+      
+      if (!parentFound) {
+        this.logger.warn(`[getCategoryWithChildrenFromOpenSearch] Category ${categoryId} not found or inactive`);
+        return [];
+      }
+      
+      // Add the parent category itself
+      categoryIds.add(categoryId);
+      
+      // Find all children recursively
+      await findChildren(categoryId);
+      
+      const result = Array.from(categoryIds);
+      this.logger.debug(`[getCategoryWithChildrenFromOpenSearch] Category ${categoryId} has ${result.length - 1} child categories (total: ${result.length} including parent)`);
+      
+      return result;
+    } catch (error: any) {
+      this.logger.error(`[getCategoryWithChildrenFromOpenSearch] Error getting category ${categoryId} with children: ${error?.message || String(error)}`);
+      // Return just the parent category ID on error
+      return [categoryId];
+    }
+  }
+
+  /**
    * NEW: Suggest API with module_id/store_id/category_id support
    * Returns items, stores, and categories with intent-based prioritization
    */
@@ -5512,6 +5684,26 @@ export class SearchService {
           Number(filters.category_id),
           filters?.module_id
         );
+        
+        // If MySQL returned only 1 category (just the parent), it might mean MySQL failed silently
+        // Try OpenSearch fallback to find children
+        if (categoryIdsForFilter.length === 1 && categoryIdsForFilter[0] === Number(filters.category_id)) {
+          this.logger.debug(`[searchItemsByModule] MySQL returned only parent category ${filters.category_id}, trying OpenSearch fallback to find children...`);
+          try {
+            const opensearchCategories = await this.getCategoryWithChildrenFromOpenSearch(
+              Number(filters.category_id),
+              filters?.module_id
+            );
+            if (opensearchCategories.length > 1) {
+              // OpenSearch found children, use those instead
+              categoryIdsForFilter = opensearchCategories;
+              this.logger.debug(`[searchItemsByModule] OpenSearch fallback found ${opensearchCategories.length} categories (parent + children) for category_id ${filters.category_id}`);
+            }
+          } catch (opensearchError: any) {
+            this.logger.warn(`[searchItemsByModule] OpenSearch fallback failed: ${opensearchError?.message || String(opensearchError)}`);
+          }
+        }
+        
         if (categoryIdsForFilter.length > 0) {
           if (categoryIdsForFilter.length === 1) {
             filterClauses.push({ term: { category_id: categoryIdsForFilter[0] } });
@@ -5524,8 +5716,31 @@ export class SearchService {
           filterClauses.push({ term: { category_id: Number(filters.category_id) } });
         }
       } catch (error: any) {
-        this.logger.warn(`[searchItemsByModule] Failed to get child categories for ${filters.category_id}: ${error?.message || String(error)}. Using parent category only.`);
-        filterClauses.push({ term: { category_id: Number(filters.category_id) } });
+        this.logger.warn(`[searchItemsByModule] Failed to get child categories from MySQL for ${filters.category_id}: ${error?.message || String(error)}. Trying OpenSearch fallback...`);
+        
+        // Fallback: Query OpenSearch categories index to find child categories
+        try {
+          categoryIdsForFilter = await this.getCategoryWithChildrenFromOpenSearch(
+            Number(filters.category_id),
+            filters?.module_id
+          );
+          
+          if (categoryIdsForFilter.length > 0) {
+            if (categoryIdsForFilter.length === 1) {
+              filterClauses.push({ term: { category_id: categoryIdsForFilter[0] } });
+            } else {
+              filterClauses.push({ terms: { category_id: categoryIdsForFilter } });
+            }
+            this.logger.debug(`[searchItemsByModule] OpenSearch fallback: Including ${categoryIdsForFilter.length} categories (parent + children) for category_id ${filters.category_id}`);
+          } else {
+            // Last resort: just the parent category
+            this.logger.warn(`[searchItemsByModule] No child categories found in OpenSearch for ${filters.category_id}. Using parent category only.`);
+            filterClauses.push({ term: { category_id: Number(filters.category_id) } });
+          }
+        } catch (opensearchError: any) {
+          this.logger.error(`[searchItemsByModule] OpenSearch fallback also failed for ${filters.category_id}: ${opensearchError?.message || String(opensearchError)}. Using parent category only.`);
+          filterClauses.push({ term: { category_id: Number(filters.category_id) } });
+        }
       }
     }
 
@@ -7164,7 +7379,7 @@ export class SearchService {
     const startTime = Date.now();
     this.logger.log(`[searchStoresByModule] Cache check: cacheEnabled=${this.cacheEnabled}`);
     if (this.cacheEnabled) {
-      const cacheKey = this.cacheService.buildCacheKey({ q, ...filters });
+      const cacheKey = this.cacheService.buildCacheKey({ type: 'stores', q, ...filters });
       this.logger.log(`[searchStoresByModule] Checking cache with key: ${cacheKey.substring(0, 100)}...`);
       const cached = await this.cacheService.get(cacheKey);
 
@@ -7546,10 +7761,48 @@ export class SearchService {
       let categoryIdsWithChildren: number[] = [];
       try {
         categoryIdsWithChildren = await this.moduleService.getCategoryWithChildren(categoryId, filters?.module_id);
+        
+        // If MySQL returned only 1 category (just the parent), it might mean MySQL failed silently
+        // Try OpenSearch fallback to find children
+        if (categoryIdsWithChildren.length === 1 && categoryIdsWithChildren[0] === categoryId) {
+          this.logger.debug(`[searchStoresByModule] MySQL returned only parent category ${categoryId}, trying OpenSearch fallback to find children...`);
+          try {
+            const opensearchCategories = await this.getCategoryWithChildrenFromOpenSearch(
+              categoryId,
+              filters?.module_id
+            );
+            if (opensearchCategories.length > 1) {
+              // OpenSearch found children, use those instead
+              categoryIdsWithChildren = opensearchCategories;
+              this.logger.debug(`[searchStoresByModule] OpenSearch fallback found ${opensearchCategories.length} categories (parent + children) for category_id ${categoryId}`);
+            }
+          } catch (opensearchError: any) {
+            this.logger.warn(`[searchStoresByModule] OpenSearch fallback failed: ${opensearchError?.message || String(opensearchError)}`);
+          }
+        }
+        
         this.logger.debug(`[searchStoresByModule] Including ${categoryIdsWithChildren.length} categories (parent + children) for category_id ${categoryId}`);
       } catch (error: any) {
-        this.logger.warn(`[searchStoresByModule] Failed to get child categories for ${categoryId}: ${error?.message || String(error)}. Using parent category only.`);
-        categoryIdsWithChildren = [categoryId];
+        this.logger.warn(`[searchStoresByModule] Failed to get child categories from MySQL for ${categoryId}: ${error?.message || String(error)}. Trying OpenSearch fallback...`);
+        
+        // Fallback: Query OpenSearch categories index to find child categories
+        try {
+          categoryIdsWithChildren = await this.getCategoryWithChildrenFromOpenSearch(
+            categoryId,
+            filters?.module_id
+          );
+          
+          if (categoryIdsWithChildren.length > 0) {
+            this.logger.debug(`[searchStoresByModule] OpenSearch fallback: Including ${categoryIdsWithChildren.length} categories (parent + children) for category_id ${categoryId}`);
+          } else {
+            // Last resort: just the parent category
+            this.logger.warn(`[searchStoresByModule] No child categories found in OpenSearch for ${categoryId}. Using parent category only.`);
+            categoryIdsWithChildren = [categoryId];
+          }
+        } catch (opensearchError: any) {
+          this.logger.error(`[searchStoresByModule] OpenSearch fallback also failed for ${categoryId}: ${opensearchError?.message || String(opensearchError)}. Using parent category only.`);
+          categoryIdsWithChildren = [categoryId];
+        }
       }
 
       // Find all items in this category and its children
@@ -8928,7 +9181,7 @@ export class SearchService {
 
     // Cache results if enabled
     if (this.cacheEnabled) {
-      const cacheKey = this.cacheService.buildCacheKey({ q, ...filters });
+      const cacheKey = this.cacheService.buildCacheKey({ type: 'stores', q, ...filters });
 
       // Dynamic TTL based on query type
       let ttl = 300; // Default 5 minutes
