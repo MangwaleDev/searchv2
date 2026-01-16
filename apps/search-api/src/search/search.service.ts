@@ -4423,49 +4423,6 @@ export class SearchService {
   }
 
   /**
-   * Diversify items by store - ensures items from different stores appear alternately
-   * Uses round-robin approach: picks one item from each store in turn
-   */
-  private diversifyByStore(items: any[]): any[] {
-    if (!items || items.length <= 1) return items;
-
-    // Group items by store_id
-    const storeGroups = new Map<number, any[]>();
-    items.forEach(item => {
-      const storeId = item.store_id || 0;
-      if (!storeGroups.has(storeId)) {
-        storeGroups.set(storeId, []);
-      }
-      storeGroups.get(storeId)!.push(item);
-    });
-
-    // If all items are from same store, return as-is
-    if (storeGroups.size <= 1) return items;
-
-    // Round-robin: pick one item from each store in turn
-    const diversified: any[] = [];
-    const storeQueues = Array.from(storeGroups.values());
-    
-    // Sort store queues by first item's relevance (distance or rating)
-    storeQueues.sort((a, b) => {
-      const distA = a[0]?.distance ?? a[0]?.distance_km ?? Infinity;
-      const distB = b[0]?.distance ?? b[0]?.distance_km ?? Infinity;
-      return distA - distB;
-    });
-
-    let maxRounds = Math.max(...storeQueues.map(q => q.length));
-    for (let round = 0; round < maxRounds; round++) {
-      for (const queue of storeQueues) {
-        if (queue[round]) {
-          diversified.push(queue[round]);
-        }
-      }
-    }
-
-    return diversified;
-  }
-
-  /**
    * NEW: Suggest API with module_id/store_id/category_id support
    * Returns items, stores, and categories with intent-based prioritization
    */
@@ -7144,16 +7101,11 @@ export class SearchService {
       return item.store_name && item.store_name !== '';
     });
 
-    // Diversify results by store for category browsing (avoid showing all items from same store consecutively)
-    const diversifiedItems = (filters?.category_id && !filters?.store_id && !q)
-      ? this.diversifyByStore(validItems)
-      : validItems;
-
     const response = {
       q,
       filters: { ...filters, _original_query: undefined }, // Remove internal flag from response
       resolved_store: resolvedStore,
-      items: diversifiedItems,
+      items: validItems,
       meta: {
         total: totalHits,
         page,
@@ -7212,7 +7164,7 @@ export class SearchService {
     const startTime = Date.now();
     this.logger.log(`[searchStoresByModule] Cache check: cacheEnabled=${this.cacheEnabled}`);
     if (this.cacheEnabled) {
-      const cacheKey = this.cacheService.buildCacheKey({ type: 'stores', q, ...filters });
+      const cacheKey = this.cacheService.buildCacheKey({ q, ...filters });
       this.logger.log(`[searchStoresByModule] Checking cache with key: ${cacheKey.substring(0, 100)}...`);
       const cached = await this.cacheService.get(cacheKey);
 
@@ -8976,7 +8928,7 @@ export class SearchService {
 
     // Cache results if enabled
     if (this.cacheEnabled) {
-      const cacheKey = this.cacheService.buildCacheKey({ type: 'stores', q, ...filters });
+      const cacheKey = this.cacheService.buildCacheKey({ q, ...filters });
 
       // Dynamic TTL based on query type
       let ttl = 300; // Default 5 minutes

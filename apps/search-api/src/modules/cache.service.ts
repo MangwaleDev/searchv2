@@ -118,7 +118,6 @@ export class SearchCacheService {
   buildCacheKey(params: any): string {
     // Normalize parameters for consistent caching
     const normalized: any = {
-      type: params.type || '', // 'items' or 'stores' to differentiate endpoints
       q: params.q?.toLowerCase().trim() || '',
       module: params.module || '',
       module_id: params.module_id,
