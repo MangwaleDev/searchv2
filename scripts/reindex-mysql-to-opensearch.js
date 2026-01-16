@@ -28,7 +28,7 @@ const CHUNK_SIZE = 500;
 // Module mappings
 const MODULES = {
   food: { id: 4, name: 'Food Delivery' },
-  ecom: { id: 2, name: 'E-commerce' },
+  ecom: { id: 5, name: 'E-commerce' }, // Updated to 5 to match API expectations
 };
 
 class ReindexService {
@@ -46,11 +46,11 @@ class ReindexService {
   async init() {
     // Initialize MySQL connection
     this.mysqlPool = await mysql.createPool({
-      host: process.env.MYSQL_HOST || 'dashboard_mangwale_mysql',
+      host: process.env.MYSQL_HOST || '103.160.107.41',
       port: Number(process.env.MYSQL_PORT || 3306),
-      user: process.env.MYSQL_USER || 'root',
-      password: process.env.MYSQL_PASSWORD || 'root_password',
-      database: process.env.MYSQL_DATABASE || 'mangwale_db',
+      user: process.env.MYSQL_USER || 'search_43d2_ai_55a6',
+      password: process.env.MYSQL_PASSWORD || '4854af0c-326d-4801-8b44-555c53eaec97',
+      database: process.env.MYSQL_DATABASE || 'migrated_db',
       waitForConnections: true,
       connectionLimit: 10,
       queueLimit: 0,
@@ -347,7 +347,8 @@ class ReindexService {
       throw new Error(`Unknown module type: ${moduleType}`);
     }
 
-    const indexName = `${moduleType}_items_v4`;
+    // Use correct index names: food_items_v4 for food, ecom_items for ecom
+    const indexName = moduleType === 'food' ? 'food_items_v4' : 'ecom_items';
     this.logger.log(`Starting reindex for ${module.name} (module_id: ${module.id}) to index ${indexName}`);
 
     // Load stores and categories
@@ -406,7 +407,8 @@ class ReindexService {
       throw new Error(`Unknown module type: ${moduleType}`);
     }
 
-    const indexName = `${moduleType}_stores_v6`;
+    // Use correct index names: food_stores_v6 for food, ecom_stores for ecom
+    const indexName = moduleType === 'food' ? 'food_stores_v6' : 'ecom_stores';
     this.logger.log(`Starting store reindex for ${module.name} to index ${indexName}`);
 
     const [stores] = await this.mysqlPool.query(

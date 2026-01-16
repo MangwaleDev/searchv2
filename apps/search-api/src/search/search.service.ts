@@ -4351,18 +4351,16 @@ export class SearchService {
    * Returns list of all item indices to search
    */
   private getAllItemIndices(): string[] {
-    // Only return indices that actually exist to avoid errors and improve performance
-    // Currently only food_items_v4 exists; add ecom_items when it's created
-    return [this.FOOD_ITEMS_INDEX];
+    // Return all item indices that exist
+    return [this.FOOD_ITEMS_INDEX, this.ECOM_ITEMS_INDEX];
   }
 
   /**
    * Get all store indices that may contain data
    */
   private getAllStoreIndices(): string[] {
-    // Only return indices that actually exist to avoid errors and improve performance
-    // Currently only food_stores_v6 exists; add ecom_stores when it's created
-    return [this.FOOD_STORES_INDEX];
+    // Return all store indices that exist
+    return [this.FOOD_STORES_INDEX, this.ECOM_STORES_INDEX];
   }
 
   /**
