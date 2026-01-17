@@ -6178,6 +6178,10 @@ export class SearchService {
 
     // Regular keyword search
     // Note: If query was provided, must already contains the function_score query with store boosting
+    // For category searches, fetch a larger batch (up to 1000) to enable proper client-side pagination
+    // This ensures all items are available for pagination across multiple pages
+    const querySize = hasCategoryFilter ? Math.min(1000, Math.max(size, (page || 1) * size)) : size;
+    const queryFrom = hasCategoryFilter ? 0 : from; // For category searches, always fetch from 0 and paginate client-side
     const body: any = {
       query: {
         bool: {
@@ -6185,8 +6189,8 @@ export class SearchService {
           filter: filterClauses,
         },
       },
-      size,
-      from,
+      size: querySize,
+      from: queryFrom,
       sort,
       _source: [
         'id', 'name', 'slug', 'image', 'images', 'price', 'base_price',
