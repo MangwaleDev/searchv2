@@ -328,6 +328,45 @@ services:
     restart: unless-stopped
 
   # ============================================
+  # STORAGE
+  # ============================================
+
+  search-minio:
+    image: minio/minio:latest
+    container_name: search-minio
+    command: server /data --console-address ":9001"
+    environment:
+      - MINIO_ROOT_USER=${MINIO_ROOT_USER:-minioadmin}
+      - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD:-minioadmin123}
+    ports:
+      - "127.0.0.1:9000:9000"  # MinIO API (only localhost)
+      - "9010:9001"  # MinIO Console (only localhost)
+    volumes:
+      - minio-data:/data
+    networks:
+      - search-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  search-minio-mc:
+    image: minio/mc:latest
+    container_name: search-minio-mc
+    depends_on:
+      search-minio:
+        condition: service_healthy
+    entrypoint: /bin/sh
+    command: -c "sleep infinity"
+    volumes:
+      - minio-data:/data
+    networks:
+      - search-network
+    restart: unless-stopped
+
+  # ============================================
   # UTILITIES
   # ============================================
 
@@ -372,4 +411,6 @@ volumes:
   clickhouse-data:
     driver: local
   opensearch-data:
+    driver: local
+  minio-data:
     driver: local

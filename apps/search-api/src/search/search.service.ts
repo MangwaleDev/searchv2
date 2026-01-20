@@ -29,11 +29,11 @@ export class SearchService {
    */
   async searchWithStoreBoosting(q: string, filters: Record<string, any>) {
     const moduleId = filters.module_id || filters.moduleId || 4;
-
+    
     // Determine indices based on module
     const itemsIndex = moduleId === 4 ? this.FOOD_ITEMS_INDEX : this.ECOM_ITEMS_INDEX;
     const storesIndex = moduleId === 4 ? this.FOOD_STORES_INDEX : this.ECOM_STORES_INDEX;
-
+    
     const page = parseInt(filters.page as any) || 1;
     // For category searches (with or without query), use larger default size (100) to show all items
     const hasCategoryFilter = filters?.category_id !== undefined && filters?.category_id !== null;
@@ -46,7 +46,7 @@ export class SearchService {
     if (q && q.trim()) {
       try {
         const storeSearchBody: any = {
-          query: {
+            query: {
             bool: {
               should: [
                 { term: { 'name.keyword': { value: q, case_insensitive: true } } },
@@ -61,23 +61,23 @@ export class SearchService {
           size: 10,
           _source: ['id', 'name']
         };
-
+        
         if (moduleId) {
           storeSearchBody.query.bool.filter = [{ term: { module_id: Number(moduleId) } }];
         }
-
+        
         const storeSearchResult = await this.client.search({
           index: storesIndex,
           body: storeSearchBody
         }).catch(() => ({ body: { hits: { hits: [] } } }));
-
+        
         storeSearchResult.body.hits?.hits?.forEach((h: any) => {
           const storeId = h._source?.id || h._id;
           if (storeId && !matchingStoreIds.includes(Number(storeId))) {
             matchingStoreIds.push(Number(storeId));
           }
         });
-
+        
         if (matchingStoreIds.length > 0) {
           this.logger.log(`[searchWithStoreBoosting] Found ${matchingStoreIds.length} stores matching "${q}": [${matchingStoreIds.join(', ')}]`);
         }
@@ -89,35 +89,35 @@ export class SearchService {
     try {
       // Build base query
       const baseQuery: any = {
-        bool: {
-          should: [
-            {
-              multi_match: {
-                query: q,
-                fields: ['name^3', 'description', 'store_name^2'],
-                type: 'best_fields',
-                fuzziness: 'AUTO'
+              bool: {
+                should: [
+                  {
+                    multi_match: {
+                      query: q,
+                      fields: ['name^3', 'description', 'store_name^2'],
+                      type: 'best_fields',
+                      fuzziness: 'AUTO'
+                    }
+                  }
+                ],
+                filter: []
               }
-            }
-          ],
-          filter: []
-        }
       };
-
+      
       // Build boost functions for store-first strategy
       const boostFunctions: any[] = [
-        {
-          // Boost stores 10x higher than items
-          filter: { term: { _index: storesIndex } },
-          weight: 10.0
-        },
-        {
-          // Items get base score (1.0)
-          filter: { term: { _index: itemsIndex } },
-          weight: 1.0
-        }
+              {
+                // Boost stores 10x higher than items
+                filter: { term: { _index: storesIndex } },
+                weight: 10.0
+              },
+              {
+                // Items get base score (1.0)
+                filter: { term: { _index: itemsIndex } },
+                weight: 1.0
+              }
       ];
-
+      
       // Add store-first boosting: Boost items from matching stores
       if (matchingStoreIds.length > 0) {
         boostFunctions.push({
@@ -132,7 +132,7 @@ export class SearchService {
           weight: 100.0  // Very high boost (100x) for items from matching stores
         });
       }
-
+      
       // Build query that searches both indices
       const searchBody: any = {
         from: from,
@@ -158,7 +158,7 @@ export class SearchService {
 
       // Apply filters
       const boolFilters = searchBody.query.function_score.query.bool.filter;
-
+      
       // Status filters
       if (moduleId === 4) {
         // Food: status=1, is_approved=1 for items, status=1 for stores
@@ -242,7 +242,7 @@ export class SearchService {
       });
 
       const hits = response.body.hits.hits || [];
-
+      
       // Separate stores and items
       const stores = hits
         .filter((h: any) => h._index === storesIndex)
@@ -269,7 +269,7 @@ export class SearchService {
           .map((h: any) => h._source?.store_id)
           .filter(Boolean)
       )] as string[];
-
+      
       // Lookup store names for all items
       const storeNames = await this.getStoreNames(itemStoreIds, moduleId === 4 ? 'food' : 'ecom');
 
@@ -278,18 +278,18 @@ export class SearchService {
         .slice(0, size) // Requested page size
         .map((h: any) => {
           const item = this.imageService.transformItemImages(h._source);
-
+          
           // Ensure store_name is populated
           let storeName = item.store_name;
           if (!storeName && item.store_id) {
             const storeIdStr = String(item.store_id);
             const storeIdNum = Number(item.store_id);
-            storeName = storeNames[storeIdStr] ||
-              storeNames[item.store_id] ||
-              (storeIdNum && !isNaN(storeIdNum) ? storeNames[storeIdNum] : null) ||
-              null;
+            storeName = storeNames[storeIdStr] || 
+                       storeNames[item.store_id] || 
+                       (storeIdNum && !isNaN(storeIdNum) ? storeNames[storeIdNum] : null) ||
+                       null;
           }
-
+          
           // Convert available_time_starts and available_time_ends from milliseconds to HH:mm format
           let availableTimeStarts = item.available_time_starts;
           let availableTimeEnds = item.available_time_ends;
@@ -299,7 +299,7 @@ export class SearchService {
           if (availableTimeEnds !== undefined && availableTimeEnds !== null) {
             availableTimeEnds = this.convertMillisecondsToTime(availableTimeEnds);
           }
-
+          
           // Build result object
           const resultItem: any = {
             id: item.id,
@@ -314,7 +314,7 @@ export class SearchService {
             veg: item.veg,
             rating: item.rating || 0
           };
-
+          
           // Add time fields if they exist
           if (availableTimeStarts !== null) {
             resultItem.available_time_starts = availableTimeStarts;
@@ -322,7 +322,7 @@ export class SearchService {
           if (availableTimeEnds !== null) {
             resultItem.available_time_ends = availableTimeEnds;
           }
-
+          
           // Copy other fields from item (excluding already set ones)
           Object.keys(item).forEach(key => {
             // Also explicitly exclude embedding/vector fields from API response
@@ -348,7 +348,7 @@ export class SearchService {
               resultItem[key] = item[key];
             }
           });
-
+          
           return resultItem;
         });
 
@@ -358,7 +358,7 @@ export class SearchService {
         if (!item.store_id) return true;
         // If item has store_id, it must have a valid store_name
         return item.store_name && item.store_name !== '';
-      });
+        });
 
       const total = response.body.hits.total?.value || 0;
       const totalStores = stores.length;
@@ -503,7 +503,7 @@ export class SearchService {
   private readonly ZONE_BOOST_ADJACENT = 1.5; // 1.5x boost for adjacent zones
 
   constructor(
-    private readonly config: ConfigService,
+    private readonly config: ConfigService, 
     private readonly analytics: AnalyticsService,
     private readonly embeddingService: EmbeddingService,
     private readonly moduleService: ModuleService,
@@ -749,7 +749,7 @@ export class SearchService {
    */
   private convertMillisecondsToTime(value: any): string | null {
     if (!value && value !== 0) return null;
-
+    
     // If already a string in HH:mm format, return as is
     if (typeof value === 'string') {
       // Check if it's already in HH:mm or HH:mm:ss format
@@ -765,7 +765,7 @@ export class SearchService {
         return null;
       }
     }
-
+    
     // If it's a number (milliseconds), convert to HH:mm
     if (typeof value === 'number') {
       // Convert milliseconds to hours and minutes
@@ -774,7 +774,7 @@ export class SearchService {
       const minutes = totalMinutes % 60;
       return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
     }
-
+    
     return null;
   }
 
@@ -786,23 +786,23 @@ export class SearchService {
    */
   private getStoreTimingStatus(store?: any): { status: string; message: string; minutesRemaining?: number; isOpen: boolean } {
     const now = new Date();
-
+    
     // Use IST timezone (UTC+5:30)
     const istOffset = 5.5 * 60; // minutes
     const localOffset = now.getTimezoneOffset(); // minutes from UTC
     const istTime = new Date(now.getTime() + (istOffset + localOffset) * 60 * 1000);
-
+    
     const currentHour = istTime.getHours();
     const currentMinute = istTime.getMinutes();
     const currentDay = istTime.getDay(); // 0 = Sunday, 1 = Monday, etc.
     const currentTimeMinutes = currentHour * 60 + currentMinute;
-
+    
     // Helper function to parse time string to minutes
     const parseTimeToMinutes = (timeStr: string): number => {
       const [h, m] = timeStr.split(':').map(s => parseInt(s, 10));
       return h * 60 + (m || 0);
     };
-
+    
     // Helper function to format minutes to "HH:MM AM/PM"
     const formatTime = (minutes: number): string => {
       const h = Math.floor(minutes / 60);
@@ -812,43 +812,43 @@ export class SearchService {
       if (h === 12) return `12:${m.toString().padStart(2, '0')} PM`;
       return `${h - 12}:${m.toString().padStart(2, '0')} PM`;
     };
-
+    
     // Use store schedule data if available - can have MULTIPLE time slots per day
     let timeSlots: Array<{ opening: number; closing: number }> = [];
-
+    
     if (store?.schedule && Array.isArray(store.schedule) && store.schedule.length > 0) {
       const todaySchedules = store.schedule.filter((s: any) => s.day === currentDay);
-
+      
       if (todaySchedules.length > 0) {
         // Parse all time slots for today
         todaySchedules.forEach((schedule: any) => {
           if (schedule.opening_time && schedule.closing_time) {
-            const openingStr = typeof schedule.opening_time === 'string'
-              ? schedule.opening_time
+            const openingStr = typeof schedule.opening_time === 'string' 
+              ? schedule.opening_time 
               : schedule.opening_time.toString();
             const closingStr = typeof schedule.closing_time === 'string'
               ? schedule.closing_time
               : schedule.closing_time.toString();
-
+            
             timeSlots.push({
               opening: parseTimeToMinutes(openingStr),
               closing: parseTimeToMinutes(closingStr)
             });
           }
         });
-
+        
         // Sort by opening time
         timeSlots.sort((a, b) => a.opening - b.opening);
-
+        
         this.logger.debug(`[Timing] Store ${store.id || store.name}: day=${currentDay}, ${timeSlots.length} slots: ${timeSlots.map(s => formatTime(s.opening) + '-' + formatTime(s.closing)).join(', ')}`);
       }
     }
-
+    
     // Fallback to single slot 10 AM - 10 PM
     if (timeSlots.length === 0) {
       timeSlots = [{ opening: 10 * 60, closing: 22 * 60 }];
     }
-
+    
     // Check off_day if available
     const offDay = store?.off_day?.trim();
     if (offDay && offDay !== ' ' && offDay !== '') {
@@ -856,7 +856,7 @@ export class SearchService {
       if (offDays.includes(currentDay)) {
         let nextDay = (currentDay + 1) % 7;
         let nextOpening = timeSlots[0].opening;
-
+        
         if (store?.schedule && Array.isArray(store.schedule)) {
           const nextSchedules = store.schedule.filter((s: any) => s.day === nextDay);
           if (nextSchedules.length > 0 && nextSchedules[0].opening_time) {
@@ -866,7 +866,7 @@ export class SearchService {
             nextOpening = parseTimeToMinutes(timeStr);
           }
         }
-
+        
         return {
           status: 'closed',
           message: `Opens tomorrow at ${formatTime(nextOpening)}`,
@@ -874,18 +874,18 @@ export class SearchService {
         };
       }
     }
-
+    
     // Check if currently open in ANY time slot
-    let currentSlot = timeSlots.find((slot: any) =>
+    let currentSlot = timeSlots.find((slot: any) => 
       currentTimeMinutes >= slot.opening && currentTimeMinutes < slot.closing
     );
-
+    
     const isOpen = !!currentSlot;
-
+    
     if (!isOpen) {
       // Find next opening time (today or tomorrow)
       let nextSlot = timeSlots.find((slot: any) => slot.opening > currentTimeMinutes);
-
+      
       if (nextSlot) {
         // Opens later today
         return {
@@ -897,7 +897,7 @@ export class SearchService {
         // After all time slots today - show tomorrow's first opening
         let nextDay = (currentDay + 1) % 7;
         let nextOpening = timeSlots[0].opening;
-
+        
         if (store?.schedule && Array.isArray(store.schedule)) {
           const nextSchedules = store.schedule.filter((s: any) => s.day === nextDay);
           if (nextSchedules.length > 0 && nextSchedules[0].opening_time) {
@@ -907,7 +907,7 @@ export class SearchService {
             nextOpening = parseTimeToMinutes(timeStr);
           }
         }
-
+        
         return {
           status: 'closed',
           message: `Opens tomorrow at ${formatTime(nextOpening)}`,
@@ -915,10 +915,10 @@ export class SearchService {
         };
       }
     }
-
+    
     // Currently open - calculate minutes until closing
     const minutesUntilClosing = currentSlot!.closing - currentTimeMinutes;
-
+    
     if (minutesUntilClosing <= 10) {
       return {
         status: 'closing_very_soon',
@@ -976,18 +976,18 @@ export class SearchService {
     if (!storeIds.length) return {};
 
     // For module_id based search, search all store indices
-    const storeAliases = module === 'all' || !module
+    const storeAliases = module === 'all' || !module 
       ? this.getAllStoreIndices()
       : [module === 'food' ? 'food_stores' : module === 'ecom' ? 'ecom_stores' : 'food_stores'];
-
+    
     const storeNames: Record<string, string> = {};
-
+    
     // Search all store indices in parallel
     const results = await Promise.all(
       storeAliases.map(alias =>
         this.client.mget({
           index: alias,
-          body: { ids: storeIds }
+        body: { ids: storeIds }
         }).catch(() => ({ body: { docs: [] } }))
       )
     );
@@ -1028,7 +1028,7 @@ export class SearchService {
       const found = storeNames[id] || storeNames[idStr] || (!isNaN(idNum) && storeNames[idNum]);
       return !found;
     });
-
+    
     if (missingStoreIds.length > 0) {
       this.logger.debug(`[getStoreNames] ${missingStoreIds.length} stores not found in OpenSearch, fetching from MySQL: ${missingStoreIds.slice(0, 10).join(', ')}`);
       try {
@@ -1063,12 +1063,12 @@ export class SearchService {
     if (!storeIds.length) return {};
 
     // For module_id based search, search all store indices
-    const storeAliases = module === 'all' || !module
+    const storeAliases = module === 'all' || !module 
       ? this.getAllStoreIndices()
       : [module === 'food' ? 'food_stores' : module === 'ecom' ? 'ecom_stores' : 'food_stores'];
-
+    
     const storeDetails: Record<string, any> = {};
-
+    
     // Search all store indices in parallel
     const results = await Promise.all(
       storeAliases.map(alias =>
@@ -1110,7 +1110,7 @@ export class SearchService {
         }
       }
     }
-
+    
     return storeDetails;
   }
 
@@ -1178,8 +1178,8 @@ export class SearchService {
     // Treat lat=0, lon=0 as no location (invalid coordinates)
     // Only food module supports geo features currently
     const supportsGeo = module === 'food';
-    const hasGeo = supportsGeo && lat !== undefined && !Number.isNaN(lat) && lon !== undefined && !Number.isNaN(lon) &&
-      !(lat === 0 && lon === 0);
+    const hasGeo = supportsGeo && lat !== undefined && !Number.isNaN(lat) && lon !== undefined && !Number.isNaN(lon) && 
+                   !(lat === 0 && lon === 0);
 
     // Geo radius filter
     if (hasGeo && radiusKm && !Number.isNaN(radiusKm)) {
@@ -1267,10 +1267,10 @@ export class SearchService {
     // Fallback: If no results found with radius filter, try without radius filter (but keep sorting by distance)
     if (hits.length === 0 && hasGeo && radiusKm) {
       this.logger.log(`[searchCategory] No results within ${radiusKm}km, retrying without radius filter`);
-
+      
       // Remove geo_distance filter
       const fallbackFilterClauses = filterClauses.filter(f => !f.geo_distance);
-
+      
       const fallbackBody = {
         ...body,
         query: {
@@ -1295,7 +1295,7 @@ export class SearchService {
       const source = h._source || {};
       // Extract distance from script_fields or sort array
       let distance = (h.fields as any)?.distance_km?.[0];
-
+      
       // If not in script_fields, check sort array (when using _geo_distance sort)
       // Note: OpenSearch _geo_distance sort returns distance in meters even when unit: 'km' is specified
       if (distance === undefined || distance === null) {
@@ -1312,13 +1312,13 @@ export class SearchService {
           }
         }
       }
-
+      
       // Ensure distance from script_fields is also in km (it should be, but double-check)
       // If script_fields returned a value > 1000, it might be in meters, convert to km
       if (distance !== undefined && distance !== null && distance > 1000 && h.fields?.distance_km?.[0] === distance) {
         distance = distance / 1000.0;
       }
-
+      
       // If still no distance and we have geo coordinates, calculate manually
       let calculatedDistance = distance;
       if ((calculatedDistance === undefined || calculatedDistance === null) && hasGeo && source.store_location) {
@@ -1336,20 +1336,20 @@ export class SearchService {
       const storeId = String(source.store_id);
       const storeDetail = storeDetails[storeId];
       let deliveryTime = storeDetail?.delivery_time || null;
-
+      
       // Recalculate delivery time if distance is available
       if (calculatedDistance && deliveryTime) {
         const travelTimeMinutes = this.calculateTravelTime(calculatedDistance);
         deliveryTime = this.recalculateDeliveryTime(deliveryTime, travelTimeMinutes);
       }
 
-      return {
-        id: h._id,
-        score: h._score,
+      return { 
+        id: h._id, 
+        score: h._score, 
         distance_km: calculatedDistance,
         store_name: source.store_id ? storeNames[String(source.store_id)] : null,
         delivery_time: deliveryTime,
-        ...source
+        ...source 
       };
     });
 
@@ -1416,7 +1416,7 @@ export class SearchService {
 
     const itemRes = await this.client.search({ index: itemAlias, body: itemQuery });
     const itemHits = itemRes.body.hits?.hits || [];
-
+    
     if (itemHits.length === 0) {
       return {
         module,
@@ -1436,7 +1436,7 @@ export class SearchService {
 
     // Get unique store IDs from items
     const storeIds = [...new Set(itemHits.map((hit: any) => hit._source?.store_id).filter(Boolean))] as string[];
-
+    
     if (storeIds.length === 0) {
       return {
         module,
@@ -1591,13 +1591,13 @@ export class SearchService {
     const stores = hits.map(h => {
       const source = h._source || {};
       let distance = (h.fields as any)?.distance_km?.[0];
-
+      
       // Calculate distance if location is provided and not already calculated
       if (hasGeo && !distance) {
         // Try different location field formats
         let storeLat: number | undefined;
         let storeLon: number | undefined;
-
+        
         if (source.latitude && source.longitude) {
           storeLat = parseFloat(source.latitude);
           storeLon = parseFloat(source.longitude);
@@ -1605,7 +1605,7 @@ export class SearchService {
           storeLat = parseFloat(source.location.lat);
           storeLon = parseFloat(source.location.lon);
         }
-
+        
         if (storeLat && storeLon) {
           distance = this.calculateDistance(lat!, lon!, storeLat, storeLon);
         }
@@ -1628,9 +1628,9 @@ export class SearchService {
         recalculatedDeliveryTime = this.recalculateDeliveryTime(source.delivery_time, travelTime);
       }
 
-      return {
-        id: h._id,
-        score: finalScore,
+      return { 
+        id: h._id, 
+        score: finalScore, 
         original_score: h._score,
         distance_km: distance ?? 0,
         delivery_time: recalculatedDeliveryTime,
@@ -1730,7 +1730,7 @@ export class SearchService {
       if (storeId) {
         const storeIdNum = Number(storeId);
         const targetStoreId = Number.isNaN(storeIdNum) ? storeId : storeIdNum;
-
+        
         // Fetch all recommended items first to check their store_id
         const allRecommendedIds = frequentlyWith.map((r: any) => r.item_id.toString());
         const allDetailsResponse = await this.client.mget({
@@ -1836,10 +1836,10 @@ export class SearchService {
   ) {
     // Use food_items_v4 with 768-dim vectors and complete store data
     const vectorIndex = module === 'food' ? 'food_items_v4' : 'ecom_items';
-
+    
     // Select appropriate model: food model for food module, general for ecom
     const modelType = module === 'food' ? 'food' : 'general';
-
+    
     this.logger.log(`🔍 Semantic search (KNN): "${query}" in ${vectorIndex} using ${modelType} model`);
 
     // Generate embedding for the query with appropriate model
@@ -1885,7 +1885,7 @@ export class SearchService {
     const lon = filters?.lon ? Number(filters.lon) : undefined;
     const radiusKm = filters?.radius_km ? Number(filters.radius_km) : undefined;
     const hasGeo = lat !== undefined && !Number.isNaN(lat) && lon !== undefined && !Number.isNaN(lon);
-
+    
     if (hasGeo && radiusKm !== undefined && !Number.isNaN(radiusKm)) {
       filterClauses.push({ geo_distance: { distance: `${radiusKm}km`, store_location: { lat, lon } } });
     }
@@ -1987,16 +1987,16 @@ export class SearchService {
 
   async search(module: 'food' | 'ecom' | 'rooms' | 'services' | 'movies', q: string, filters: Record<string, string>) {
     const startTime = Date.now();
-
+    
     // Try cache first if enabled
     if (this.cacheEnabled) {
       const cacheKey = this.cacheService.buildCacheKey({ module, q, ...filters });
       const cached = await this.cacheService.get(cacheKey);
-
+      
       if (cached) {
         const latency = Date.now() - startTime;
         this.logger.log(`🚀 Cache HIT: module=${module}, q="${q}", latency=${latency}ms`);
-
+        
         // Recalculate timing for cached stores (timing is dynamic based on current time)
         if (cached.stores && Array.isArray(cached.stores)) {
           cached.stores.forEach((store: any) => {
@@ -2009,21 +2009,21 @@ export class SearchService {
             }
           });
         }
-
+        
         return cached;
       }
     }
-
+    
     // Execute search
     const results = await this.executeSearch(module, q, filters, startTime);
-
+    
     // Cache results if enabled
     if (this.cacheEnabled && results) {
       const cacheKey = this.cacheService.buildCacheKey({ module, q, ...filters });
-
+      
       // Dynamic TTL based on query type
       let ttl = 300; // Default 5 minutes
-
+      
       if (!q || q.trim() === '') {
         ttl = 600; // 10 min for browse queries
       } else if (results.meta?.total > 100) {
@@ -2031,10 +2031,10 @@ export class SearchService {
       } else if (filters?.lat && filters?.lon) {
         ttl = 60; // 1 min for geo queries (location-sensitive)
       }
-
+      
       await this.cacheService.set(cacheKey, results, ttl);
     }
-
+    
     return results;
   }
 
@@ -2052,16 +2052,16 @@ export class SearchService {
     const filterClauses: any[] = [];
     if (q && q.trim()) {
       if (module === 'movies') {
-        must.push({
-          multi_match: {
-            query: q,
+      must.push({
+        multi_match: {
+          query: q,
             fields: ['title^4', 'description^2', 'genre^2', 'cast^1'],
-            type: 'best_fields',
-            operator: 'and',
-            fuzziness: 'AUTO',
-            lenient: true,
-          },
-        });
+          type: 'best_fields',
+          operator: 'and',
+          fuzziness: 'AUTO',
+          lenient: true,
+        },
+      });
       } else {
         must.push({
           bool: {
@@ -2069,34 +2069,34 @@ export class SearchService {
               // Exact match gets highest priority
               { term: { 'name.keyword': { value: q, boost: 15 } } },
               { term: { slug: { value: q.toLowerCase(), boost: 12 } } },
-
+              
               // Word boundary match (e.g., "pan" as a whole word, not substring)
               { match: { name: { query: q, operator: 'and', boost: 10 } } },
-
+              
               // Phrase match gets high priority
               { match_phrase: { name: { query: q, boost: 8 } } },
               { match_phrase: { slug: { query: q.toLowerCase(), boost: 6 } } },
               { match_phrase: { category_name: { query: q, boost: 7 } } },
-
+              
               // Partial matches with AND operator (stricter)
               {
                 multi_match: {
-                  query: q,
-                  fields: ['name^3', 'description^1', 'category_name^2'],
-                  type: 'best_fields',
-                  operator: 'and',
-                  fuzziness: 'AUTO',
-                  lenient: true,
+                query: q,
+                fields: ['name^3', 'description^1', 'category_name^2'],
+                type: 'best_fields',
+                operator: 'and',
+                fuzziness: 'AUTO',
+                lenient: true,
                 }
               },
-
+              
               // Wildcard matches for partial text (lower boost to prevent substring dominance)
               { wildcard: { name: { value: `*${q.toLowerCase()}*`, boost: 0.5 } } },
               { wildcard: { slug: { value: `*${q.toLowerCase()}*`, boost: 0.3 } } },
             ],
             minimum_should_match: 1,
-          },
-        });
+        },
+      });
       }
     }
     // Parse common filters (veg, category_id, price range)
@@ -2204,58 +2204,58 @@ export class SearchService {
       if (storeIds.length) filterClauses.push({ terms: { store_id: storeIds } });
     }
 
-    // Add status filter for food and ecom items (but not for movies/rooms/services)
-    // TEMPORARILY DISABLED - status field not populated in reindexed data
-    // if (module === 'food' || module === 'ecom') {
+  // Add status filter for food and ecom items (but not for movies/rooms/services)
+  // TEMPORARILY DISABLED - status field not populated in reindexed data
+  // if (module === 'food' || module === 'ecom') {
     //   filterClauses.push({ term: { status: 1 } }); // Only active items
-    // }
+  // }
 
-    const baseQuery: any = { bool: { must: must.length ? must : [{ match_all: {} }], filter: filterClauses } };
+  const baseQuery: any = { bool: { must: must.length ? must : [{ match_all: {} }], filter: filterClauses } };
 
-    // pagination
-    const size = Math.max(1, Math.min(Number(filters?.size ?? 20) || 20, 100));
-    const page = Math.max(1, Number(filters?.page ?? 1) || 1);
-    const from = (page - 1) * size;
+  // pagination
+  const size = Math.max(1, Math.min(Number(filters?.size ?? 20) || 20, 100));
+  const page = Math.max(1, Number(filters?.page ?? 1) || 1);
+  const from = (page - 1) * size;
 
     const aggsConfig: any = (module === 'food' || module === 'ecom')
       ? {
-        veg: { terms: { field: 'veg', size: 2 } },
-        category_id: { terms: { field: 'category_id', size: 20 } },
-        price_ranges: {
-          range: {
-            field: 'price',
-            ranges: [
-              { to: 100 },
-              { from: 100, to: 300 },
-              { from: 300, to: 1000 },
-              { from: 1000 },
-            ],
+          veg: { terms: { field: 'veg', size: 2 } },
+          category_id: { terms: { field: 'category_id', size: 20 } },
+          price_ranges: {
+            range: {
+              field: 'price',
+              ranges: [
+                { to: 100 },
+                { from: 100, to: 300 },
+                { from: 300, to: 1000 },
+                { from: 1000 },
+              ],
+            },
           },
-        },
-        ...(module === 'ecom' ? { brand: { terms: { field: 'brand.keyword', size: 20 } } } : {}),
-      } : module === 'movies' ? {
-        // For movies, expose genre facet when available
-        genre: { terms: { field: 'genre.keyword', size: 20 } },
-      } : module === 'services' ? {
-        // For services, show category facet and base_price ranges
-        category: { terms: { field: 'category.keyword', size: 20 } },
-        price_ranges: {
-          range: {
-            field: 'base_price',
-            ranges: [
-              { to: 500 },
-              { from: 500, to: 1000 },
-              { from: 1000, to: 2000 },
-              { from: 2000 },
-            ],
+          ...(module === 'ecom' ? { brand: { terms: { field: 'brand.keyword', size: 20 } } } : {}),
+        } : module === 'movies' ? {
+          // For movies, expose genre facet when available
+          genre: { terms: { field: 'genre.keyword', size: 20 } },
+        } : module === 'services' ? {
+          // For services, show category facet and base_price ranges
+          category: { terms: { field: 'category.keyword', size: 20 } },
+          price_ranges: {
+            range: {
+              field: 'base_price',
+              ranges: [
+                { to: 500 },
+                { from: 500, to: 1000 },
+                { from: 1000, to: 2000 },
+                { from: 2000 },
+              ],
+            },
           },
-        },
-      } : {
-        // rooms minimal aggs if needed later
-      };
+        } : {
+          // rooms minimal aggs if needed later
+        };
 
     const useFnScore = module === 'food' || (supportsItemGeo && hasGeo) || ratingMin !== undefined;
-    const body: any = {
+  const body: any = {
       query: useFnScore ? {
         function_score: {
           query: baseQuery,
@@ -2356,10 +2356,10 @@ export class SearchService {
         stores = (storeRes.body.hits?.hits || []).map((h: any) => {
           const source = h._source;
           let distance = (h.fields as any)?.distance_km?.[0];
-
+          
           // Fallback distance calculation
           if (hasGeo && !distance && source.location?.lat && source.location?.lon) {
-            distance = this.calculateDistance(lat!, lon!, parseFloat(source.location.lat), parseFloat(source.location.lon));
+             distance = this.calculateDistance(lat!, lon!, parseFloat(source.location.lat), parseFloat(source.location.lon));
           }
 
           return {
@@ -2372,18 +2372,18 @@ export class SearchService {
         this.logger.warn(`Failed to search stores: ${(e as any).message}`);
       }
     }
-
+    
     if (q && q.trim() && (module === 'food' || module === 'ecom')) {
       const storeAlias = module === 'food' ? 'food_stores' : 'ecom_stores';
       const catAlias = module === 'food' ? 'food_categories' : 'ecom_categories';
       let allItems: Array<{ _id: string; _source: any; fields?: any; _score?: number; matchType: string }> = [];
-
+      
       try {
         // 1. Item name matches (main search)
         const itemNameRes = await this.client.search({ index: alias, body });
         const nameMatches = (itemNameRes.body.hits?.hits || []).map((h: any) => ({ ...h, matchType: 'name' }));
         allItems.push(...nameMatches);
-
+        
         // 2. Category matches
         const catRes = await this.client.search({
           index: catAlias,
@@ -2404,7 +2404,7 @@ export class SearchService {
         }).catch(() => ({ body: { hits: { hits: [] } } }));
 
         const matchingCategoryIds = (catRes.body.hits?.hits || []).map((hit: any) => hit._id);
-
+        
         if (matchingCategoryIds.length > 0) {
           // Find items in these categories
           const itemsInCategoriesRes = await this.client.search({
@@ -2431,7 +2431,7 @@ export class SearchService {
               } : undefined,
             },
           }).catch(() => ({ body: { hits: { hits: [] } } }));
-
+          
           const categoryMatches = (itemsInCategoriesRes.body.hits?.hits || []).map((h: any) => ({ ...h, matchType: 'category' }));
           allItems.push(...categoryMatches);
         }
@@ -2457,7 +2457,7 @@ export class SearchService {
         }).catch(() => ({ body: { hits: { hits: [] } } }));
 
         const matchingStoreIds = (storeRes.body.hits?.hits || []).map((hit: any) => hit._id);
-
+        
         if (matchingStoreIds.length > 0) {
           // Find items from these stores
           const itemsFromStoresRes = await this.client.search({
@@ -2484,7 +2484,7 @@ export class SearchService {
               } : undefined,
             },
           }).catch(() => ({ body: { hits: { hits: [] } } }));
-
+          
           const storeMatches = (itemsFromStoresRes.body.hits?.hits || []).map((h: any) => ({ ...h, matchType: 'store' }));
           allItems.push(...storeMatches);
         }
@@ -2492,20 +2492,20 @@ export class SearchService {
         // Remove duplicates and sort by match type priority with proper scoring
         const seenItems = new Set<string>();
         const sortedItems: Array<{ _id: string; _source: any; fields?: any; _score?: number; matchType: string }> = [];
-
+        
         // Priority order: name > category > store
         const matchTypeOrder = { 'name': 1, 'category': 2, 'store': 3 };
         const matchTypeScore = { 'name': 1000, 'category': 100, 'store': 10 };
-
+        
         allItems
           .sort((a, b) => {
             const aOrder = matchTypeOrder[a.matchType as keyof typeof matchTypeOrder] || 999;
             const bOrder = matchTypeOrder[b.matchType as keyof typeof matchTypeOrder] || 999;
-
+            
             if (aOrder !== bOrder) {
               return aOrder - bOrder;
             }
-
+            
             // Within same match type, sort by score
             return (b._score || 0) - (a._score || 0);
           })
@@ -2519,7 +2519,7 @@ export class SearchService {
               sortedItems.push(item);
             }
           });
-
+        
         // Use the enhanced results
         res = {
           body: {
@@ -2530,17 +2530,17 @@ export class SearchService {
             aggregations: itemNameRes.body.aggregations
           }
         };
-
+        
         // Get aggregations from the main search
         const aggOnly: any = { query: body.query, size: 0, aggs: body.aggs };
         aggRes = await this.client.search({ index: alias, body: aggOnly });
-
+        
       } catch (error) {
         console.warn('Enhanced item search failed:', error);
         // Fallback to original search
         const aggOnly: any = { query: body.query, size: 0, aggs: body.aggs };
         [res, aggRes] = await Promise.all([
-          this.client.search({ index: alias, body }),
+      this.client.search({ index: alias, body }),
           this.client.search({ index: alias, body: aggOnly }),
         ]);
       }
@@ -2552,7 +2552,7 @@ export class SearchService {
         this.client.search({ index: alias, body: aggOnly }),
       ]);
     }
-
+    
     // Geo fallback: if radius filter excluded everything, retry without the hard radius filter
     try {
       const total0 = res?.body?.hits?.total?.value ?? 0;
@@ -2617,42 +2617,42 @@ export class SearchService {
     if (aggs.category?.buckets) {
       facets.category = aggs.category.buckets.map((b: any) => ({ value: b.key, count: b.doc_count }));
     }
-    // Get store names and delivery times for items
-    const storeIds = [...new Set(hits.map(h => h._source?.store_id).filter(Boolean))] as string[];
-    const storeNames = await this.getStoreNames(storeIds, module);
-    const storeDetails = await this.getStoreDetails(storeIds, module);
+      // Get store names and delivery times for items
+      const storeIds = [...new Set(hits.map(h => h._source?.store_id).filter(Boolean))] as string[];
+      const storeNames = await this.getStoreNames(storeIds, module);
+      const storeDetails = await this.getStoreDetails(storeIds, module);
 
-    let items = hits.map(h => {
-      const { matchType, ...cleanHit } = h as any;
-      const source = h._source || {};
-      const distance = (h.fields as any)?.distance_km?.[0];
+      let items = hits.map(h => {
+        const { matchType, ...cleanHit } = h as any;
+        const source = h._source || {};
+        const distance = (h.fields as any)?.distance_km?.[0];
+        
+        // Calculate distance if location is provided and not already calculated
+        let calculatedDistance = distance;
+        if (hasGeo && !calculatedDistance && source.store_location?.lat && source.store_location?.lon) {
+          calculatedDistance = this.calculateDistance(lat!, lon!, source.store_location.lat, source.store_location.lon);
+        }
 
-      // Calculate distance if location is provided and not already calculated
-      let calculatedDistance = distance;
-      if (hasGeo && !calculatedDistance && source.store_location?.lat && source.store_location?.lon) {
-        calculatedDistance = this.calculateDistance(lat!, lon!, source.store_location.lat, source.store_location.lon);
-      }
+        // Get store details for delivery time
+        const storeId = String(source.store_id);
+        const storeDetail = storeDetails[storeId];
+        let deliveryTime = storeDetail?.delivery_time || null;
+        
+        // Recalculate delivery time if distance is available
+        if (calculatedDistance && deliveryTime) {
+          const travelTimeMinutes = this.calculateTravelTime(calculatedDistance);
+          deliveryTime = this.recalculateDeliveryTime(deliveryTime, travelTimeMinutes);
+        }
 
-      // Get store details for delivery time
-      const storeId = String(source.store_id);
-      const storeDetail = storeDetails[storeId];
-      let deliveryTime = storeDetail?.delivery_time || null;
-
-      // Recalculate delivery time if distance is available
-      if (calculatedDistance && deliveryTime) {
-        const travelTimeMinutes = this.calculateTravelTime(calculatedDistance);
-        deliveryTime = this.recalculateDeliveryTime(deliveryTime, travelTimeMinutes);
-      }
-
-      return {
-        id: h._id,
-        score: h._score,
-        distance_km: calculatedDistance,
-        store_name: source.store_id ? storeNames[String(source.store_id)] : null,
-        delivery_time: deliveryTime,
-        ...source
-      };
-    });
+        return { 
+          id: h._id, 
+          score: h._score, 
+          distance_km: calculatedDistance,
+          store_name: source.store_id ? storeNames[String(source.store_id)] : null,
+          delivery_time: deliveryTime,
+          ...source 
+        };
+      });
 
 
     // Optional lightweight re-ranking (heuristic) when requested
@@ -2689,11 +2689,11 @@ export class SearchService {
       facets,
       meta: { total: res.body.hits?.total?.value ?? hits.length },
     };
-
+    
     // Log search performance
     const latency = Date.now() - startTime;
     this.logger.log(`Search: module=${module}, q="${q || '(browse)'}", total=${response.meta.total}, items=${items.length}, latency=${latency}ms`);
-
+    
     // best-effort analytics
     this.analytics.logSearch({
       module,
@@ -2706,7 +2706,7 @@ export class SearchService {
       total: response.meta.total,
       section: 'items',
     }).catch(() => { });
-
+    
     return response;
   }
 
@@ -2716,11 +2716,11 @@ export class SearchService {
    */
   async unifiedSearch(q: string, filters: Record<string, string>) {
     this.logger.log(`🚀 unifiedSearch CALLED: q="${q}", filters=${JSON.stringify(filters)}`);
-
+    
     // Parse module parameters
     const moduleId = filters?.module_id ? Number(filters.module_id) : undefined;
     const moduleIdsStr = filters?.module_ids;
-    const moduleIds = moduleIdsStr
+    const moduleIds = moduleIdsStr 
       ? moduleIdsStr.split(',').map(id => Number(id.trim())).filter(id => !Number.isNaN(id))
       : undefined;
     let moduleType = filters?.module_type || filters?.module;
@@ -2826,27 +2826,27 @@ export class SearchService {
         // Exact match gets highest priority
         { term: { 'name.keyword': { value: q, boost: 15 } } },
         { term: { slug: { value: q.toLowerCase(), boost: 12 } } },
-
+        
         // Word boundary match (whole word)
         { match: { name: { query: q, operator: 'and', boost: 10 } } },
-
+        
         // Phrase match gets high priority
         { match_phrase: { name: { query: q, boost: 8 } } },
         { match_phrase: { slug: { query: q.toLowerCase(), boost: 6 } } },
         { match_phrase: { category_name: { query: q, boost: 7 } } },
-
+        
         // Partial matches
         {
           multi_match: {
-            query: q,
-            fields: ['name^3', 'description^1', 'category_name^2'],
-            type: 'best_fields',
-            operator: 'and',
-            fuzziness: 'AUTO',
-            lenient: true,
+          query: q,
+          fields: ['name^3', 'description^1', 'category_name^2'],
+          type: 'best_fields',
+          operator: 'and',
+          fuzziness: 'AUTO',
+          lenient: true,
           }
         },
-
+        
         // Wildcard matches for partial text (lower boost)
         { wildcard: { name: { value: `*${q.toLowerCase()}*`, boost: 0.5 } } },
         { wildcard: { slug: { value: `*${q.toLowerCase()}*`, boost: 0.3 } } },
@@ -3001,8 +3001,8 @@ export class SearchService {
       case 'popularity':
         // Use order_count if available, fallback to avg_rating
         sort = [
-          { order_count: { order: 'desc', missing: 0 } },
-          { avg_rating: { order: 'desc', missing: 0 } },
+          { order_count: { order: 'desc', missing: 0 } }, 
+          { avg_rating: { order: 'desc', missing: 0 } }, 
           { _score: { order: 'desc' } }
         ];
         break;
@@ -3067,13 +3067,13 @@ export class SearchService {
     let stores: any[] = [];
 
     // Search for stores directly if query is present
-    if (q && q.trim()) {
-      const storeIndices: string[] = [];
-      if (modules.some(m => m.module_type === 'food')) storeIndices.push('food_stores');
-      if (modules.some(m => m.module_type === 'ecommerce' || m.module_type === 'ecom' || m.module_type === 'grocery')) {
-        storeIndices.push('ecom_stores');
-      }
-
+      if (q && q.trim()) {
+        const storeIndices: string[] = [];
+        if (modules.some(m => m.module_type === 'food')) storeIndices.push('food_stores');
+        if (modules.some(m => m.module_type === 'ecommerce' || m.module_type === 'ecom' || m.module_type === 'grocery')) {
+          storeIndices.push('ecom_stores');
+        }
+      
       if (storeIndices.length > 0) {
         const storeSearchBody: any = {
           query: {
@@ -3124,10 +3124,10 @@ export class SearchService {
               hits.forEach((h: any) => {
                 const source = h._source;
                 let distance = (h.fields as any)?.distance_km?.[0];
-
+                
                 // Fallback distance calculation
                 if (hasGeo && !distance && source.location?.lat && source.location?.lon) {
-                  distance = this.calculateDistance(lat!, lon!, parseFloat(source.location.lat), parseFloat(source.location.lon));
+                   distance = this.calculateDistance(lat!, lon!, parseFloat(source.location.lat), parseFloat(source.location.lon));
                 }
 
                 // Transform store images
@@ -3140,17 +3140,17 @@ export class SearchService {
               });
             }
           });
-
+          
           // Sort combined stores by distance or score
           if (hasGeo) {
             stores.sort((a, b) => (a.distance_km || Infinity) - (b.distance_km || Infinity));
           } else {
             stores.sort((a, b) => (b._score || 0) - (a._score || 0));
           }
-
+          
           // Limit to top 20
           stores = stores.slice(0, 20);
-
+          
         } catch (e) {
           this.logger.warn(`Failed to search stores in unified search: ${(e as any).message}`);
         }
@@ -3169,7 +3169,7 @@ export class SearchService {
           distance_km: h.fields?.distance_km?.[0],
         }));
         totalHits = res.body.hits?.total?.value ?? 0;
-
+        
         // Note: No pagination here - handled after transformation below
       } else {
         // Multi-index search using msearch
@@ -3195,7 +3195,7 @@ export class SearchService {
               if (convertedFields.available_time_ends !== undefined && convertedFields.available_time_ends !== null) {
                 convertedFields.available_time_ends = this.convertMillisecondsToTime(convertedFields.available_time_ends);
               }
-
+              
               allItems.push({
                 ...convertedFields,
                 id: h._id,
@@ -3258,7 +3258,7 @@ export class SearchService {
       }
 
       this.logger.log(`✅ Unified search returned ${allItems.length} items from ${totalHits} total`);
-
+      
       // DEBUG: Log first item structure to verify transformation
       if (allItems.length > 0) {
         this.logger.log(`📋 Sample item keys: ${Object.keys(allItems[0]).join(', ')}`);
@@ -3290,40 +3290,40 @@ export class SearchService {
           searching_modules: modules.map(m => m.name),
         },
       };
-    } catch (error: any) {
-      this.logger.error(`❌ Unified search error (returning empty response): ${error?.message || String(error)}`, error?.stack);
+      } catch (error: any) {
+        this.logger.error(`❌ Unified search error (returning empty response): ${error?.message || String(error)}`, error?.stack);
 
-      // Never 500 for unified search; return empty payload so the UI can still function.
-      // Keep the response shape stable.
-      const safeSize = Math.max(1, Math.min(Number(filters?.size ?? 20) || 20, 100));
-      const safePage = Math.max(1, Number(filters?.page ?? 1) || 1);
+        // Never 500 for unified search; return empty payload so the UI can still function.
+        // Keep the response shape stable.
+        const safeSize = Math.max(1, Math.min(Number(filters?.size ?? 20) || 20, 100));
+        const safePage = Math.max(1, Number(filters?.page ?? 1) || 1);
 
-      return {
-        q,
-        filters: {
-          ...filters,
-          module_ids: (Array.isArray((filters as any)?.module_ids) ? (filters as any).module_ids : undefined),
-          searching_modules: [],
-        },
-        modules: (Array.isArray(modules) ? modules : []).map((m: any) => ({
-          id: m?.id,
-          name: m?.name,
-          type: m?.module_type,
-          slug: m?.slug,
-        })),
-        stores: [],
-        items: [],
-        meta: {
-          total: 0,
-          page: safePage,
-          size: safeSize,
-          total_pages: 0,
-          has_more: false,
-          searched_indices: [],
-          searching_modules: [],
-        },
-      };
-    }
+        return {
+          q,
+          filters: {
+            ...filters,
+            module_ids: (Array.isArray((filters as any)?.module_ids) ? (filters as any).module_ids : undefined),
+            searching_modules: [],
+          },
+          modules: (Array.isArray(modules) ? modules : []).map((m: any) => ({
+            id: m?.id,
+            name: m?.name,
+            type: m?.module_type,
+            slug: m?.slug,
+          })),
+          stores: [],
+          items: [],
+          meta: {
+            total: 0,
+            page: safePage,
+            size: safeSize,
+            total_pages: 0,
+            has_more: false,
+            searched_indices: [],
+            searching_modules: [],
+          },
+        };
+      }
   }
 
   async searchStores(module: 'food' | 'ecom' | 'rooms' | 'services' | 'movies', q: string, filters: Record<string, string>) {
@@ -3352,11 +3352,11 @@ export class SearchService {
             // Partial matches
             {
               multi_match: {
-                query: q,
-                fields: ['name^3', 'slug^2', 'address'],
-                type: 'best_fields',
-                operator: 'and',
-                fuzziness: 'AUTO',
+          query: q,
+              fields: ['name^3', 'slug^2', 'address'],
+          type: 'best_fields',
+          operator: 'and',
+          fuzziness: 'AUTO',
               }
             },
             // Wildcard matches for partial text
@@ -3457,15 +3457,15 @@ export class SearchService {
       from,
       sort: hasGeo
         ? [{
-          _geo_distance: {
-            location: { lat, lon },
-            order: 'asc',
-            unit: 'km',
-            mode: 'min',
-            distance_type: 'arc',
-            ignore_unmapped: true,
-          },
-        }]
+            _geo_distance: {
+              location: { lat, lon },
+              order: 'asc',
+              unit: 'km',
+              mode: 'min',
+              distance_type: 'arc',
+              ignore_unmapped: true,
+            },
+          }]
         : [{ order_count: { order: 'desc' } }],
       // Ensure _source fields are included when using script_fields
       _source: [
@@ -3486,31 +3486,31 @@ export class SearchService {
       ],
       script_fields: hasGeo
         ? {
-          distance_km: {
-            script: {
-              source: "if (doc['location'].size() == 0) return null; doc['location'].arcDistance(params.lat, params.lon) / 1000.0",
-              params: { lat, lon },
+            distance_km: {
+              script: {
+                source: "if (doc['location'].size() == 0) return null; doc['location'].arcDistance(params.lat, params.lon) / 1000.0",
+                params: { lat, lon },
+              },
             },
-          },
-        }
+          }
         : undefined,
     };
 
     // Enhanced store search: Always search for stores by name, category, and items, then merge and sort results
     let res: any;
     let hits: Array<{ _id: string; _source: any; fields?: any; sort?: any[]; _score?: number }> = [];
-
+    
     if (q && q.trim()) {
       let allStores: Array<{ _id: string; _source: any; fields?: any; sort?: any[]; _score?: number; matchType: string }> = [];
       const itemAlias = this.getItemIndex(module as 'food' | 'ecom');
       const catAlias = module === 'food' ? 'food_categories' : module === 'ecom' ? 'ecom_categories' : 'food_categories';
-
+      
       try {
         // 1. Store name matches (initial search)
         const initialRes = await this.client.search({ index: alias, body });
         const nameMatches = (initialRes.body.hits?.hits || []).map((h: any) => ({ ...h, matchType: 'name' }));
         allStores.push(...nameMatches);
-
+        
         // 2. Category matches
         const catRes = await this.client.search({
           index: catAlias,
@@ -3531,7 +3531,7 @@ export class SearchService {
         }).catch(() => ({ body: { hits: { hits: [] } } }));
 
         const matchingCategoryIds = (catRes.body.hits?.hits || []).map((hit: any) => hit._id);
-
+        
         if (matchingCategoryIds.length > 0) {
           // Find items in these categories first
           const itemsInCategoriesRes = await this.client.search({
@@ -3581,7 +3581,7 @@ export class SearchService {
                 ],
               },
             }).catch(() => ({ body: { hits: { hits: [] } } }));
-
+            
             const categoryMatches = (storeRes.body.hits?.hits || []).map((h: any) => ({ ...h, matchType: 'category' }));
             allStores.push(...categoryMatches);
           }
@@ -3634,7 +3634,7 @@ export class SearchService {
               ],
             },
           }).catch(() => ({ body: { hits: { hits: [] } } }));
-
+          
           const itemMatches = (storeRes.body.hits?.hits || []).map((h: any) => ({ ...h, matchType: 'item' }));
           allStores.push(...itemMatches);
         }
@@ -3642,17 +3642,17 @@ export class SearchService {
         // Remove duplicates and sort by match type priority with proper scoring
         const seenStores = new Set<string>();
         const sortedStores: Array<{ _id: string; _source: any; fields?: any; sort?: any[]; _score?: number; matchType: string; distance_km?: number }> = [];
-
+        
         // Priority order: name > item (store name matches first, then stores with matching items)
         const matchTypeOrder = { 'name': 1, 'item': 2, 'category': 3 };
-
+        
         // Calculate distances for all stores if geo is available
         allStores.forEach((store: any) => {
           if (hasGeo && !store.distance_km) {
             const src = store._source || {};
             let storeLat: number | undefined;
             let storeLon: number | undefined;
-
+            
             if (src.latitude && src.longitude) {
               storeLat = parseFloat(src.latitude);
               storeLon = parseFloat(src.longitude);
@@ -3660,7 +3660,7 @@ export class SearchService {
               storeLat = parseFloat(src.location.lat);
               storeLon = parseFloat(src.location.lon);
             }
-
+            
             if (storeLat && storeLon) {
               store.distance_km = this.calculateDistance(lat!, lon!, storeLat, storeLon);
             }
@@ -3680,30 +3680,30 @@ export class SearchService {
             }
           });
         }
-
+        
         allStores
           .sort((a: any, b: any) => {
             // First: Sort by match type priority (name > item > category)
             const aOrder = matchTypeOrder[a.matchType as keyof typeof matchTypeOrder] || 999;
             const bOrder = matchTypeOrder[b.matchType as keyof typeof matchTypeOrder] || 999;
-
+            
             if (aOrder !== bOrder) {
               return aOrder - bOrder;
             }
-
+            
             // Second: Within same match type, sort by score (higher is better)
             const scoreDiff = (b._score || 0) - (a._score || 0);
             if (Math.abs(scoreDiff) > 0.01) {
               return scoreDiff;
             }
-
+            
             // Third: Sort by distance (closer is better) if geo is available
             if (hasGeo && sortOrder === 'distance') {
               const aDist = a.distance_km !== undefined && a.distance_km !== null ? a.distance_km : Infinity;
               const bDist = b.distance_km !== undefined && b.distance_km !== null ? b.distance_km : Infinity;
               return aDist - bDist;
             }
-
+            
             // Fallback: Sort by popularity
             return (b._source?.order_count || 0) - (a._source?.order_count || 0);
           })
@@ -3713,7 +3713,7 @@ export class SearchService {
               sortedStores.push(store);
             }
           });
-
+        
         hits = sortedStores;
         res = {
           body: {
@@ -3723,7 +3723,7 @@ export class SearchService {
             }
           }
         };
-
+        
       } catch (error) {
         console.warn('Enhanced store search failed:', error);
         // Fallback to original search
@@ -3735,17 +3735,17 @@ export class SearchService {
       res = await this.client.search({ index: alias, body });
       hits = (res.body.hits?.hits || []) as Array<{ _id: string; _source: any; fields?: any; sort?: any[]; _score?: number }>;
     }
-
+    
     const items = hits.map(h => {
       const src: any = h._source || {};
       let distance = (h.fields && (h.fields as any).distance_km && (h.fields as any).distance_km[0]) ?? undefined;
-
+      
       // Calculate distance if location is provided and not already calculated
       if (hasGeo && !distance) {
         // Try different location field formats
         let storeLat: number | undefined;
         let storeLon: number | undefined;
-
+        
         if (src.latitude && src.longitude) {
           storeLat = parseFloat(src.latitude);
           storeLon = parseFloat(src.longitude);
@@ -3753,7 +3753,7 @@ export class SearchService {
           storeLat = parseFloat(src.location.lat);
           storeLon = parseFloat(src.location.lon);
         }
-
+        
         if (storeLat && storeLon) {
           distance = this.calculateDistance(lat!, lon!, storeLat, storeLon);
         }
@@ -3765,14 +3765,14 @@ export class SearchService {
         const travelTimeMinutes = this.calculateTravelTime(distance);
         deliveryTime = this.recalculateDeliveryTime(src.delivery_time, travelTimeMinutes);
       }
-
+      
       // Remove matchType from the response
       const { matchType, ...cleanHit } = h as any;
-
-      return {
-        id: h._id,
-        score: h._score,
-        distance_km: distance ?? 0,
+      
+      return { 
+        id: h._id, 
+        score: h._score, 
+        distance_km: distance ?? 0, 
         ...src,
         delivery_time: deliveryTime, // Updated delivery time
         // Ensure required fields have safe defaults for Flutter
@@ -3822,22 +3822,22 @@ export class SearchService {
 
     let itemAlias: string, storeAlias: string, catAlias: string;
     switch (module) {
-      case 'food':
-        itemAlias = this.FOOD_ITEMS_INDEX; storeAlias = this.FOOD_STORES_INDEX; catAlias = 'food_categories';
+      case 'food': 
+        itemAlias = this.FOOD_ITEMS_INDEX; storeAlias = this.FOOD_STORES_INDEX; catAlias = 'food_categories'; 
         break;
-      case 'ecom':
-        itemAlias = this.ECOM_ITEMS_INDEX; storeAlias = this.ECOM_STORES_INDEX; catAlias = 'ecom_categories';
+      case 'ecom': 
+        itemAlias = this.ECOM_ITEMS_INDEX; storeAlias = this.ECOM_STORES_INDEX; catAlias = 'ecom_categories'; 
         break;
-      case 'rooms':
-        itemAlias = 'rooms_index'; storeAlias = 'rooms_stores'; catAlias = 'rooms_categories';
+      case 'rooms': 
+        itemAlias = 'rooms_index'; storeAlias = 'rooms_stores'; catAlias = 'rooms_categories'; 
         break;
-      case 'services':
-        itemAlias = 'services_index'; storeAlias = 'services_stores'; catAlias = 'services_categories';
+      case 'services': 
+        itemAlias = 'services_index'; storeAlias = 'services_stores'; catAlias = 'services_categories'; 
         break;
       case 'movies':
         itemAlias = 'movies_catalog'; storeAlias = 'movies_showtimes'; catAlias = 'movies_categories';
         break;
-      default:
+      default: 
         itemAlias = this.FOOD_ITEMS_INDEX; storeAlias = this.FOOD_STORES_INDEX; catAlias = 'food_categories';
     }
 
@@ -3854,20 +3854,20 @@ export class SearchService {
           // Exact match gets highest priority
           { term: { name: { value: q, boost: 15 } } },
           { term: { slug: { value: q.toLowerCase(), boost: 12 } } },
-
+          
           // Word boundary match (whole word)
           { match: { name: { query: q, operator: 'and', boost: 10 } } },
-
+          
           // Phrase match gets high priority
           { match_phrase: { name: { query: q, boost: 8 } } },
           { match_phrase: { slug: { query: q.toLowerCase(), boost: 6 } } },
           { match_phrase: { category_name: { query: q, boost: 7 } } },
-
+          
           // Partial matches
           { multi_match: { query: q, type: 'best_fields', fields: ['name^4', 'category_name^2'] } },
           // phrase_prefix only on text fields (name, description), not keyword fields (category_name)
           { multi_match: { query: q, type: 'phrase_prefix', fields: ['name^3', 'description'] } },
-
+          
           // Wildcard with lower boost
           { wildcard: { name: { value: `*${q.toLowerCase()}*`, boost: 0.5 } } },
         ],
@@ -3955,7 +3955,7 @@ export class SearchService {
     const allItems = (itemRes.body.hits?.hits || []).map((h: any) => {
       const source = h._source || {};
       const distance = h.fields?.distance_km?.[0];
-
+      
       // Calculate distance if location is provided and not already calculated
       let calculatedDistance = distance;
       if (hasGeo && !calculatedDistance && source.store_location?.lat && source.store_location?.lon) {
@@ -3966,26 +3966,26 @@ export class SearchService {
       const storeId = String(source.store_id);
       const storeDetail = storeDetails[storeId];
       let deliveryTime = storeDetail?.delivery_time || null;
-
+      
       // Recalculate delivery time if distance is available
       if (calculatedDistance && deliveryTime) {
         const travelTimeMinutes = this.calculateTravelTime(calculatedDistance);
         deliveryTime = this.recalculateDeliveryTime(deliveryTime, travelTimeMinutes);
       }
 
-      return {
-        id: h._id,
+      return { 
+        id: h._id, 
         distance_km: calculatedDistance,
         store_name: source.store_id ? storeNames[String(source.store_id)] : null,
         delivery_time: deliveryTime,
-        ...source
+        ...source 
       };
     });
-
+    
     const allStores = (storeRes.body.hits?.hits || []).map((h: any) => {
       const source = h._source || {};
       let distance = h.fields?.distance_km?.[0];
-
+      
       // Calculate distance if location is provided and not already calculated
       if (hasGeo && !distance && source.latitude && source.longitude) {
         distance = this.calculateDistance(lat!, lon!, parseFloat(source.latitude), parseFloat(source.longitude));
@@ -3998,14 +3998,14 @@ export class SearchService {
         deliveryTime = this.recalculateDeliveryTime(source.delivery_time, travelTimeMinutes);
       }
 
-      return {
-        id: h._id,
+      return { 
+        id: h._id, 
         distance_km: distance,
         delivery_time: deliveryTime,
-        ...source
+        ...source 
       };
     });
-
+    
     const allCategories = (catRes.body.hits?.hits || []).map((h: any) => ({ id: h._id, ...h._source }));
 
     // Get distinct items by name (keep first occurrence)
@@ -4049,12 +4049,12 @@ export class SearchService {
       }
     });
 
-    return {
-      module,
-      q,
-      items: this.imageService.transformItemsWithImages(items),
-      stores: this.imageService.transformStoresWithImages(stores),
-      categories: this.imageService.transformCategoriesWithImages(categories)
+    return { 
+      module, 
+      q, 
+      items: this.imageService.transformItemsWithImages(items), 
+      stores: this.imageService.transformStoresWithImages(stores), 
+      categories: this.imageService.transformCategoriesWithImages(categories) 
     };
   }
 
@@ -4073,8 +4073,8 @@ export class SearchService {
       }
     } catch { }
     if (!parsed) parsed = this.parseAgentPrompt(prompt, params);
-
-    let filters: Record<string, string> = {};
+  
+  let filters: Record<string, string> = {};
     if (parsed.lat != null && parsed.lon != null) {
       filters.lat = String(parsed.lat);
       filters.lon = String(parsed.lon);
@@ -4206,9 +4206,9 @@ export class SearchService {
     if (/\b(food|restaurant|meal|biryani|pizza|paneer|thali|dosa|burger)\b/.test(lc)) module = 'food';
 
     // Target: items or stores
-    let target: 'items' | 'stores' = 'items';
+  let target: 'items' | 'stores' = 'items';
     if (/\b(restaurant|restaurants|places|shops|stores|nearby stores|nearby restaurants|hotels|service providers)\b/.test(lc)) target = 'stores';
-    if (module === 'movies' && /\b(showtime|showtimes|theatre|theater|cinema)\b/.test(lc)) target = 'stores';
+  if (module === 'movies' && /\b(showtime|showtimes|theatre|theater|cinema)\b/.test(lc)) target = 'stores';
 
     // Store name extraction - detect patterns like "go to X", "at X", "from X"
     let store_name: string | undefined;
@@ -4217,15 +4217,15 @@ export class SearchService {
       /(?:go to|visit|from|at)\s+([a-z0-9\s]+?)(?:\s+and\s+|\s+to\s+|$)/i,
       /(?:in|inside)\s+([a-z0-9\s]+?)(?:\s+and\s+|\s+to\s+|$)/i,
     ];
-
+    
     for (const pattern of storePatterns) {
       const match = text.match(pattern);
       if (match && match[1]) {
         const potentialStoreName = match[1].trim();
         // Filter out common stop words that might be captured
-        if (potentialStoreName &&
-          !/^(order|search|find|show|get|menu|items|store|restaurant|shop)$/i.test(potentialStoreName) &&
-          potentialStoreName.length > 2) {
+        if (potentialStoreName && 
+            !/^(order|search|find|show|get|menu|items|store|restaurant|shop)$/i.test(potentialStoreName) &&
+            potentialStoreName.length > 2) {
           store_name = potentialStoreName;
           break;
         }
@@ -4287,22 +4287,22 @@ export class SearchService {
     }
 
     // Heuristic defaults
-    if (!qExpanded && module === 'food' && target === 'items') qExpanded = 'food';
-    if (!qExpanded && module === 'ecom' && target === 'items') qExpanded = brand[0] || '';
-    if (!qExpanded && module === 'movies') qExpanded = 'movies';
+  if (!qExpanded && module === 'food' && target === 'items') qExpanded = 'food';
+  if (!qExpanded && module === 'ecom' && target === 'items') qExpanded = brand[0] || '';
+  if (!qExpanded && module === 'movies') qExpanded = 'movies';
 
-    return {
-      module,
-      target,
-      q: qExpanded,
-      lat,
-      lon,
-      radius_km,
-      open_now,
-      veg,
-      rating_min,
-      price_min,
-      price_max,
+  return { 
+      module, 
+      target, 
+      q: qExpanded, 
+      lat, 
+      lon, 
+      radius_km, 
+      open_now, 
+      veg, 
+      rating_min, 
+      price_min, 
+      price_max, 
       brand,
       store_name,
       store_id,
@@ -4397,11 +4397,11 @@ export class SearchService {
             // Fuzzy matches
             {
               multi_match: {
-                query: trimmed,
-                fields: ['name^5', 'slug^3', 'address^1'],
-                type: 'best_fields',
-                operator: 'or',
-                fuzziness: 'AUTO',
+              query: trimmed,
+              fields: ['name^5', 'slug^3', 'address^1'],
+              type: 'best_fields',
+              operator: 'or',
+              fuzziness: 'AUTO',
               }
             },
             { wildcard: { name: { value: `*${trimmed.toLowerCase()}*`, boost: 3 } } },
@@ -4610,11 +4610,11 @@ export class SearchService {
     // Validate category belongs to module if both provided
     if (filters?.category_id && filters?.module_id) {
       try {
-        const isValid = await this.moduleService.validateCategoryModule(Number(filters.category_id), filters.module_id);
-        if (!isValid) {
-          throw new BadRequestException(
-            `Category ${filters.category_id} does not exist in module ${filters.module_id}`
-          );
+      const isValid = await this.moduleService.validateCategoryModule(Number(filters.category_id), filters.module_id);
+      if (!isValid) {
+        throw new BadRequestException(
+          `Category ${filters.category_id} does not exist in module ${filters.module_id}`
+        );
         }
       } catch (error: any) {
         // If MySQL is unavailable, skip validation and proceed with search
@@ -4631,7 +4631,7 @@ export class SearchService {
     // Parse query intent using query parser
     const parsed = this.queryParser.parse(q);
     this.logger.debug(`[suggestByModule] Query: \"${q}\" | Intent: ${parsed.intent}`);
-
+    
     const size = Math.max(1, Math.min(Number(filters?.size ?? 5) || 5, 50));
     const lat = filters?.lat;
     const lon = filters?.lon;
@@ -4639,15 +4639,15 @@ export class SearchService {
 
     // Build filter clauses
     const filterClauses: any[] = [];
-
+    
     if (filters?.module_id) {
       filterClauses.push({ term: { module_id: Number(filters.module_id) } });
     }
-
+    
     if (filters?.store_id) {
       filterClauses.push({ term: { store_id: Number(filters.store_id) } });
     }
-
+    
     if (filters?.category_id) {
       filterClauses.push({ term: { category_id: Number(filters.category_id) } });
     }
@@ -4685,22 +4685,22 @@ export class SearchService {
     // Add popularity and rating boosting functions for better ranking
     const rankingFunctions = [
       // Boost by order count (log scale to avoid extreme values)
-      {
-        field_value_factor: {
-          field: 'order_count',
-          modifier: 'log1p',
-          factor: 0.5,
-          missing: 0
-        }
+      { 
+        field_value_factor: { 
+          field: 'order_count', 
+          modifier: 'log1p', 
+          factor: 0.5, 
+          missing: 0 
+        } 
       },
       // Boost by average rating
-      {
-        field_value_factor: {
-          field: 'avg_rating',
-          modifier: 'sqrt',
-          factor: 1.5,
-          missing: 0
-        }
+      { 
+        field_value_factor: { 
+          field: 'avg_rating', 
+          modifier: 'sqrt', 
+          factor: 1.5, 
+          missing: 0 
+        } 
       },
       // Boost recommended items
       {
@@ -4855,13 +4855,13 @@ export class SearchService {
     const catIndices = this.getAllCategoryIndices();
 
     const [itemResults, storeResults, catResults] = await Promise.all([
-      Promise.all(itemIndices.map(index =>
+      Promise.all(itemIndices.map(index => 
         this.client.search({ index, body: itemBody }).catch(() => ({ body: { hits: { hits: [] } } }))
       )),
-      Promise.all(storeIndices.map(index =>
+      Promise.all(storeIndices.map(index => 
         this.client.search({ index, body: storeBody }).catch(() => ({ body: { hits: { hits: [] } } }))
       )),
-      Promise.all(catIndices.map(index =>
+      Promise.all(catIndices.map(index => 
         this.client.search({ index, body: catBody }).catch(() => ({ body: { hits: { hits: [] } } }))
       )),
     ]);
@@ -4873,12 +4873,12 @@ export class SearchService {
       hits.forEach((h: any) => {
         const source = h._source || {};
         let distance = h.fields?.distance_km?.[0];
-
+        
         // Calculate distance manually if lat/lon are provided and distance not already calculated
         if (hasGeo && !distance && source.store_location) {
           let storeLat: number | undefined;
           let storeLon: number | undefined;
-
+          
           if (source.store_location?.lat && source.store_location?.lon) {
             storeLat = parseFloat(String(source.store_location.lat));
             storeLon = parseFloat(String(source.store_location.lon));
@@ -4887,12 +4887,12 @@ export class SearchService {
             storeLon = parseFloat(String(source.store_location[0]));
             storeLat = parseFloat(String(source.store_location[1]));
           }
-
+          
           if (storeLat !== undefined && !Number.isNaN(storeLat) && storeLon !== undefined && !Number.isNaN(storeLon)) {
             distance = this.calculateDistance(lat!, lon!, storeLat, storeLon);
           }
         }
-
+        
         // Convert available_time_starts and available_time_ends from milliseconds to HH:mm format
         const convertedSource: any = { ...source };
         if (convertedSource.available_time_starts !== undefined && convertedSource.available_time_starts !== null) {
@@ -4901,7 +4901,7 @@ export class SearchService {
         if (convertedSource.available_time_ends !== undefined && convertedSource.available_time_ends !== null) {
           convertedSource.available_time_ends = this.convertMillisecondsToTime(convertedSource.available_time_ends);
         }
-
+        
         allItems.push({
           id: h._id,
           distance_km: distance,
@@ -4917,12 +4917,12 @@ export class SearchService {
       hits.forEach((h: any) => {
         const source = h._source || {};
         let distance = h.fields?.distance_km?.[0];
-
+        
         // Calculate distance manually if lat/lon are provided and distance not already calculated
         if (hasGeo && !distance) {
           let storeLat: number | undefined;
           let storeLon: number | undefined;
-
+          
           // Try different location field formats
           if (source.latitude && source.longitude) {
             storeLat = parseFloat(String(source.latitude));
@@ -4935,12 +4935,12 @@ export class SearchService {
             storeLon = parseFloat(String(source.location[0]));
             storeLat = parseFloat(String(source.location[1]));
           }
-
+          
           if (storeLat !== undefined && !Number.isNaN(storeLat) && storeLon !== undefined && !Number.isNaN(storeLon)) {
             distance = this.calculateDistance(lat!, lon!, storeLat, storeLon);
           }
         }
-
+        
         // Build store object with explicit logo field handling
         // Note: In OpenSearch, logo is stored as 'image' field (from sync script: s.logo as image)
         const storeObj: any = {
@@ -4948,7 +4948,7 @@ export class SearchService {
           distance_km: distance !== undefined && distance !== null ? distance : (hasGeo ? Infinity : undefined),
           ...source,
         };
-
+        
         // Map image field to logo (since sync script stores logo as image in OpenSearch)
         // Priority: logo field (if exists) > image field > null
         if (storeObj.logo === undefined || storeObj.logo === null) {
@@ -4958,7 +4958,7 @@ export class SearchService {
         if (storeObj.logo === undefined) {
           storeObj.logo = null;
         }
-
+        
         allStores.push(storeObj);
       });
     });
@@ -4984,7 +4984,7 @@ export class SearchService {
       seenItemKeys.add(key);
       return true;
     });
-
+    
     // Sort items by distance if lat/lon are provided
     if (hasGeo) {
       items.sort((a, b) => {
@@ -5000,7 +5000,7 @@ export class SearchService {
       // Sort by popularity when no geo
       items.sort((a, b) => (b.order_count || 0) - (a.order_count || 0));
     }
-
+    
     // Keep up to size * 3 items for now, we'll apply intent-based limits later
     items = items.slice(0, size * 3);
 
@@ -5010,7 +5010,7 @@ export class SearchService {
       seenStoreNames.add(store.name);
       return true;
     });
-
+    
     // Sort stores by distance if lat/lon are provided
     if (hasGeo) {
       stores.sort((a, b) => {
@@ -5026,7 +5026,7 @@ export class SearchService {
       // Sort by popularity when no geo
       stores.sort((a, b) => (b.order_count || 0) - (a.order_count || 0));
     }
-
+    
     // Keep more stores for now, we'll apply intent-based limits later
     stores = stores.slice(0, size * 3);
 
@@ -5071,13 +5071,13 @@ export class SearchService {
     // FALLBACK LOGIC: Cross-entity search
     // ============================================
     // If any entity type is empty, search related entities and find connections
-
+    
     // 1. If stores are empty, find stores via items and categories
     if (stores.length === 0 && (items.length > 0 || categories.length > 0)) {
       this.logger.debug(`[suggestByModule] Stores empty, searching via items/categories`);
       const storeIdsFromItems = new Set<string>();
       const storeIdsFromCategories = new Set<string>();
-
+      
       // Get store IDs from items
       if (items.length > 0) {
         items.forEach((item: any) => {
@@ -5087,7 +5087,7 @@ export class SearchService {
         });
         this.logger.debug(`[suggestByModule] Found ${storeIdsFromItems.size} unique store IDs from items: ${Array.from(storeIdsFromItems).slice(0, 10).join(', ')}`);
       }
-
+      
       // Get store IDs from categories (via items in those categories)
       if (categories.length > 0) {
         const categoryIds = categories.map((cat: any) => String(cat.id));
@@ -5104,17 +5104,17 @@ export class SearchService {
             size: 100,
             _source: ['store_id'],
           };
-
+          
           if (filters?.module_id) {
             categoryItemsBody.query.bool.filter = [{ term: { module_id: Number(filters.module_id) } }];
           }
-
+          
           const categoryItemsResults = await Promise.all(
-            itemIndices.map(index =>
+            itemIndices.map(index => 
               this.client.search({ index, body: categoryItemsBody }).catch(() => ({ body: { hits: { hits: [] } } }))
             )
           );
-
+          
           categoryItemsResults.forEach(res => {
             (res.body.hits?.hits || []).forEach((hit: any) => {
               if (hit._source?.store_id) {
@@ -5126,7 +5126,7 @@ export class SearchService {
           this.logger.warn(`[suggestByModule] Failed to find stores via categories: ${error?.message || String(error)}`);
         }
       }
-
+      
       // Combine store IDs and fetch stores
       const allStoreIds = [...new Set([...storeIdsFromItems, ...storeIdsFromCategories])];
       this.logger.debug(`[suggestByModule] Searching for ${allStoreIds.length} stores in ${storeIndices.length} indices: ${storeIndices.join(', ')}`);
@@ -5137,7 +5137,7 @@ export class SearchService {
           const fallbackStoreFilterClauses: any[] = [];
           // Only add module_id filter if explicitly provided and we want to be strict
           // But for fallback, we'll trust that stores serving items with module_id are correct
-
+          
           const fallbackStoreBody: any = {
             query: {
               bool: {
@@ -5149,9 +5149,9 @@ export class SearchService {
             sort: [{ order_count: { order: 'desc' } }],
             _source: ['name', 'slug', 'logo', 'cover_photo', 'image', 'images', 'location', 'latitude', 'longitude', 'order_count', 'delivery_time', 'rating', 'module_id', 'veg', 'non_veg', 'food_type'],
           };
-
+          
           this.logger.debug(`[suggestByModule] Fallback store query: ${JSON.stringify(fallbackStoreBody.query).substring(0, 200)}`);
-
+          
           const fallbackStoreResults = await Promise.all(
             storeIndices.map(async (index) => {
               try {
@@ -5164,18 +5164,18 @@ export class SearchService {
               }
             })
           );
-
+          
           const fallbackStores: any[] = [];
           fallbackStoreResults.forEach(res => {
             const hits = res.body.hits?.hits || [];
             hits.forEach((h: any) => {
               const source = h._source || {};
               let distance: number | undefined;
-
+              
               if (hasGeo) {
                 let storeLat: number | undefined;
                 let storeLon: number | undefined;
-
+                
                 if (source.latitude && source.longitude) {
                   storeLat = parseFloat(String(source.latitude));
                   storeLon = parseFloat(String(source.longitude));
@@ -5186,26 +5186,26 @@ export class SearchService {
                   storeLon = parseFloat(String(source.location[0]));
                   storeLat = parseFloat(String(source.location[1]));
                 }
-
+                
                 if (storeLat !== undefined && !Number.isNaN(storeLat) && storeLon !== undefined && !Number.isNaN(storeLon)) {
                   distance = this.calculateDistance(lat!, lon!, storeLat, storeLon);
                 }
               }
-
+              
               const storeObj: any = {
                 id: h._id,
                 distance_km: distance !== undefined && distance !== null ? distance : (hasGeo ? Infinity : undefined),
                 ...source,
               };
-
+              
               if (storeObj.logo === undefined || storeObj.logo === null) {
                 storeObj.logo = storeObj.image || null;
               }
-
+              
               fallbackStores.push(storeObj);
             });
           });
-
+          
           // Deduplicate fallback stores
           // Note: For fallback stores, we trust the item-store relationship
           // If items have store_id, those stores are valid regardless of store's module_id
@@ -5217,7 +5217,7 @@ export class SearchService {
             return true;
           });
           this.logger.debug(`[suggestByModule] After deduplication: ${stores.length} stores`);
-
+          
           if (hasGeo) {
             stores.sort((a, b) => {
               const distA = a.distance_km !== undefined && a.distance_km !== null ? a.distance_km : Infinity;
@@ -5228,7 +5228,7 @@ export class SearchService {
           } else {
             stores.sort((a, b) => (b.order_count || 0) - (a.order_count || 0));
           }
-
+          
           stores = stores.slice(0, size);
           this.logger.debug(`[suggestByModule] Found ${stores.length} stores via items/categories fallback`);
         } catch (error: any) {
@@ -5236,13 +5236,13 @@ export class SearchService {
         }
       }
     }
-
+    
     // 2. If categories are empty, find categories via items and stores
     if (categories.length === 0 && (items.length > 0 || stores.length > 0)) {
       this.logger.debug(`[suggestByModule] Categories empty, searching via items/stores`);
       const categoryIdsFromItems = new Set<string>();
       const categoryIdsFromStores = new Set<string>();
-
+      
       // Get category IDs from items
       if (items.length > 0) {
         items.forEach((item: any) => {
@@ -5251,7 +5251,7 @@ export class SearchService {
           }
         });
       }
-
+      
       // Get category IDs from stores (via items in those stores)
       if (stores.length > 0) {
         const storeIds = stores.map((store: any) => String(store.id));
@@ -5268,17 +5268,17 @@ export class SearchService {
             size: 100,
             _source: ['category_id'],
           };
-
+          
           if (filters?.module_id) {
             storeItemsBody.query.bool.filter = [{ term: { module_id: Number(filters.module_id) } }];
           }
-
+          
           const storeItemsResults = await Promise.all(
-            itemIndices.map(index =>
+            itemIndices.map(index => 
               this.client.search({ index, body: storeItemsBody }).catch(() => ({ body: { hits: { hits: [] } } }))
             )
           );
-
+          
           storeItemsResults.forEach(res => {
             (res.body.hits?.hits || []).forEach((hit: any) => {
               if (hit._source?.category_id) {
@@ -5290,7 +5290,7 @@ export class SearchService {
           this.logger.warn(`[suggestByModule] Failed to find categories via stores: ${error?.message || String(error)}`);
         }
       }
-
+      
       // Combine category IDs and fetch categories
       const allCategoryIds = [...new Set([...categoryIdsFromItems, ...categoryIdsFromStores])];
       if (allCategoryIds.length > 0) {
@@ -5305,13 +5305,13 @@ export class SearchService {
             size,
             _source: ['name', 'slug', 'parent_id', 'module_id', 'image'],
           };
-
+          
           const fallbackCatResults = await Promise.all(
-            catIndices.map(index =>
+            catIndices.map(index => 
               this.client.search({ index, body: fallbackCatBody }).catch(() => ({ body: { hits: { hits: [] } } }))
             )
           );
-
+          
           const fallbackCategories: any[] = [];
           fallbackCatResults.forEach(res => {
             const hits = res.body.hits?.hits || [];
@@ -5322,7 +5322,7 @@ export class SearchService {
               });
             });
           });
-
+          
           // Deduplicate fallback categories
           const seenFallbackCategoryNames = new Set<string>();
           categories = fallbackCategories.filter((category: any) => {
@@ -5330,31 +5330,31 @@ export class SearchService {
             seenFallbackCategoryNames.add(category.name);
             return true;
           }).slice(0, size);
-
+          
           this.logger.debug(`[suggestByModule] Found ${categories.length} categories via items/stores fallback`);
         } catch (error: any) {
           this.logger.warn(`[suggestByModule] Failed to fetch fallback categories: ${error?.message || String(error)}`);
         }
       }
     }
-
+    
     // 3. If items are empty, find items via stores and categories
     if (items.length === 0 && (stores.length > 0 || categories.length > 0)) {
       this.logger.debug(`[suggestByModule] Items empty, searching via stores/categories`);
       const itemFilters: any[] = [];
-
+      
       // Add store filter if stores found
       if (stores.length > 0) {
         const storeIds = stores.map((store: any) => String(store.id));
         itemFilters.push({ terms: { store_id: storeIds } });
       }
-
+      
       // Add category filter if categories found
       if (categories.length > 0) {
         const categoryIds = categories.map((cat: any) => String(cat.id));
         itemFilters.push({ terms: { category_id: categoryIds } });
       }
-
+      
       if (itemFilters.length > 0) {
         try {
           const fallbackItemBody: any = {
@@ -5370,24 +5370,24 @@ export class SearchService {
               distance_km: { script: { source: "if (!doc.containsKey('store_location') || doc['store_location'].size() == 0) return null; doc['store_location'].arcDistance(params.lat, params.lon) / 1000.0", params: { lat, lon } } },
             } : undefined,
           };
-
+          
           const fallbackItemResults = await Promise.all(
-            itemIndices.map(index =>
+            itemIndices.map(index => 
               this.client.search({ index, body: fallbackItemBody }).catch(() => ({ body: { hits: { hits: [] } } }))
             )
           );
-
+          
           const fallbackItems: any[] = [];
           fallbackItemResults.forEach(res => {
             const hits = res.body.hits?.hits || [];
             hits.forEach((h: any) => {
               const source = h._source || {};
               let distance = h.fields?.distance_km?.[0];
-
+              
               if (hasGeo && !distance && source.store_location) {
                 let storeLat: number | undefined;
                 let storeLon: number | undefined;
-
+                
                 if (source.store_location?.lat && source.store_location?.lon) {
                   storeLat = parseFloat(String(source.store_location.lat));
                   storeLon = parseFloat(String(source.store_location.lon));
@@ -5395,12 +5395,12 @@ export class SearchService {
                   storeLon = parseFloat(String(source.store_location[0]));
                   storeLat = parseFloat(String(source.store_location[1]));
                 }
-
+                
                 if (storeLat !== undefined && !Number.isNaN(storeLat) && storeLon !== undefined && !Number.isNaN(storeLon)) {
                   distance = this.calculateDistance(lat!, lon!, storeLat, storeLon);
                 }
               }
-
+              
               // Convert available_time_starts and available_time_ends from milliseconds to HH:mm format
               const convertedSource: any = { ...source };
               if (convertedSource.available_time_starts !== undefined && convertedSource.available_time_starts !== null) {
@@ -5409,7 +5409,7 @@ export class SearchService {
               if (convertedSource.available_time_ends !== undefined && convertedSource.available_time_ends !== null) {
                 convertedSource.available_time_ends = this.convertMillisecondsToTime(convertedSource.available_time_ends);
               }
-
+              
               fallbackItems.push({
                 id: h._id,
                 distance_km: distance,
@@ -5417,7 +5417,7 @@ export class SearchService {
               });
             });
           });
-
+          
           // Deduplicate and sort fallback items
           const seenFallbackItemNames = new Set<string>();
           items = fallbackItems.filter((item: any) => {
@@ -5425,7 +5425,7 @@ export class SearchService {
             seenFallbackItemNames.add(item.name);
             return true;
           });
-
+          
           if (hasGeo) {
             items.sort((a, b) => {
               const distA = a.distance_km !== undefined && a.distance_km !== null ? a.distance_km : Infinity;
@@ -5434,7 +5434,7 @@ export class SearchService {
               return 0;
             });
           }
-
+          
           items = items.slice(0, size);
           this.logger.debug(`[suggestByModule] Found ${items.length} items via stores/categories fallback`);
         } catch (error: any) {
@@ -5448,7 +5448,7 @@ export class SearchService {
     const storeIdsNeedingLogo = stores
       .filter((store: any) => !store.logo || store.logo === null || store.logo === '')
       .map((store: any) => String(store.id));
-
+    
     if (storeIdsNeedingLogo.length > 0) {
       this.logger.debug(`[suggestByModule] Fetching logos from database for ${storeIdsNeedingLogo.length} stores`);
       try {
@@ -5486,7 +5486,7 @@ export class SearchService {
         this.logger.debug(`[suggestByModule] Store IDs to fetch: ${storeIds.join(', ')}`);
         if (storeIds.length > 0) {
           const schedulesByStore = await this.fetchStoreSchedules(storeIds);
-
+          
           // Attach schedule data to stores
           stores.forEach((store: any) => {
             const storeId = String(store.id);
@@ -5495,7 +5495,7 @@ export class SearchService {
               this.logger.debug(`[suggestByModule] Store ${storeId} has ${store.schedule.length} schedule entries`);
             }
           });
-
+          
           this.logger.debug(`[suggestByModule] Attached schedules to ${schedulesByStore.size} stores`);
         }
       } catch (error: any) {
@@ -5576,7 +5576,7 @@ export class SearchService {
     // If user searched for a known international brand (KFC, Dominos, etc.)
     // but we found no matching stores, inform them it's not available
     let brandNotFound: { brand: string; message: string } | undefined;
-
+    
     if (parsed.isBrandSearch && parsed.detectedBrand && stores.length === 0) {
       const brandName = parsed.detectedBrand.charAt(0).toUpperCase() + parsed.detectedBrand.slice(1);
       brandNotFound = {
@@ -5586,15 +5586,15 @@ export class SearchService {
       this.logger.debug(`[suggestByModule] Brand "${parsed.detectedBrand}" detected but not registered as a partner`);
     }
 
-    return {
-      q,
+    return { 
+      q, 
       intent: parsed.intent,
       detected_brand: parsed.detectedBrand,
       is_brand_search: parsed.isBrandSearch || false,
       brand_not_found: brandNotFound,
-      items: this.imageService.transformItemsWithImages(items),
-      stores: this.imageService.transformStoresWithImages(stores),
-      categories: this.imageService.transformCategoriesWithImages(categories)
+      items: this.imageService.transformItemsWithImages(items), 
+      stores: this.imageService.transformStoresWithImages(stores), 
+      categories: this.imageService.transformCategoriesWithImages(categories) 
     };
   }
 
@@ -5635,19 +5635,19 @@ export class SearchService {
     // Validate category belongs to module if both provided
     if (filters?.category_id && filters?.module_id) {
       try {
-        const isValid = await this.moduleService.validateCategoryModule(Number(filters.category_id), filters.module_id);
-        if (!isValid) {
-          // Check if category exists in another module
+      const isValid = await this.moduleService.validateCategoryModule(Number(filters.category_id), filters.module_id);
+      if (!isValid) {
+        // Check if category exists in another module
           try {
-            const correctModuleId = await this.moduleService.getModuleIdForCategory(Number(filters.category_id));
-            if (correctModuleId) {
-              this.logger.warn(`[searchItemsByModule] Category ${filters.category_id} belongs to module ${correctModuleId}, not ${filters.module_id}. Switching module context.`);
-              filters.module_id = correctModuleId;
-            } else {
-              throw new BadRequestException(
-                `Category ${filters.category_id} does not exist in module ${filters.module_id}`
-              );
-            }
+        const correctModuleId = await this.moduleService.getModuleIdForCategory(Number(filters.category_id));
+        if (correctModuleId) {
+          this.logger.warn(`[searchItemsByModule] Category ${filters.category_id} belongs to module ${correctModuleId}, not ${filters.module_id}. Switching module context.`);
+          filters.module_id = correctModuleId;
+        } else {
+          throw new BadRequestException(
+            `Category ${filters.category_id} does not exist in module ${filters.module_id}`
+          );
+        }
           } catch (error: any) {
             // If MySQL is unavailable, skip validation and proceed with search
             if (error instanceof BadRequestException) throw error;
@@ -5733,7 +5733,7 @@ export class SearchService {
           } else {
             // Last resort: just the parent category
             this.logger.warn(`[searchItemsByModule] No child categories found in OpenSearch for ${filters.category_id}. Using parent category only.`);
-            filterClauses.push({ term: { category_id: Number(filters.category_id) } });
+        filterClauses.push({ term: { category_id: Number(filters.category_id) } });
           }
         } catch (opensearchError: any) {
           this.logger.error(`[searchItemsByModule] OpenSearch fallback also failed for ${filters.category_id}: ${opensearchError?.message || String(opensearchError)}. Using parent category only.`);
@@ -5745,17 +5745,17 @@ export class SearchService {
     // Query text
     let baseQuery: any = null;
     let matchingStoreIds: number[] = [];
-
+    
     if (q && q.trim()) {
       // Store-First Search Strategy: First, find stores matching the query
       // Then boost items from those stores by store_id (more reliable than text matching)
       try {
-        const storeIndices = filters?.module_id === 4
-          ? [this.FOOD_STORES_INDEX]
-          : filters?.module_id === 5
-            ? ['ecom_stores']
+        const storeIndices = filters?.module_id === 4 
+          ? [this.FOOD_STORES_INDEX] 
+          : filters?.module_id === 5 
+            ? ['ecom_stores'] 
             : this.getAllStoreIndices();
-
+        
         const storeSearchBody: any = {
           query: {
             bool: {
@@ -5772,17 +5772,17 @@ export class SearchService {
           size: 10,  // Get top 10 matching stores
           _source: ['id', 'name']
         };
-
+        
         if (filters?.module_id) {
           storeSearchBody.query.bool.filter = [{ term: { module_id: Number(filters.module_id) } }];
         }
-
+        
         const storeSearchResults = await Promise.all(
-          storeIndices.map(index =>
+          storeIndices.map(index => 
             this.client.search({ index, body: storeSearchBody }).catch(() => ({ body: { hits: { hits: [] } } }))
           )
         );
-
+        
         storeSearchResults.forEach(res => {
           const hits = res.body.hits?.hits || [];
           hits.forEach((h: any) => {
@@ -5792,14 +5792,14 @@ export class SearchService {
             }
           });
         });
-
+        
         if (matchingStoreIds.length > 0) {
           this.logger.log(`[searchItemsByModule] Found ${matchingStoreIds.length} stores matching "${q}": [${matchingStoreIds.join(', ')}]`);
         }
       } catch (error: any) {
         this.logger.warn(`[searchItemsByModule] Failed to search stores for query "${q}": ${error?.message || String(error)}`);
       }
-
+      
       baseQuery = {
         bool: {
           should: [
@@ -5810,12 +5810,12 @@ export class SearchService {
             { match: { store_name: { query: q, boost: 7, operator: 'and' } } },
             {
               multi_match: {
-                query: q,
-                fields: ['name^3', 'description^1', 'category_name^2', 'store_name^2'],
-                type: 'best_fields',
-                operator: 'and',
-                fuzziness: 'AUTO',
-                lenient: true,
+              query: q,
+              fields: ['name^3', 'description^1', 'category_name^2', 'store_name^2'],
+              type: 'best_fields',
+              operator: 'and',
+              fuzziness: 'AUTO',
+              lenient: true,
               }
             },
             { wildcard: { name: { value: `*${q.toLowerCase()}*`, boost: 2 } } },
@@ -5824,11 +5824,11 @@ export class SearchService {
           minimum_should_match: 1,
         },
       };
-
+      
       // Store-First Search Strategy: Boost items from stores matching the query
       // Use store_id matching (more reliable) if we found matching stores
       const boostFunctions: any[] = [];
-
+      
       if (matchingStoreIds.length > 0) {
         // Boost items from matching stores by store_id (most reliable)
         boostFunctions.push({
@@ -5838,7 +5838,7 @@ export class SearchService {
           weight: 100.0  // Very high boost (100x) for items from matching stores
         });
       }
-
+      
       // Also boost by store_name text matching (fallback)
       boostFunctions.push(
         {
@@ -5878,7 +5878,7 @@ export class SearchService {
           weight: 10.0  // Boost (10x) for store name substring match
         }
       );
-
+      
       const storeBoostQuery = {
         function_score: {
           query: baseQuery,
@@ -5887,7 +5887,7 @@ export class SearchService {
           boost_mode: 'multiply'  // Multiply with base query score
         }
       };
-
+      
       must.push(storeBoostQuery);
     }
 
@@ -5927,9 +5927,9 @@ export class SearchService {
     const lon = filters?.lon;
     const radiusKm = filters?.radius_km ? Number(filters.radius_km) : undefined;
     // Treat lat=0, lon=0 as no location (invalid coordinates)
-    const hasGeo = lat !== undefined && !Number.isNaN(lat) && lon !== undefined && !Number.isNaN(lon) &&
-      !(lat === 0 && lon === 0);
-
+    const hasGeo = lat !== undefined && !Number.isNaN(lat) && lon !== undefined && !Number.isNaN(lon) && 
+                   !(lat === 0 && lon === 0);
+    
     if (hasGeo && radiusKm !== undefined && !Number.isNaN(radiusKm) && !filters?.store_id) {
       filterClauses.push({ geo_distance: { distance: `${radiusKm}km`, store_location: { lat, lon } } });
     } else if (filters?.store_id && hasGeo && radiusKm !== undefined) {
@@ -5941,13 +5941,13 @@ export class SearchService {
     // When category_id is provided, don't apply zone filter (category browsing should show all items regardless of zone)
     // Only apply zone filter when radius_km is provided (user wants nearby items)
     let userZoneId: number | null = null;
-
+    
     // IMPORTANT: Skip zone filter if category_id is provided (category browsing should show all items)
     // Check category_id FIRST before any zone filter logic
     this.logger.debug(`[searchItemsByModule] Zone filter check: category_id=${filters?.category_id}, hasGeo=${hasGeo}, store_id=${filters?.store_id}, radiusKm=${radiusKm}`);
     const shouldSkipZoneFilter = filters?.category_id !== undefined && filters?.category_id !== null;
     this.logger.debug(`[searchItemsByModule] shouldSkipZoneFilter=${shouldSkipZoneFilter}`);
-
+    
     if (shouldSkipZoneFilter) {
       this.logger.debug(`[searchItemsByModule] Zone filter skipped because category_id=${filters.category_id} is provided (category browsing)`);
     } else if (hasGeo && !filters?.store_id && radiusKm !== undefined && !Number.isNaN(radiusKm)) {
@@ -6007,7 +6007,7 @@ export class SearchService {
         if (q && q.trim()) {
           sort = ['_score', { price: { order: 'asc' } }];
         } else {
-          sort = [{ price: { order: 'asc' } }];
+        sort = [{ price: { order: 'asc' } }];
         }
         break;
       case 'price_desc':
@@ -6015,7 +6015,7 @@ export class SearchService {
         if (q && q.trim()) {
           sort = ['_score', { price: { order: 'desc' } }];
         } else {
-          sort = [{ price: { order: 'desc' } }];
+        sort = [{ price: { order: 'desc' } }];
         }
         break;
       case 'rating':
@@ -6023,7 +6023,7 @@ export class SearchService {
         if (q && q.trim()) {
           sort = ['_score', { avg_rating: { order: 'desc' } }, { order_count: { order: 'desc' } }];
         } else {
-          sort = [{ avg_rating: { order: 'desc' } }, { order_count: { order: 'desc' } }];
+        sort = [{ avg_rating: { order: 'desc' } }, { order_count: { order: 'desc' } }];
         }
         break;
       case 'popularity':
@@ -6032,7 +6032,7 @@ export class SearchService {
         if (q && q.trim()) {
           sort = ['_score', { order_count: { order: 'desc' } }, { avg_rating: { order: 'desc' } }];
         } else {
-          sort = [{ order_count: { order: 'desc' } }, { avg_rating: { order: 'desc' } }];
+        sort = [{ order_count: { order: 'desc' } }, { avg_rating: { order: 'desc' } }];
         }
         break;
     }
@@ -6040,7 +6040,7 @@ export class SearchService {
     // Check for semantic search
     const semanticValue = filters?.semantic;
     const useSemantic = semanticValue === true || String(semanticValue) === '1' || String(semanticValue) === 'true';
-
+    
     if (useSemantic && q && q.trim()) {
       // Use semantic search
       const embedding = await this.embeddingService.generateEmbedding(q);
@@ -6087,7 +6087,7 @@ export class SearchService {
             // Check if index supports geo features (food_items_v4 has complete store data with geo)
             const supportsGeo = index === this.FOOD_ITEMS_INDEX;
             let indexBody = body;
-
+            
             if (!supportsGeo && hasGeo) {
               indexBody = { ...body };
               // Remove geo sort, keep score sort
@@ -6099,7 +6099,7 @@ export class SearchService {
                 indexBody.query.bool.filter = indexBody.query.bool.filter.filter((f: any) => !f.geo_distance);
               }
             }
-
+            
             return this.client.search({ index, body: indexBody }).catch(() => ({ body: { hits: { hits: [], total: { value: 0 } } } }));
           })
         );
@@ -6111,24 +6111,24 @@ export class SearchService {
           const hits = res.body.hits?.hits || [];
           totalHits += res.body.hits?.total?.value ?? 0;
           hits.forEach((h: any) => {
-            // Extract _source fields but explicitly exclude _source field if it exists
-            const sourceData = h._source || {};
-            const { _source, ...sourceFields } = sourceData;
-
-            // Convert available_time_starts and available_time_ends from milliseconds to HH:mm format
-            const convertedFields: any = { ...sourceFields };
-            if (convertedFields.available_time_starts !== undefined && convertedFields.available_time_starts !== null) {
-              convertedFields.available_time_starts = this.convertMillisecondsToTime(convertedFields.available_time_starts);
-            }
-            if (convertedFields.available_time_ends !== undefined && convertedFields.available_time_ends !== null) {
-              convertedFields.available_time_ends = this.convertMillisecondsToTime(convertedFields.available_time_ends);
-            }
-
+          // Extract _source fields but explicitly exclude _source field if it exists
+          const sourceData = h._source || {};
+          const { _source, ...sourceFields } = sourceData;
+          
+          // Convert available_time_starts and available_time_ends from milliseconds to HH:mm format
+          const convertedFields: any = { ...sourceFields };
+          if (convertedFields.available_time_starts !== undefined && convertedFields.available_time_starts !== null) {
+            convertedFields.available_time_starts = this.convertMillisecondsToTime(convertedFields.available_time_starts);
+          }
+          if (convertedFields.available_time_ends !== undefined && convertedFields.available_time_ends !== null) {
+            convertedFields.available_time_ends = this.convertMillisecondsToTime(convertedFields.available_time_ends);
+          }
+          
             allItems.push({
               id: h._id,
               score: h._score,
               distance_km: h.fields?.distance_km?.[0],
-              ...convertedFields,
+            ...convertedFields,
             });
           });
         });
@@ -6149,7 +6149,7 @@ export class SearchService {
           // Explicitly delete these fields to ensure they're removed
           delete (cleanItem as any)._source;
           delete (cleanItem as any)._score;
-
+          
           // Ensure store_name is always populated if store_id exists
           let storeName = cleanItem.store_name;
           if (!storeName && cleanItem.store_id) {
@@ -6193,8 +6193,8 @@ export class SearchService {
       from: queryFrom,
       sort,
       _source: [
-        'id', 'name', 'slug', 'image', 'images', 'price', 'base_price',
-        'veg', 'category_id', 'category_name', 'store_id', 'store_location',
+        'id', 'name', 'slug', 'image', 'images', 'price', 'base_price', 
+        'veg', 'category_id', 'category_name', 'store_id', 'store_location', 
         'module_id', 'description', 'available_time_starts', 'available_time_ends',
         'rating_count', 'avg_rating', 'order_count', 'discount', 'discount_type',
         'status', 'tax', 'tax_type', 'stock', 'recommended', 'is_approved',
@@ -6203,13 +6203,13 @@ export class SearchService {
       ],
       script_fields: hasGeo
         ? {
-          distance_km: {
-            script: {
-              source: "if (!doc.containsKey('store_location') || doc['store_location'].size() == 0) return null; doc['store_location'].arcDistance(params.lat, params.lon) / 1000.0",
-              params: { lat, lon },
+            distance_km: {
+              script: {
+                source: "if (!doc.containsKey('store_location') || doc['store_location'].size() == 0) return null; doc['store_location'].arcDistance(params.lat, params.lon) / 1000.0",
+                params: { lat, lon },
+              },
             },
-          },
-        }
+          }
         : undefined,
     };
 
@@ -6224,32 +6224,32 @@ export class SearchService {
           const supportsGeo = index === this.FOOD_ITEMS_INDEX;
           // Check if index supports order_count (food_items_v4 and ecom_items)
           const supportsOrderCount = index === this.FOOD_ITEMS_INDEX || index === this.ECOM_ITEMS_INDEX;
-
+          
           let indexBody = body;
-
+          
           if (!supportsGeo && hasGeo) {
-            indexBody = { ...body };
-            // Remove geo sort if present
-            if (sortOrder === 'distance') {
-              if (supportsOrderCount) {
-                indexBody.sort = [{ order_count: { order: 'desc', missing: 0 } }];
-              } else {
-                indexBody.sort = ['_score'];
-              }
-            }
-            // Remove script_fields
-            indexBody.script_fields = undefined;
-            // Remove geo_distance filter
-            if (indexBody.query?.bool?.filter) {
-              const newFilters = indexBody.query.bool.filter.filter((f: any) => !f.geo_distance);
-              indexBody.query = {
-                ...indexBody.query,
-                bool: {
-                  ...indexBody.query.bool,
-                  filter: newFilters
-                }
-              };
-            }
+             indexBody = { ...body };
+             // Remove geo sort if present
+             if (sortOrder === 'distance') {
+                 if (supportsOrderCount) {
+                    indexBody.sort = [{ order_count: { order: 'desc', missing: 0 } }];
+                 } else {
+                    indexBody.sort = ['_score'];
+                 }
+             }
+             // Remove script_fields
+             indexBody.script_fields = undefined;
+             // Remove geo_distance filter
+             if (indexBody.query?.bool?.filter) {
+                 const newFilters = indexBody.query.bool.filter.filter((f: any) => !f.geo_distance);
+                 indexBody.query = {
+                     ...indexBody.query,
+                     bool: {
+                         ...indexBody.query.bool,
+                         filter: newFilters
+                     }
+                 };
+             }
           }
 
           const res = await this.client.search({ index, body: indexBody });
@@ -6271,7 +6271,7 @@ export class SearchService {
       hits.forEach((h: any) => {
         // Extract distance from script_fields or sort array
         let distance = h.fields?.distance_km?.[0];
-
+        
         // If not in script_fields, check sort array (when using _geo_distance sort)
         if (distance === undefined || distance === null) {
           if (h.sort && Array.isArray(h.sort) && h.sort.length > 0) {
@@ -6289,13 +6289,13 @@ export class SearchService {
             }
           }
         }
-
+        
         // Ensure distance from script_fields is also in km (it should be, but double-check)
         if (distance !== undefined && distance !== null && distance > 1000 && h.fields?.distance_km?.[0] === distance) {
           // If script_fields returned a value > 1000, it might be in meters, convert to km
           distance = distance / 1000.0;
         }
-
+        
         // If still no distance and we have geo coordinates, calculate manually
         if ((distance === undefined || distance === null) && hasGeo && h._source?.store_location) {
           const storeLoc = h._source.store_location;
@@ -6307,11 +6307,11 @@ export class SearchService {
             }
           }
         }
-
+        
         // Extract _source fields but explicitly exclude _source field if it exists
         const sourceData = h._source || {};
         const { _source, ...sourceFields } = sourceData;
-
+        
         // Convert available_time_starts and available_time_ends from milliseconds to HH:mm format
         const convertedFields: any = { ...sourceFields };
         if (convertedFields.available_time_starts !== undefined && convertedFields.available_time_starts !== null) {
@@ -6320,7 +6320,7 @@ export class SearchService {
         if (convertedFields.available_time_ends !== undefined && convertedFields.available_time_ends !== null) {
           convertedFields.available_time_ends = this.convertMillisecondsToTime(convertedFields.available_time_ends);
         }
-
+        
         allItems.push({
           id: h._id,
           score: h._score,
@@ -6336,16 +6336,16 @@ export class SearchService {
     // Skip fallback if store_id is provided (user wants specific store, don't retry without filters)
     if (totalHits === 0 && hasGeo && radiusKm && !filters?.store_id) {
       this.logger.log(`[searchItemsByModule] No results within ${radiusKm}km, retrying without radius filter`);
-
+      
       const fallbackResults = await Promise.all(
         itemIndices.map(async (index) => {
           try {
             // Determine if this index supports geo features
             // food_items_v4 has complete store data with store_location properly mapped
-            const supportsGeo = index === this.FOOD_ITEMS_INDEX;
+            const supportsGeo = index === this.FOOD_ITEMS_INDEX; 
             const supportsOrderCount = index === this.FOOD_ITEMS_INDEX || index === this.ECOM_ITEMS_INDEX;
             this.logger.debug(`[searchItemsByModule] Fallback for index ${index}. Supports geo: ${supportsGeo}`);
-
+            
             const indexBody = {
               ...body,
               query: {
@@ -6358,13 +6358,13 @@ export class SearchService {
 
             // If index doesn't support geo, remove geo sort and script fields to avoid errors
             if (!supportsGeo) {
-              // Use default sort (popularity) instead of geo distance
-              if (supportsOrderCount) {
-                indexBody.sort = [{ order_count: { order: 'desc', missing: 0 } }];
-              } else {
-                indexBody.sort = ['_score'];
-              }
-              indexBody.script_fields = undefined;
+               // Use default sort (popularity) instead of geo distance
+               if (supportsOrderCount) {
+                   indexBody.sort = [{ order_count: { order: 'desc', missing: 0 } }]; 
+               } else {
+                   indexBody.sort = ['_score'];
+               }
+               indexBody.script_fields = undefined;
             }
 
             const res = await this.client.search({ index, body: indexBody });
@@ -6376,18 +6376,18 @@ export class SearchService {
           }
         })
       );
-
+      
       // Reset and repopulate
       allItems = [];
       totalHits = 0;
-
+      
       fallbackResults.forEach(res => {
         const hits = res.body.hits?.hits || [];
         totalHits += res.body.hits?.total?.value ?? 0;
         hits.forEach((h: any) => {
           // Extract distance from script_fields or sort array
           let distance = h.fields?.distance_km?.[0];
-
+          
           // If not in script_fields, check sort array (when using _geo_distance sort)
           if (distance === undefined || distance === null) {
             if (h.sort && Array.isArray(h.sort) && h.sort.length > 0) {
@@ -6401,11 +6401,11 @@ export class SearchService {
               }
             }
           }
-
+          
           if (distance !== undefined && distance !== null && distance > 1000 && h.fields?.distance_km?.[0] === distance) {
             distance = distance / 1000.0;
           }
-
+          
           if ((distance === undefined || distance === null) && hasGeo && h._source?.store_location) {
             const storeLoc = h._source.store_location;
             if (storeLoc?.lat && storeLoc?.lon) {
@@ -6416,7 +6416,7 @@ export class SearchService {
               }
             }
           }
-
+          
           // Convert available_time_starts and available_time_ends from milliseconds to HH:mm format
           const sourceData = h._source || {};
           const convertedFields: any = { ...sourceData };
@@ -6426,7 +6426,7 @@ export class SearchService {
           if (convertedFields.available_time_ends !== undefined && convertedFields.available_time_ends !== null) {
             convertedFields.available_time_ends = this.convertMillisecondsToTime(convertedFields.available_time_ends);
           }
-
+          
           allItems.push({
             id: h._id,
             score: h._score,
@@ -6440,7 +6440,7 @@ export class SearchService {
     // Enhanced sorting with priority: 1) Item name matches, 2) Store name matches, 3) Distance
     // First, mark items by their match type
     const itemIdsFromNameSearch = new Set(allItems.map(item => item.id));
-
+    
     // If we have a query, also search stores and get their items (second priority)
     if (q && q.trim() && !filters?.store_id) {
       try {
@@ -6455,11 +6455,11 @@ export class SearchService {
                 { match_phrase: { slug: { query: q.toLowerCase(), boost: 5 } } },
                 {
                   multi_match: {
-                    query: q,
-                    fields: ['name^3', 'slug^2', 'address'],
-                    type: 'best_fields',
-                    operator: 'or',
-                    fuzziness: 'AUTO',
+                  query: q,
+                  fields: ['name^3', 'slug^2', 'address'],
+                  type: 'best_fields',
+                  operator: 'or',
+                  fuzziness: 'AUTO',
                   }
                 },
                 { wildcard: { name: { value: `*${q.toLowerCase()}*`, boost: 2 } } },
@@ -6471,11 +6471,11 @@ export class SearchService {
           size: 50,
           _source: ['id'],
         };
-
+        
         if (filters?.module_id) {
           storeBody.query.bool.filter = [{ term: { module_id: Number(filters.module_id) } }];
         }
-
+        
         if (hasGeo && radiusKm !== undefined && !Number.isNaN(radiusKm)) {
           if (!storeBody.query.bool.filter) {
             storeBody.query.bool.filter = [];
@@ -6487,13 +6487,13 @@ export class SearchService {
             },
           });
         }
-
+        
         const storeResults = await Promise.all(
-          storeIndices.map(index =>
+          storeIndices.map(index => 
             this.client.search({ index, body: storeBody }).catch(() => ({ body: { hits: { hits: [] } } }))
           )
         );
-
+        
         const matchingStoreIds = new Set<string>();
         const storeScores = new Map<string, number>();
         storeResults.forEach(res => {
@@ -6508,7 +6508,7 @@ export class SearchService {
             }
           });
         });
-
+        
         if (matchingStoreIds.size > 0) {
           // Get items from these stores (but exclude items already found by name)
           const storeFilterClauses = [...filterClauses];
@@ -6526,12 +6526,12 @@ export class SearchService {
                   { match: { store_name: { query: q, boost: 7, operator: 'and' } } },
                   {
                     multi_match: {
-                      query: q,
-                      fields: ['name^3', 'description^1', 'category_name^2', 'store_name^2'],
-                      type: 'best_fields',
-                      operator: 'and',
-                      fuzziness: 'AUTO',
-                      lenient: true,
+                    query: q,
+                    fields: ['name^3', 'description^1', 'category_name^2', 'store_name^2'],
+                    type: 'best_fields',
+                    operator: 'and',
+                    fuzziness: 'AUTO',
+                    lenient: true,
                     }
                   },
                   { wildcard: { name: { value: `*${q.toLowerCase()}*`, boost: 2 } } },
@@ -6541,7 +6541,7 @@ export class SearchService {
               },
             });
           }
-
+          
           const itemsFromStoresBody: any = {
             query: {
               bool: {
@@ -6554,7 +6554,7 @@ export class SearchService {
               'id', 'name', 'description', 'image', 'images', 'slug', 'price', 'base_price', 'veg', 'brand',
               'category_id', 'category_name', 'store_id', 'store_name', 'avg_rating', 'order_count', 'store_location',
               'module_id', 'rating_count', 'available_time_starts', 'available_time_ends',
-              'discount', 'discount_type', 'status', 'tax', 'tax_type', 'stock', 'recommended', 'is_approved',
+              'discount', 'discount_type', 'status', 'tax', 'tax_type', 'stock', 'recommended', 'is_approved', 
               'is_halal', 'is_visible', 'organic', 'maximum_cart_quantity', 'unit_id', 'zone_id', 'attributes',
             ],
             script_fields: hasGeo ? {
@@ -6566,13 +6566,13 @@ export class SearchService {
               },
             } : undefined,
           };
-
+          
           const itemsFromStoresResults = await Promise.all(
-            itemIndices.map(index =>
+            itemIndices.map(index => 
               this.client.search({ index, body: itemsFromStoresBody }).catch(() => ({ body: { hits: { hits: [] } } }))
             )
           );
-
+          
           itemsFromStoresResults.forEach(res => {
             const hits = res.body.hits?.hits || [];
             hits.forEach((h: any) => {
@@ -6580,9 +6580,9 @@ export class SearchService {
               if (itemIdsFromNameSearch.has(h._id)) {
                 return;
               }
-
+              
               let distance = h.fields?.distance_km?.[0];
-
+              
               if (distance === undefined || distance === null) {
                 if (h.sort && Array.isArray(h.sort) && h.sort.length > 0) {
                   const sortDistance = h.sort[0];
@@ -6595,11 +6595,11 @@ export class SearchService {
                   }
                 }
               }
-
+              
               if (distance !== undefined && distance !== null && distance > 1000 && h.fields?.distance_km?.[0] === distance) {
                 distance = distance / 1000.0;
               }
-
+              
               if ((distance === undefined || distance === null) && hasGeo && h._source?.store_location) {
                 const storeLoc = h._source.store_location;
                 if (storeLoc?.lat && storeLoc?.lon) {
@@ -6610,14 +6610,14 @@ export class SearchService {
                   }
                 }
               }
-
+              
               // Use the store's match score as the item's score
               const storeScore = storeScores.get(String(h._source.store_id)) || 0;
-
+              
               // Extract _source fields but explicitly exclude _source field if it exists
               const sourceData = h._source || {};
               const { _source, ...sourceFields } = sourceData;
-
+              
               // Convert available_time_starts and available_time_ends from milliseconds to HH:mm format
               const convertedFields: any = { ...sourceFields };
               if (convertedFields.available_time_starts !== undefined && convertedFields.available_time_starts !== null) {
@@ -6626,7 +6626,7 @@ export class SearchService {
               if (convertedFields.available_time_ends !== undefined && convertedFields.available_time_ends !== null) {
                 convertedFields.available_time_ends = this.convertMillisecondsToTime(convertedFields.available_time_ends);
               }
-
+              
               allItems.push({
                 id: h._id,
                 score: storeScore, // Use store match score directly
@@ -6641,7 +6641,7 @@ export class SearchService {
         this.logger.warn(`[searchItemsByModule] Failed to search stores: ${error?.message || String(error)}`);
       }
     }
-
+    
     // Mark items from name search
     allItems.forEach(item => {
       if (!item.matchType) {
@@ -6662,32 +6662,32 @@ export class SearchService {
         }
       });
     }
-
+    
     // Sort with proper priority: 1) Match type (item_name > store_name), 2) Score (with zone boost), 3) Distance
     const matchTypePriority = { 'item_name': 1, 'store_name': 1, 'none': 3 };
-
+    
     allItems.sort((a, b) => {
       // First: Sort by match type priority
       const aPriority = matchTypePriority[a.matchType as keyof typeof matchTypePriority] || 999;
       const bPriority = matchTypePriority[b.matchType as keyof typeof matchTypePriority] || 999;
-
+      
       if (aPriority !== bPriority) {
         return aPriority - bPriority;
       }
-
+      
       // Second: Within same match type, sort by score (higher is better)
       const scoreDiff = (b.score || 0) - (a.score || 0);
       if (Math.abs(scoreDiff) > 0.01) {
         return scoreDiff;
       }
-
+      
       // Third: Sort by distance (closer is better) if geo is available
       if (hasGeo && sortOrder === 'distance') {
         const aDist = a.distance_km !== undefined && a.distance_km !== null ? a.distance_km : Infinity;
         const bDist = b.distance_km !== undefined && b.distance_km !== null ? b.distance_km : Infinity;
         return aDist - bDist;
       }
-
+      
       // Fallback: Sort by other criteria
       if (sortOrder === 'price_asc') {
         return (a.price || 0) - (b.price || 0);
@@ -6708,10 +6708,10 @@ export class SearchService {
     if (allItems.length === 0 && q && q.trim()) {
       try {
         this.logger.debug(`[searchItemsByModule] Items empty, searching via stores/categories for query: ${q}`);
-
+        
         const matchingStoreIds = new Set<string>();
         const matchingCategoryIds = new Set<string>();
-
+        
         // Only search stores if store_id filter is not provided (if store_id is provided, we should only search within that store)
         if (!filters?.store_id) {
           // Search for stores matching the query
@@ -6726,11 +6726,11 @@ export class SearchService {
                   { match_phrase: { slug: { query: q.toLowerCase(), boost: 5 } } },
                   {
                     multi_match: {
-                      query: q,
-                      fields: ['name^3', 'slug^2', 'address'],
-                      type: 'best_fields',
-                      operator: 'or',
-                      fuzziness: 'AUTO',
+                    query: q,
+                    fields: ['name^3', 'slug^2', 'address'],
+                    type: 'best_fields',
+                    operator: 'or',
+                    fuzziness: 'AUTO',
                     }
                   },
                   { wildcard: { name: { value: `*${q.toLowerCase()}*`, boost: 2 } } },
@@ -6742,12 +6742,12 @@ export class SearchService {
             size: 50, // Limit to top 50 stores
             _source: ['id'],
           };
-
+          
           // Add module filter if provided
           if (filters?.module_id) {
             storeBody.query.bool.filter = [{ term: { module_id: Number(filters.module_id) } }];
           }
-
+          
           // Add geo filter if provided
           if (hasGeo && radiusKm !== undefined && !Number.isNaN(radiusKm)) {
             if (!storeBody.query.bool.filter) {
@@ -6760,13 +6760,13 @@ export class SearchService {
               },
             });
           }
-
+          
           const storeResults = await Promise.all(
-            storeIndices.map(index =>
+            storeIndices.map(index => 
               this.client.search({ index, body: storeBody }).catch(() => ({ body: { hits: { hits: [] } } }))
             )
           );
-
+          
           storeResults.forEach(res => {
             (res.body.hits?.hits || []).forEach((hit: any) => {
               // Try _source.id first (the actual store ID), then fallback to _id
@@ -6776,14 +6776,14 @@ export class SearchService {
               }
             });
           });
-
+          
           this.logger.debug(`[searchItemsByModule] Found ${matchingStoreIds.size} stores matching query: ${Array.from(matchingStoreIds).slice(0, 10).join(', ')}`);
         } else {
           // If store_id is provided, use it directly
           matchingStoreIds.add(String(filters.store_id));
           this.logger.debug(`[searchItemsByModule] Using provided store_id: ${filters.store_id}`);
         }
-
+        
         // Only search categories if category_id filter is not provided (if category_id is provided, we should only search within that category)
         if (!filters?.category_id) {
           // Search for categories matching the query
@@ -6798,11 +6798,11 @@ export class SearchService {
                   { match_phrase: { slug: { query: q.toLowerCase(), boost: 5 } } },
                   {
                     multi_match: {
-                      query: q,
-                      fields: ['name^3', 'slug^2'],
-                      type: 'best_fields',
-                      operator: 'or',
-                      fuzziness: 'AUTO',
+                    query: q,
+                    fields: ['name^3', 'slug^2'],
+                    type: 'best_fields',
+                    operator: 'or',
+                    fuzziness: 'AUTO',
                     }
                   },
                   { wildcard: { name: { value: `*${q.toLowerCase()}*`, boost: 2 } } },
@@ -6814,18 +6814,18 @@ export class SearchService {
             size: 50, // Limit to top 50 categories
             _source: ['id'],
           };
-
+          
           // Add module filter if provided
           if (filters?.module_id) {
             categoryBody.query.bool.filter = [{ term: { module_id: Number(filters.module_id) } }];
           }
-
+          
           const categoryResults = await Promise.all(
-            catIndices.map(index =>
+            catIndices.map(index => 
               this.client.search({ index, body: categoryBody }).catch(() => ({ body: { hits: { hits: [] } } }))
             )
           );
-
+          
           categoryResults.forEach(res => {
             (res.body.hits?.hits || []).forEach((hit: any) => {
               // Try _source.id first (the actual category ID), then fallback to _id
@@ -6835,14 +6835,14 @@ export class SearchService {
               }
             });
           });
-
+          
           this.logger.debug(`[searchItemsByModule] Found ${matchingCategoryIds.size} categories matching query: ${Array.from(matchingCategoryIds).slice(0, 10).join(', ')}`);
         } else {
           // If category_id is provided, use it directly
           matchingCategoryIds.add(String(filters.category_id));
           this.logger.debug(`[searchItemsByModule] Using provided category_id: ${filters.category_id}`);
         }
-
+        
         // If we found stores or categories, search for items
         if (matchingStoreIds.size > 0 || matchingCategoryIds.size > 0) {
           const itemBody: any = {
@@ -6875,20 +6875,20 @@ export class SearchService {
               },
             } : undefined,
           };
-
+          
           // Build must clause with store_ids and/or category_ids
           const mustClauses: any[] = [];
-
+          
           if (matchingStoreIds.size > 0) {
             const storeIdNumbers = Array.from(matchingStoreIds).map(id => Number(id)).filter(id => !Number.isNaN(id));
             mustClauses.push({ terms: { store_id: storeIdNumbers } });
           }
-
+          
           if (matchingCategoryIds.size > 0) {
             const categoryIdNumbers = Array.from(matchingCategoryIds).map(id => Number(id)).filter(id => !Number.isNaN(id));
             mustClauses.push({ terms: { category_id: categoryIdNumbers } });
           }
-
+          
           // If we have both stores and categories, use should (OR) logic
           if (mustClauses.length > 1) {
             itemBody.query.bool.should = mustClauses;
@@ -6896,7 +6896,7 @@ export class SearchService {
           } else if (mustClauses.length === 1) {
             itemBody.query.bool.must = mustClauses;
           }
-
+          
           // Add module filter if provided
           if (filters?.module_id) {
             if (!itemBody.query.bool.filter) {
@@ -6904,7 +6904,7 @@ export class SearchService {
             }
             itemBody.query.bool.filter.push({ term: { module_id: Number(filters.module_id) } });
           }
-
+          
           // If store_id was provided, ensure we only get items from that store
           if (filters?.store_id) {
             if (!itemBody.query.bool.filter) {
@@ -6912,17 +6912,17 @@ export class SearchService {
             }
             itemBody.query.bool.filter.push({ term: { store_id: Number(filters.store_id) } });
           }
-
+          
           // If category_id was provided, ensure we only get items from that category and its children
           if (filters?.category_id) {
             if (!itemBody.query.bool.filter) {
               itemBody.query.bool.filter = [];
             }
             // Use the already computed categoryIdsForFilter if available, otherwise compute it
-            let fallbackCategoryIds = categoryIdsForFilter.length > 0
-              ? categoryIdsForFilter
+            let fallbackCategoryIds = categoryIdsForFilter.length > 0 
+              ? categoryIdsForFilter 
               : await this.moduleService.getCategoryWithChildren(Number(filters.category_id), filters?.module_id).catch(() => [Number(filters.category_id)]);
-
+            
             if (fallbackCategoryIds.length === 1) {
               itemBody.query.bool.filter.push({ term: { category_id: fallbackCategoryIds[0] } });
             } else if (fallbackCategoryIds.length > 1) {
@@ -6931,26 +6931,26 @@ export class SearchService {
               itemBody.query.bool.filter.push({ term: { category_id: Number(filters.category_id) } });
             }
           }
-
+          
           this.logger.debug(`[searchItemsByModule] Fallback item query: ${JSON.stringify(itemBody.query).substring(0, 300)}`);
-
+          
           const itemIndices = this.getAllItemIndices();
           const fallbackResults = await Promise.all(
-            itemIndices.map(index =>
+            itemIndices.map(index => 
               this.client.search({ index, body: itemBody }).catch(() => ({ body: { hits: { hits: [], total: { value: 0 } } } }))
             )
           );
-
+          
           let fallbackItems: any[] = [];
           let fallbackTotalHits = 0;
-
+          
           fallbackResults.forEach(res => {
             const hits = res.body.hits?.hits || [];
             fallbackTotalHits += res.body.hits?.total?.value ?? 0;
             hits.forEach((h: any) => {
               // Extract distance from script_fields or sort array
               let distance = h.fields?.distance_km?.[0];
-
+              
               // If not in script_fields, check sort array (when using _geo_distance sort)
               if (distance === undefined || distance === null) {
                 if (h.sort && Array.isArray(h.sort) && h.sort.length > 0) {
@@ -6966,13 +6966,13 @@ export class SearchService {
                   }
                 }
               }
-
+              
               // Ensure distance from script_fields is also in km (it should be, but double-check)
               if (distance !== undefined && distance !== null && distance > 1000 && h.fields?.distance_km?.[0] === distance) {
                 // If script_fields returned a value > 1000, it might be in meters, convert to km
                 distance = distance / 1000.0;
               }
-
+              
               // If still no distance and we have geo coordinates, calculate manually
               if ((distance === undefined || distance === null) && hasGeo && h._source?.store_location) {
                 const storeLoc = h._source.store_location;
@@ -6984,31 +6984,31 @@ export class SearchService {
                   }
                 }
               }
-
-              // Extract _source fields but explicitly exclude _source field if it exists
-              const sourceData = h._source || {};
-              const { _source, ...sourceFields } = sourceData;
-
-              // Convert available_time_starts and available_time_ends from milliseconds to HH:mm format
-              const convertedFields: any = { ...sourceFields };
-              if (convertedFields.available_time_starts !== undefined && convertedFields.available_time_starts !== null) {
-                convertedFields.available_time_starts = this.convertMillisecondsToTime(convertedFields.available_time_starts);
+              
+          // Extract _source fields but explicitly exclude _source field if it exists
+          const sourceData = h._source || {};
+          const { _source, ...sourceFields } = sourceData;
+          
+          // Convert available_time_starts and available_time_ends from milliseconds to HH:mm format
+          const convertedFields: any = { ...sourceFields };
+          if (convertedFields.available_time_starts !== undefined && convertedFields.available_time_starts !== null) {
+            convertedFields.available_time_starts = this.convertMillisecondsToTime(convertedFields.available_time_starts);
+          }
+          if (convertedFields.available_time_ends !== undefined && convertedFields.available_time_ends !== null) {
+            convertedFields.available_time_ends = this.convertMillisecondsToTime(convertedFields.available_time_ends);
               }
-              if (convertedFields.available_time_ends !== undefined && convertedFields.available_time_ends !== null) {
-                convertedFields.available_time_ends = this.convertMillisecondsToTime(convertedFields.available_time_ends);
-              }
-
+              
               fallbackItems.push({
                 id: h._id,
                 score: h._score,
                 distance_km: distance !== undefined && distance !== null ? distance : undefined,
-                ...convertedFields,
+            ...convertedFields,
               });
             });
           });
-
+          
           this.logger.debug(`[searchItemsByModule] Found ${fallbackItems.length} fallback items before sorting/pagination`);
-
+          
           // Sort and paginate fallback items
           if (sortOrder === 'distance' && hasGeo) {
             fallbackItems.sort((a, b) => (a.distance_km || Infinity) - (b.distance_km || Infinity));
@@ -7022,29 +7022,29 @@ export class SearchService {
             // Default: popularity
             fallbackItems.sort((a, b) => (b.order_count || 0) - (a.order_count || 0));
           }
-
+          
           // Apply pagination
           fallbackItems = fallbackItems.slice(from, from + size);
-
+          
           this.logger.debug(`[searchItemsByModule] Returning ${fallbackItems.length} fallback items after pagination`);
-
+          
           // Get store names
           const fallbackStoreIds = [...new Set(fallbackItems.map(item => item.store_id).filter(Boolean))];
           const fallbackStoreNames = await this.getStoreNames(fallbackStoreIds, 'all');
-
+          
           const items = fallbackItems.map(item => {
             // Remove _source and _score fields if they exist (shouldn't be in response)
             const { _source, _score, score, ...cleanItem } = item;
             // Explicitly delete these fields to ensure they're removed
             delete (cleanItem as any)._source;
             delete (cleanItem as any)._score;
-
+            
             // Ensure store_name is always populated if store_id exists
             let storeName = cleanItem.store_name;
             if (!storeName && cleanItem.store_id) {
               storeName = fallbackStoreNames[String(cleanItem.store_id)] || fallbackStoreNames[cleanItem.store_id] || null;
             }
-
+            
             // Convert available_time_starts and available_time_ends from milliseconds to HH:mm format
             if (cleanItem.available_time_starts !== undefined && cleanItem.available_time_ends !== null) {
               cleanItem.available_time_starts = this.convertMillisecondsToTime(cleanItem.available_time_starts);
@@ -7052,13 +7052,13 @@ export class SearchService {
             if (cleanItem.available_time_ends !== undefined && cleanItem.available_time_ends !== null) {
               cleanItem.available_time_ends = this.convertMillisecondsToTime(cleanItem.available_time_ends);
             }
-
+            
             return {
               ...cleanItem,
               store_name: storeName || null, // Explicitly set to null if missing
             };
           });
-
+          
           // Log analytics
           this.analytics.logSearch({
             module: filters?.module_id ? String(filters.module_id) : 'all',
@@ -7071,7 +7071,7 @@ export class SearchService {
             total: fallbackTotalHits,
             section: 'items',
           }).catch(() => { });
-
+          
           // Transform and clean items
           const transformedItems = this.imageService.transformItemsWithImages(items);
           const cleanedItems = transformedItems.map((item: any) => {
@@ -7091,13 +7091,13 @@ export class SearchService {
             delete cleaned.embedding;
             return cleaned;
           });
-
+          
           // Filter out items with store_id but no store_name
           const validItems = cleanedItems.filter((item: any) => {
             if (!item.store_id) return true;
             return item.store_name && item.store_name !== '';
           });
-
+          
           return {
             q,
             filters,
@@ -7124,7 +7124,7 @@ export class SearchService {
 
     const items = allItems.map(item => {
       let distanceKm = item.distance_km;
-
+      
       // If item doesn't have distance_km but has store_id and we have geo coordinates,
       // try to calculate distance from store location
       if ((distanceKm === undefined || distanceKm === null || distanceKm === 0) && hasGeo && item.store_id) {
@@ -7133,7 +7133,7 @@ export class SearchService {
           // Try location.lat/lon first, then latitude/longitude
           let storeLat: number | undefined;
           let storeLon: number | undefined;
-
+          
           if (storeDetail.location?.lat && storeDetail.location?.lon) {
             storeLat = parseFloat(String(storeDetail.location.lat));
             storeLon = parseFloat(String(storeDetail.location.lon));
@@ -7141,7 +7141,7 @@ export class SearchService {
             storeLat = parseFloat(String(storeDetail.latitude));
             storeLon = parseFloat(String(storeDetail.longitude));
           }
-
+          
           if (storeLat && storeLon && !Number.isNaN(storeLat) && !Number.isNaN(storeLon)) {
             distanceKm = this.calculateDistance(lat!, lon!, storeLat, storeLon);
             // Also add store_location to the item for consistency
@@ -7151,7 +7151,7 @@ export class SearchService {
           }
         }
       }
-
+      
       // Ensure store_name is always populated if store_id exists
       // Priority: 1) item.store_name (from index), 2) lookup from storeNames map
       let storeName = item.store_name;
@@ -7159,12 +7159,12 @@ export class SearchService {
         const storeIdStr = String(item.store_id);
         const storeIdNum = Number(item.store_id);
         // Try multiple key formats
-        storeName = storeNames[storeIdStr] ||
-          storeNames[item.store_id] ||
-          (storeIdNum && !isNaN(storeIdNum) ? storeNames[storeIdNum] : null) ||
-          null;
+        storeName = storeNames[storeIdStr] || 
+                   storeNames[item.store_id] || 
+                   (storeIdNum && !isNaN(storeIdNum) ? storeNames[storeIdNum] : null) ||
+                   null;
       }
-
+      
       // Remove _source and _score fields by creating a new object
       const cleanItem: any = {};
       for (const key in item) {
@@ -7178,7 +7178,7 @@ export class SearchService {
           cleanItem[key] = item[key];
         }
       });
-
+      
       // Convert available_time_starts and available_time_ends from milliseconds to HH:mm format
       if (cleanItem.available_time_starts !== undefined && cleanItem.available_time_starts !== null) {
         cleanItem.available_time_starts = this.convertMillisecondsToTime(cleanItem.available_time_starts);
@@ -7200,7 +7200,7 @@ export class SearchService {
           }
         }
       }
-
+      
       return {
         ...cleanItem,
         distance: distanceKm, // Flutter expects 'distance' field
@@ -7226,10 +7226,10 @@ export class SearchService {
     // If store_id filter was applied from query parsing, get store details
     let resolvedStore = null;
     const originalQuery = (filters as any)?._original_query || q;
-
+    
     // Log for debugging
     this.logger.log(`[searchItemsByModule] DEBUG: q="${q}", filters._original_query="${(filters as any)?._original_query}", originalQuery="${originalQuery}", store_id=${filters?.store_id}`);
-
+    
     if (filters?.store_id && originalQuery && originalQuery.trim()) {
       this.logger.log(`[searchItemsByModule] ✓ Condition met - attempting to resolve store`);
       try {
@@ -7267,7 +7267,7 @@ export class SearchService {
 
     // Transform images first
     let transformedItems = this.imageService.transformItemsWithImages(items);
-
+    
     // Final cleanup: Remove internal fields (_source, _score, embedding/vector fields) from all items after transformation
     // Create a completely new object without these fields
     const cleanedItems = transformedItems.map(item => {
@@ -7384,11 +7384,11 @@ export class SearchService {
       const cacheKey = this.cacheService.buildCacheKey({ type: 'stores', q, ...filters });
       this.logger.log(`[searchStoresByModule] Checking cache with key: ${cacheKey.substring(0, 100)}...`);
       const cached = await this.cacheService.get(cacheKey);
-
+      
       if (cached) {
         const latency = Date.now() - startTime;
         this.logger.log(`🚀 [searchStoresByModule] Cache HIT: q="${q}", latency=${latency}ms`);
-
+        
         // CRITICAL: Recalculate timing for cached stores (timing is dynamic based on current time)
         // We need to fetch schedules for these stores before recalculating
         if (cached.stores && Array.isArray(cached.stores) && cached.stores.length > 0) {
@@ -7415,7 +7415,7 @@ export class SearchService {
             }
           }
         }
-
+        
         return cached;
       }
     }
@@ -7424,27 +7424,27 @@ export class SearchService {
     if (filters?.category_id && filters?.module_id) {
       this.logger.debug(`[searchStoresByModule] Validating category ${filters.category_id} belongs to module ${filters.module_id}`);
       try {
-        const isValid = await this.moduleService.validateCategoryModule(Number(filters.category_id), filters.module_id);
-        if (!isValid) {
-          // Check if category exists in another module
+      const isValid = await this.moduleService.validateCategoryModule(Number(filters.category_id), filters.module_id);
+      if (!isValid) {
+        // Check if category exists in another module
           try {
-            const correctModuleId = await this.moduleService.getModuleIdForCategory(Number(filters.category_id));
-            if (correctModuleId) {
-              this.logger.warn(`[searchStoresByModule] Category ${filters.category_id} belongs to module ${correctModuleId}, not ${filters.module_id}. Switching module context.`);
-              filters.module_id = correctModuleId;
-            } else {
-              this.logger.warn(`[searchStoresByModule] Category ${filters.category_id} does not exist in module ${filters.module_id}`);
-              throw new BadRequestException(
-                `Category ${filters.category_id} does not exist in module ${filters.module_id}`
-              );
+        const correctModuleId = await this.moduleService.getModuleIdForCategory(Number(filters.category_id));
+        if (correctModuleId) {
+          this.logger.warn(`[searchStoresByModule] Category ${filters.category_id} belongs to module ${correctModuleId}, not ${filters.module_id}. Switching module context.`);
+          filters.module_id = correctModuleId;
+        } else {
+          this.logger.warn(`[searchStoresByModule] Category ${filters.category_id} does not exist in module ${filters.module_id}`);
+          throw new BadRequestException(
+            `Category ${filters.category_id} does not exist in module ${filters.module_id}`
+          );
             }
           } catch (error: any) {
             // If MySQL is unavailable, skip validation and proceed with search
             if (error instanceof BadRequestException) throw error;
             this.logger.warn(`[searchStoresByModule] Category validation skipped (MySQL unavailable): ${error?.message || String(error)}`);
-          }
         }
-        this.logger.debug(`[searchStoresByModule] Category validation passed`);
+      }
+      this.logger.debug(`[searchStoresByModule] Category validation passed`);
       } catch (error: any) {
         // If MySQL is unavailable, skip validation and proceed with search
         if (error instanceof BadRequestException) throw error;
@@ -7465,7 +7465,7 @@ export class SearchService {
       } catch (error: any) {
         this.logger.warn(`[searchStoresByModule] Failed to fetch module from database: ${error?.message || String(error)}. Using fallback mapping.`);
       }
-
+      
       if (!module) {
         // Fallback: Use common module_id to module_type mappings
         const moduleTypeMap: Record<number, string> = {
@@ -7475,7 +7475,7 @@ export class SearchService {
         };
         const moduleType = moduleTypeMap[filters.module_id] || 'food';
         this.logger.log(`[searchStoresByModule] Using fallback mapping: module_id=${filters.module_id} -> module_type=${moduleType}`);
-
+        
         // Use module_type to determine indices
         if (moduleType === 'food') {
           storeIndices = [this.FOOD_STORES_INDEX];
@@ -7493,7 +7493,7 @@ export class SearchService {
         this.logger.log(`[searchStoresByModule] Using fallback indices: stores=[${storeIndices.join(',')}], items=[${itemIndices.join(',')}], categories=[${catIndices.join(',')}]`);
       } else {
         this.logger.log(`[searchStoresByModule] Module found: id=${module.id}, name=${module.name}, type=${module.module_type}`);
-
+        
         storeIndices = [this.moduleService.getIndexForModule(module, 'stores')];
         itemIndices = [this.moduleService.getIndexForModule(module, 'items')];
         // For categories, we need to determine the category index based on module type
@@ -7551,11 +7551,11 @@ export class SearchService {
             { match: { name: { query: q, boost: 5, fuzziness: 'AUTO' } } },
             {
               multi_match: {
-                query: q,
-                fields: ['name^4', 'slug^3', 'address^1'],
-                type: 'best_fields',
-                operator: 'and',
-                fuzziness: 'AUTO',
+              query: q,
+              fields: ['name^4', 'slug^3', 'address^1'],
+              type: 'best_fields',
+              operator: 'and',
+              fuzziness: 'AUTO',
               }
             },
             { wildcard: { name: { value: `*${q.toLowerCase()}*`, boost: 2 } } },
@@ -7612,7 +7612,7 @@ export class SearchService {
     // Veg/Non-Veg filter
     const vegFilter = filters?.veg;
     const mustNotClauses: any[] = [];
-
+    
     if (vegFilter === 'pure_veg' || vegFilter === 'pure-veg') {
       // Pure Veg ONLY: veg=1 AND non_veg!=1 (excludes restaurants that also serve non-veg)
       filterClauses.push({ term: { veg: 1 } });
@@ -7673,13 +7673,13 @@ export class SearchService {
 
     // Store-First Search Strategy: Boost stores that match the query exactly
     let finalQuery: any = {
-      bool: {
-        must: must.length ? must : [{ match_all: {} }],
-        filter: filterClauses,
-        must_not: mustNotClauses.length > 0 ? mustNotClauses : undefined,
-      },
+        bool: {
+          must: must.length ? must : [{ match_all: {} }],
+          filter: filterClauses,
+          must_not: mustNotClauses.length > 0 ? mustNotClauses : undefined,
+        },
     };
-
+    
     // If query is provided, apply function_score to boost exact matches
     if (q && q.trim()) {
       finalQuery = {
@@ -7754,11 +7754,11 @@ export class SearchService {
     // Enhanced store search: Always search for stores by name, category, and items, then merge and sort results
     let allStores: Array<{ _id: string; _source: any; fields?: any; sort?: any[]; _score?: number; matchType: string }> = [];
     let totalHits = 0;
-
+    
     // If category_id is provided, find stores that serve items in this category and its children
     if (filters?.category_id) {
       const categoryId = Number(filters.category_id);
-
+      
       // Get all child categories (subcategories) recursively
       let categoryIdsWithChildren: number[] = [];
       try {
@@ -7799,14 +7799,14 @@ export class SearchService {
           } else {
             // Last resort: just the parent category
             this.logger.warn(`[searchStoresByModule] No child categories found in OpenSearch for ${categoryId}. Using parent category only.`);
-            categoryIdsWithChildren = [categoryId];
+        categoryIdsWithChildren = [categoryId];
           }
         } catch (opensearchError: any) {
           this.logger.error(`[searchStoresByModule] OpenSearch fallback also failed for ${categoryId}: ${opensearchError?.message || String(opensearchError)}. Using parent category only.`);
           categoryIdsWithChildren = [categoryId];
         }
       }
-
+      
       // Find all items in this category and its children
       const itemsInCategoryBody: any = {
         query: {
@@ -7822,19 +7822,19 @@ export class SearchService {
         size: 1000,
         _source: ['store_id'],
       };
-
+      
       // Apply strict filtering: filter items by module_id if provided
       if (filters?.module_id) {
         itemsInCategoryBody.query.bool.must.push({ term: { module_id: Number(filters.module_id) } });
       }
-
+      
       // When finding stores via category_id, use module-specific indices if module_id is provided for strict filtering
       // Otherwise search in all item indices
       const itemIndicesForCategory = filters?.module_id ? itemIndices : this.getAllItemIndices();
       this.logger.debug(`[searchStoresByModule] Searching for items via category_id in ${itemIndicesForCategory.length} indices: ${itemIndicesForCategory.join(', ')}`);
-
+      
       const itemsInCategoryResults = await Promise.all(
-        itemIndicesForCategory.map(index =>
+        itemIndicesForCategory.map(index => 
           this.client.search({ index, body: itemsInCategoryBody }).catch(() => ({ body: { hits: { hits: [] } } }))
         )
       );
@@ -7864,7 +7864,7 @@ export class SearchService {
         });
         // Only filter by active:true (stores serving items in this category should be shown)
         categoryStoreFilterClauses.push({ term: { active: 1 } });
-
+        
         const storeResBody: any = {
           query: {
             bool: {
@@ -7885,12 +7885,12 @@ export class SearchService {
             'featured', 'zone_id', 'module_id'
           ],
         };
-
+        
         // Don't use geo_distance sort - we'll sort manually by distance later
         // This prevents OpenSearch from filtering out results when location field isn't a geo_point
         storeResBody.sort = [{ order_count: { order: 'desc' } }];
         storeResBody.script_fields = undefined;
-
+        
         // If query is provided, also filter stores by name matching the query
         if (q && q.trim()) {
           storeResBody.query.bool.must.push({
@@ -7902,11 +7902,11 @@ export class SearchService {
                 { match_phrase: { slug: { query: q.toLowerCase(), boost: 5 } } },
                 {
                   multi_match: {
-                    query: q,
-                    fields: ['name^3', 'slug^2', 'address'],
-                    type: 'best_fields',
-                    operator: 'and',
-                    fuzziness: 'AUTO',
+                  query: q,
+                  fields: ['name^3', 'slug^2', 'address'],
+                  type: 'best_fields',
+                  operator: 'and',
+                  fuzziness: 'AUTO',
                   }
                 },
                 { wildcard: { name: { value: `*${q.toLowerCase()}*`, boost: 2 } } },
@@ -7916,12 +7916,12 @@ export class SearchService {
             },
           });
         }
-
+        
         // When finding stores via category_id, search in all store indices
         // We'll filter stores by module_id after fetching (strict filtering)
         const storeIndicesForCategory = this.getAllStoreIndices();
         this.logger.debug(`[searchStoresByModule] Searching for stores via category_id in ${storeIndicesForCategory.length} indices: ${storeIndicesForCategory.join(', ')}`);
-
+        
         const storeResults = await Promise.all(
           storeIndicesForCategory.map(async (index) => {
             try {
@@ -7934,7 +7934,7 @@ export class SearchService {
             }
           })
         );
-
+        
         storeResults.forEach((res, idx) => {
           // Handle both response formats: res.body.hits (OpenSearch client) or res.hits (direct response)
           const responseBody = res.body || res;
@@ -7944,14 +7944,14 @@ export class SearchService {
           this.logger.debug(`[searchStoresByModule] Processing results from index ${storeIndicesForCategory[idx]}: ${hits.length} hits, total: ${total}`);
           hits.forEach((h: any) => {
             // Keep the original hit structure with _source so processing code can extract fields properly
-            allStores.push({
+            allStores.push({ 
               ...h,
               _id: h._source?.id || h._id,
-              matchType: q && q.trim() ? 'category_name' : 'category'
+              matchType: q && q.trim() ? 'category_name' : 'category' 
             });
           });
         });
-
+        
         this.logger.debug(`[searchStoresByModule] Found ${allStores.length} stores via category_id ${categoryId} (totalHits: ${totalHits})`);
       } else {
         this.logger.warn(`[searchStoresByModule] No stores found for category_id ${categoryId} - no items found in this category`);
@@ -7959,7 +7959,7 @@ export class SearchService {
     } else if (!q || !q.trim()) {
       // No query and no category_id - return all stores matching filters (module_id, store_id)
       this.logger.log(`[searchStoresByModule] No query provided, returning all stores matching filters: module_id=${filters?.module_id}, store_id=${filters?.store_id}`);
-
+      
       const allStoresBody: any = {
         query: {
           bool: {
@@ -7978,22 +7978,22 @@ export class SearchService {
           'featured', 'zone_id', 'module_id'
         ],
       };
-
+      
       // If no filters, return all stores (match_all)
       if (filterClauses.length === 0 && (!filters?.module_id && !filters?.store_id)) {
         allStoresBody.query = { match_all: {} };
       }
-
+      
       // Don't use geo_distance sort - we'll sort manually by distance later
       allStoresBody.sort = [{ order_count: { order: 'desc' } }];
       allStoresBody.script_fields = undefined;
-
+      
       const allStoresResults = await Promise.all(
-        storeIndices.map(index =>
+        storeIndices.map(index => 
           this.client.search({ index, body: allStoresBody }).catch(() => ({ body: { hits: { hits: [], total: { value: 0 } } } }))
         )
       );
-
+      
       allStoresResults.forEach(res => {
         const hits = res.body.hits?.hits || [];
         totalHits += res.body.hits?.total?.value ?? 0;
@@ -8001,13 +8001,13 @@ export class SearchService {
           allStores.push({ ...h, matchType: 'name' });
         });
       });
-
+      
       this.logger.debug(`[searchStoresByModule] Found ${allStores.length} stores without query (totalHits: ${totalHits})`);
-
+      
       // If module_id is provided, also find stores via items in that module
       if (filters?.module_id && allStores.length === 0) {
         this.logger.debug(`[searchStoresByModule] No stores found directly, searching for stores via items in module ${filters.module_id}`);
-
+        
         const itemsInModuleBody: any = {
           query: {
             bool: {
@@ -8020,14 +8020,14 @@ export class SearchService {
           size: 1000,
           _source: ['store_id'],
         };
-
+        
         const itemIndicesForModule = filters?.module_id ? itemIndices : this.getAllItemIndices();
         const itemsInModuleResults = await Promise.all(
-          itemIndicesForModule.map(index =>
+          itemIndicesForModule.map(index => 
             this.client.search({ index, body: itemsInModuleBody }).catch(() => ({ body: { hits: { hits: [] } } }))
           )
         );
-
+        
         const storeIdsFromItems = new Set<string>();
         itemsInModuleResults.forEach(res => {
           (res.body.hits?.hits || []).forEach((hit: any) => {
@@ -8036,7 +8036,7 @@ export class SearchService {
             }
           });
         });
-
+        
         if (storeIdsFromItems.size > 0) {
           const storesViaItemsBody: any = {
             query: {
@@ -8059,14 +8059,14 @@ export class SearchService {
             ],
             sort: [{ order_count: { order: 'desc' } }],
           };
-
+          
           const allStoreIndicesForModule = this.getAllStoreIndices();
           const storesViaItemsResults = await Promise.all(
-            allStoreIndicesForModule.map(index =>
+            allStoreIndicesForModule.map(index => 
               this.client.search({ index, body: storesViaItemsBody }).catch(() => ({ body: { hits: { hits: [], total: { value: 0 } } } }))
             )
           );
-
+          
           storesViaItemsResults.forEach(res => {
             const hits = res.body.hits?.hits || [];
             totalHits += res.body.hits?.total?.value ?? 0;
@@ -8074,7 +8074,7 @@ export class SearchService {
               allStores.push({ ...h, matchType: 'item' });
             });
           });
-
+          
           this.logger.debug(`[searchStoresByModule] Found ${allStores.length} stores via items in module ${filters.module_id} (totalHits: ${totalHits})`);
         }
       }
@@ -8083,7 +8083,7 @@ export class SearchService {
       this.logger.log(`[searchStoresByModule] Enhanced search: query="${q}", searching ${storeIndices.length} store indices`);
       try {
         // Use the indices determined at the beginning of the method
-
+        
         // Create a body without geo_distance sort for initial search (we'll sort by distance manually later)
         // This prevents OpenSearch from filtering out results when location field isn't a geo_point
         const initialSearchBody: any = {
@@ -8091,7 +8091,7 @@ export class SearchService {
           sort: [{ order_count: { order: 'desc' } }], // Use popularity sort for initial search
           script_fields: undefined, // Don't use script_fields in initial search
         };
-
+        
         // 1. Store name matches (initial search)
         this.logger.debug(`[searchStoresByModule] Step 1: Searching stores by name matching "${q}"`);
         const initialResults = await Promise.all(
@@ -8112,7 +8112,7 @@ export class SearchService {
             }
           })
         );
-
+        
         initialResults.forEach(res => {
           const hits = res.body.hits?.hits || [];
           totalHits += res.body.hits?.total?.value ?? 0;
@@ -8120,7 +8120,7 @@ export class SearchService {
             allStores.push({ ...h, matchType: 'name' });
           });
         });
-
+        
         // 2. Category matches - find categories matching the query
         const catBody: any = {
           query: {
@@ -8136,14 +8136,14 @@ export class SearchService {
           size: 100,
           _source: ['id'],
         };
-
+        
         // Add module filter to category search if provided
         if (filters?.module_id) {
           catBody.query.bool.filter = [{ term: { module_id: Number(filters.module_id) } }];
         }
-
+        
         const catResults = await Promise.all(
-          catIndices.map(index =>
+          catIndices.map(index => 
             this.client.search({ index, body: catBody }).catch(() => ({ body: { hits: { hits: [] } } }))
           )
         );
@@ -8154,7 +8154,7 @@ export class SearchService {
             if (hit._id) matchingCategoryIds.add(String(hit._id));
           });
         });
-
+        
         if (matchingCategoryIds.size > 0) {
           // Find items in these categories
           const itemsInCategoriesBody: any = {
@@ -8169,14 +8169,14 @@ export class SearchService {
             size: 1000,
             _source: ['store_id'],
           };
-
+          
           // Add module filter if provided
           if (filters?.module_id) {
             itemsInCategoriesBody.query.bool.must.push({ term: { module_id: Number(filters.module_id) } });
           }
-
+          
           const itemsInCategoriesResults = await Promise.all(
-            itemIndices.map(index =>
+            itemIndices.map(index => 
               this.client.search({ index, body: itemsInCategoriesBody }).catch(() => ({ body: { hits: { hits: [] } } }))
             )
           );
@@ -8212,18 +8212,18 @@ export class SearchService {
                 'featured', 'zone_id', 'module_id'
               ],
             };
-
+            
             // Don't use geo_distance sort in enhanced search - we'll sort manually by distance later
             // This prevents OpenSearch from filtering out results when location field isn't a geo_point
             storeResBody.sort = [{ order_count: { order: 'desc' } }];
             storeResBody.script_fields = undefined;
-
+            
             const storeResults = await Promise.all(
-              storeIndices.map(index =>
+              storeIndices.map(index => 
                 this.client.search({ index, body: storeResBody }).catch(() => ({ body: { hits: { hits: [] } } }))
               )
             );
-
+            
             storeResults.forEach(res => {
               (res.body.hits?.hits || []).forEach((h: any) => {
                 allStores.push({ ...h, matchType: 'category' });
@@ -8247,14 +8247,14 @@ export class SearchService {
           size: 1000,
           _source: ['store_id'],
         };
-
+        
         // Add module filter if provided
         if (filters?.module_id) {
           itemBody.query.bool.filter = [{ term: { module_id: Number(filters.module_id) } }];
         }
-
+        
         const itemResults = await Promise.all(
-          itemIndices.map(index =>
+          itemIndices.map(index => 
             this.client.search({ index, body: itemBody }).catch(() => ({ body: { hits: { hits: [] } } }))
           )
         );
@@ -8286,18 +8286,18 @@ export class SearchService {
               'featured', 'zone_id', 'module_id'
             ],
           };
-
+          
           // Don't use geo_distance sort in enhanced search - we'll sort manually by distance later
           // This prevents OpenSearch from filtering out results when location field isn't a geo_point
           storeResBody.sort = [{ order_count: { order: 'desc' } }];
           storeResBody.script_fields = undefined;
-
+          
           const storeResults = await Promise.all(
-            storeIndices.map(index =>
+            storeIndices.map(index => 
               this.client.search({ index, body: storeResBody }).catch(() => ({ body: { hits: { hits: [] } } }))
             )
           );
-
+          
           storeResults.forEach(res => {
             (res.body.hits?.hits || []).forEach((h: any) => {
               allStores.push({ ...h, matchType: 'item' });
@@ -8308,20 +8308,20 @@ export class SearchService {
         // Remove duplicates and sort by match type priority with proper scoring
         const seenStores = new Set<string>();
         const sortedStores: Array<{ _id: string; _source: any; fields?: any; sort?: any[]; _score?: number; matchType: string }> = [];
-
+        
         // Priority order: name > category > item
         const matchTypeOrder = { 'name': 1, 'category': 2, 'item': 3 };
         const matchTypeScore = { 'name': 1000, 'category': 100, 'item': 10 };
-
+        
         allStores
           .sort((a, b) => {
             const aOrder = matchTypeOrder[a.matchType as keyof typeof matchTypeOrder] || 999;
             const bOrder = matchTypeOrder[b.matchType as keyof typeof matchTypeOrder] || 999;
-
+            
             if (aOrder !== bOrder) {
               return aOrder - bOrder;
             }
-
+            
             // Within same match type, sort by score
             return (b._score || 0) - (a._score || 0);
           })
@@ -8335,22 +8335,22 @@ export class SearchService {
               sortedStores.push(store);
             }
           });
-
+        
         allStores = sortedStores;
         totalHits = sortedStores.length;
-
+        
       } catch (error: any) {
         this.logger.error(`Enhanced store search failed: ${error?.message || String(error)}`, error?.stack);
         // Fallback to original search
         const results = await Promise.all(
-          storeIndices.map(index =>
+          storeIndices.map(index => 
             this.client.search({ index, body }).catch((err: any) => {
               this.logger.warn(`Search failed on index ${index}: ${err?.message || String(err)}`);
               return { body: { hits: { hits: [], total: { value: 0 } } } };
             })
           )
         );
-
+        
         allStores = [];
         results.forEach((res: any, idx: number) => {
           const hits = res.body.hits?.hits || [];
@@ -8364,21 +8364,21 @@ export class SearchService {
     } else {
       // No query and no category_id, use simple search
       this.logger.log(`[searchStoresByModule] Simple search: no query, no category_id, searching ${storeIndices.length} indices`);
-
+      
       // Create a body without geo_distance sort when radius_km is not provided
       // This prevents OpenSearch from filtering out results when location field isn't a geo_point
       const simpleSearchBody: any = {
         ...body,
       };
-
+      
       // Only use geo_distance sort if radius_km is provided
       if (!(hasGeo && radiusKm !== undefined && !Number.isNaN(radiusKm) && radiusKm > 0) && !(hasGeo && filters?.sort === 'distance')) {
         simpleSearchBody.sort = [{ order_count: { order: 'desc' } }];
         simpleSearchBody.script_fields = undefined;
       }
-
+      
       this.logger.debug(`[searchStoresByModule] Search query body: ${JSON.stringify(simpleSearchBody, null, 2).substring(0, 1000)}`);
-
+      
       const results = await Promise.all(
         storeIndices.map(async (index) => {
           try {
@@ -8392,7 +8392,7 @@ export class SearchService {
           }
         })
       );
-
+      
       results.forEach((res: any, idx: number) => {
         const hits = res.body.hits?.hits || [];
         const indexTotal = res.body.hits?.total?.value ?? 0;
@@ -8403,14 +8403,14 @@ export class SearchService {
         });
       });
     }
-
+    
     this.logger.log(`[searchStoresByModule] Total stores found: ${allStores.length} (totalHits: ${totalHits})`);
-
+    
     // Process and format stores
     let stores = allStores.map(h => {
       const src: any = h._source || {};
       let distance = (h.fields && (h.fields as any).distance_km && (h.fields as any).distance_km[0]) ?? undefined;
-
+      
       // Always calculate distance if location is provided (even if already calculated from script_fields)
       // This ensures we have distance for all stores when lat/lon are provided
       if (hasGeo) {
@@ -8418,7 +8418,7 @@ export class SearchService {
         if (!distance) {
           let storeLat: number | undefined;
           let storeLon: number | undefined;
-
+          
           // Try different location field formats
           if (src.latitude && src.longitude) {
             storeLat = parseFloat(String(src.latitude));
@@ -8431,7 +8431,7 @@ export class SearchService {
             storeLon = parseFloat(String(src.location[0]));
             storeLat = parseFloat(String(src.location[1]));
           }
-
+          
           if (storeLat !== undefined && !Number.isNaN(storeLat) && storeLon !== undefined && !Number.isNaN(storeLon)) {
             distance = this.calculateDistance(lat!, lon!, storeLat, storeLon);
           }
@@ -8444,7 +8444,7 @@ export class SearchService {
         const travelTimeMinutes = this.calculateTravelTime(distance);
         deliveryTime = this.recalculateDeliveryTime(src.delivery_time, travelTimeMinutes);
       }
-
+      
       // Format address with distance: "{distance_km}km | {address}"
       let formattedAddress = src.address || null;
       if (hasGeo && distance !== undefined && distance !== null && !Number.isNaN(distance) && distance !== Infinity) {
@@ -8455,7 +8455,7 @@ export class SearchService {
           formattedAddress = `${distanceStr}km`;
         }
       }
-
+      
       // Ensure cover_photo is included (use image as fallback if cover_photo doesn't exist)
       let coverPhoto = src.cover_photo || null;
       if (!coverPhoto && src.image) {
@@ -8465,11 +8465,11 @@ export class SearchService {
       // Calculate distance value (for Flutter compatibility, use distance as well as distance_km)
       const distanceValue = distance !== undefined && distance !== null ? distance : (hasGeo ? null : null);
       
-      return {
+      return { 
         id: h._id || src.id,
         name: src.name || null,
         slug: src.slug || null,
-        score: h._score,
+        score: h._score, 
         distance: distanceValue, // Flutter expects 'distance' field
         distance_km: distanceValue, // Keep for backward compatibility
         ...src,
@@ -8533,7 +8533,7 @@ export class SearchService {
     if (filters?.module_id) {
       const requestedModuleId = Number(filters.module_id);
       const beforeFilterCount = stores.length;
-
+      
       // Separate stores by matchType and module_id
       const storesWithMatchingModuleId = stores.filter((store: any) => {
         if (store.module_id !== undefined && store.module_id !== null) {
@@ -8541,13 +8541,13 @@ export class SearchService {
         }
         return false;
       });
-
+      
       // Keep stores found via items in the specified module, even if store's module_id differs
       // This is because if items in module 5 exist, stores serving them are relevant
       const storesFromItems = stores.filter((store: any) => {
         return store.matchType === 'item' || store.matchType === 'category' || store.matchType === 'category_name';
       });
-
+      
       // Combine: stores with matching module_id + stores found via items in that module
       const combinedStoreIds = new Set<string>();
       storesWithMatchingModuleId.forEach((store: any) => {
@@ -8556,16 +8556,16 @@ export class SearchService {
       storesFromItems.forEach((store: any) => {
         combinedStoreIds.add(String(store.id));
       });
-
+      
       stores = stores.filter((store: any) => {
         return combinedStoreIds.has(String(store.id));
       });
-
+      
       // Update totalHits to reflect filtered count
       totalHits = stores.length;
       this.logger.debug(`[searchStoresByModule] Filtered stores by module_id ${requestedModuleId}: ${beforeFilterCount} -> ${stores.length} (kept ${storesWithMatchingModuleId.length} with matching module_id, ${storesFromItems.length} from items/categories)`);
     }
-
+    
     if (filters?.store_id) {
       const requestedStoreId = Number(filters.store_id);
       const beforeFilterCount = stores.length;
@@ -8594,10 +8594,10 @@ export class SearchService {
     if (stores.length === 0 && q && q.trim()) {
       try {
         this.logger.debug(`[searchStoresByModule] Stores empty, searching via items/categories for query: ${q}`);
-
+        
         const matchingStoreIds = new Set<string>();
         const matchingCategoryIds = new Set<string>();
-
+        
         // Only search categories if category_id filter is not provided (if category_id is provided, we should only search within that category)
         if (!filters?.category_id) {
           // Search for categories matching the query
@@ -8611,11 +8611,11 @@ export class SearchService {
                   { match_phrase: { slug: { query: q.toLowerCase(), boost: 5 } } },
                   {
                     multi_match: {
-                      query: q,
-                      fields: ['name^3', 'slug^2'],
-                      type: 'best_fields',
-                      operator: 'or',
-                      fuzziness: 'AUTO',
+                    query: q,
+                    fields: ['name^3', 'slug^2'],
+                    type: 'best_fields',
+                    operator: 'or',
+                    fuzziness: 'AUTO',
                     }
                   },
                   { wildcard: { name: { value: `*${q.toLowerCase()}*`, boost: 2 } } },
@@ -8627,18 +8627,18 @@ export class SearchService {
             size: 50, // Limit to top 50 categories
             _source: ['id'],
           };
-
+          
           // Add module filter if provided
           if (filters?.module_id) {
             categoryBody.query.bool.filter = [{ term: { module_id: Number(filters.module_id) } }];
           }
-
+          
           const categoryResults = await Promise.all(
-            catIndices.map(index =>
+            catIndices.map(index => 
               this.client.search({ index, body: categoryBody }).catch(() => ({ body: { hits: { hits: [] } } }))
             )
           );
-
+          
           categoryResults.forEach(res => {
             (res.body.hits?.hits || []).forEach((hit: any) => {
               // Try _source.id first (the actual category ID), then fallback to _id
@@ -8648,7 +8648,7 @@ export class SearchService {
               }
             });
           });
-
+          
           this.logger.debug(`[searchStoresByModule] Found ${matchingCategoryIds.size} categories matching query: ${Array.from(matchingCategoryIds).slice(0, 10).join(', ')}`);
         } else {
           // If category_id is provided, use it and its children
@@ -8664,12 +8664,12 @@ export class SearchService {
             matchingCategoryIds.add(String(filters.category_id));
           }
         }
-
+        
         // Search for items matching the query
         // Split query into words for better matching (e.g., "Elaichi/Cardamom Powder 25g" -> ["Elaichi", "Cardamom", "Powder"])
         const queryWords = q.split(/[\s\/\-_]+/).filter(word => word.length > 0 && !/^\d+$/.test(word)); // Remove pure numbers
         const cleanQuery = queryWords.join(' ');
-
+        
         const itemBody: any = {
           query: {
             bool: {
@@ -8679,23 +8679,23 @@ export class SearchService {
                 // Match all words (but more flexible)
                 { match: { name: { query: cleanQuery, boost: 8, operator: 'or' } } },
                 // Match individual words
-                ...queryWords.map((word: string) => ({
-                  match: { name: { query: word, boost: 5, operator: 'or' } }
+                ...queryWords.map((word: string) => ({ 
+                  match: { name: { query: word, boost: 5, operator: 'or' } } 
                 })),
                 // Multi-match across fields
                 {
                   multi_match: {
-                    query: cleanQuery,
-                    fields: ['name^3', 'category_name^2', 'description'],
-                    type: 'best_fields',
-                    operator: 'or',
-                    fuzziness: 'AUTO',
+                  query: cleanQuery,
+                  fields: ['name^3', 'category_name^2', 'description'],
+                  type: 'best_fields',
+                  operator: 'or',
+                  fuzziness: 'AUTO',
                   }
                 },
                 // Wildcard matches
                 { wildcard: { name: { value: `*${q.toLowerCase().replace(/[\/\-_]/g, '*')}*`, boost: 3 } } },
-                ...queryWords.map((word: string) => ({
-                  wildcard: { name: { value: `*${word.toLowerCase()}*`, boost: 2 } }
+                ...queryWords.map((word: string) => ({ 
+                  wildcard: { name: { value: `*${word.toLowerCase()}*`, boost: 2 } } 
                 })),
               ],
               minimum_should_match: 1,
@@ -8704,15 +8704,15 @@ export class SearchService {
           size: 500, // Increased limit to find more items
           _source: ['store_id', 'category_id'],
         };
-
+        
         // Apply strict filtering: filter items by module_id and category_id if provided
         const itemFilterClauses: any[] = [];
-
+        
         // Filter by module_id if provided (strict filtering)
         if (filters?.module_id) {
           itemFilterClauses.push({ term: { module_id: Number(filters.module_id) } });
         }
-
+        
         // Filter items by categories (matchingCategoryIds already includes parent + children if category_id was provided)
         if (matchingCategoryIds.size > 0) {
           const categoryIdNumbers = Array.from(matchingCategoryIds).map(id => Number(id)).filter(id => !Number.isNaN(id));
@@ -8722,22 +8722,22 @@ export class SearchService {
             itemFilterClauses.push({ terms: { category_id: categoryIdNumbers } });
           }
         }
-
+        
         if (itemFilterClauses.length > 0) {
           itemBody.query.bool.filter = itemFilterClauses;
         }
-
+        
         // For fallback, use module-specific indices if module_id is provided for strict filtering
         // Otherwise search in all item indices
         const fallbackItemIndices = filters?.module_id ? itemIndices : this.getAllItemIndices();
         this.logger.debug(`[searchStoresByModule] Searching for items in ${fallbackItemIndices.length} indices: ${fallbackItemIndices.join(', ')}`);
-
+        
         const itemResults = await Promise.all(
-          fallbackItemIndices.map(index =>
+          fallbackItemIndices.map(index => 
             this.client.search({ index, body: itemBody }).catch(() => ({ body: { hits: { hits: [] } } }))
           )
         );
-
+        
         itemResults.forEach(res => {
           (res.body.hits?.hits || []).forEach((hit: any) => {
             if (hit._source?.store_id) {
@@ -8749,15 +8749,15 @@ export class SearchService {
             }
           });
         });
-
+        
         this.logger.debug(`[searchStoresByModule] Found ${matchingStoreIds.size} store IDs from items: ${Array.from(matchingStoreIds).slice(0, 10).join(', ')}`);
-
+        
         // If we found very few stores, also try searching for just the first significant word
         // This helps when the full query is too specific (e.g., "Elaichi/Cardamom Powder 25g" -> search for "Elaichi")
         if (matchingStoreIds.size < 3 && queryWords.length > 0) {
           const firstWord = queryWords[0]; // Get the first significant word
           this.logger.debug(`[searchStoresByModule] Found only ${matchingStoreIds.size} stores, also searching for first word: ${firstWord}`);
-
+          
           const firstWordItemBody: any = {
             query: {
               bool: {
@@ -8771,15 +8771,15 @@ export class SearchService {
             size: 200,
             _source: ['store_id', 'category_id'],
           };
-
+          
           // Apply strict filtering: filter by module_id and category_id if provided
           const firstWordFilterClauses: any[] = [];
-
+          
           // Filter by module_id if provided (strict filtering)
           if (filters?.module_id) {
             firstWordFilterClauses.push({ term: { module_id: Number(filters.module_id) } });
           }
-
+          
           if (filters?.category_id) {
             // Include child categories (subcategories)
             let firstWordCategoryIds: number[] = [];
@@ -8792,27 +8792,27 @@ export class SearchService {
               this.logger.warn(`[searchStoresByModule] Failed to get child categories for first word search: ${error?.message || String(error)}`);
               firstWordCategoryIds = [Number(filters.category_id)];
             }
-
+            
             if (firstWordCategoryIds.length === 1) {
               firstWordFilterClauses.push({ term: { category_id: firstWordCategoryIds[0] } });
             } else {
               firstWordFilterClauses.push({ terms: { category_id: firstWordCategoryIds } });
             }
           }
-
+          
           if (firstWordFilterClauses.length > 0) {
             firstWordItemBody.query.bool.filter = firstWordFilterClauses;
           }
-
+          
           // Use module-specific indices if module_id is provided for strict filtering
           const firstWordItemIndices = filters?.module_id ? itemIndices : this.getAllItemIndices();
-
+          
           const firstWordItemResults = await Promise.all(
-            firstWordItemIndices.map(index =>
+            firstWordItemIndices.map(index => 
               this.client.search({ index, body: firstWordItemBody }).catch(() => ({ body: { hits: { hits: [] } } }))
             )
           );
-
+          
           firstWordItemResults.forEach(res => {
             (res.body.hits?.hits || []).forEach((hit: any) => {
               if (hit._source?.store_id) {
@@ -8820,10 +8820,10 @@ export class SearchService {
               }
             });
           });
-
+          
           this.logger.debug(`[searchStoresByModule] After first word search, found ${matchingStoreIds.size} store IDs: ${Array.from(matchingStoreIds).slice(0, 10).join(', ')}`);
         }
-
+        
         // If we found categories but no stores from items, find stores via categories
         if (matchingCategoryIds.size > 0 && matchingStoreIds.size === 0) {
           const categoryItemsBody: any = {
@@ -8839,21 +8839,21 @@ export class SearchService {
             size: 1000,
             _source: ['store_id'],
           };
-
+          
           // Apply strict filtering: filter by module_id if provided
           if (filters?.module_id) {
             categoryItemsBody.query.bool.filter.push({ term: { module_id: Number(filters.module_id) } });
           }
-
+          
           // Use module-specific indices if module_id is provided for strict filtering
           const categoryItemIndices = filters?.module_id ? itemIndices : this.getAllItemIndices();
-
+          
           const categoryItemsResults = await Promise.all(
-            categoryItemIndices.map(index =>
+            categoryItemIndices.map(index => 
               this.client.search({ index, body: categoryItemsBody }).catch(() => ({ body: { hits: { hits: [] } } }))
             )
           );
-
+          
           categoryItemsResults.forEach(res => {
             (res.body.hits?.hits || []).forEach((hit: any) => {
               if (hit._source?.store_id) {
@@ -8861,14 +8861,14 @@ export class SearchService {
               }
             });
           });
-
+          
           this.logger.debug(`[searchStoresByModule] Found ${matchingStoreIds.size} store IDs from categories: ${Array.from(matchingStoreIds).slice(0, 10).join(', ')}`);
         }
-
+        
         // If we found stores, fetch them
         if (matchingStoreIds.size > 0) {
           const storeIdNumbers = Array.from(matchingStoreIds).map(id => Number(id)).filter(id => !Number.isNaN(id));
-
+          
           // For fallback, don't filter by module_id in the query
           // We'll filter stores by module_id after fetching (strict filtering)
           // This allows us to find stores that serve items in the specified module
@@ -8876,7 +8876,7 @@ export class SearchService {
             // Remove module_id filter, but keep other filters like geo filters
             return !(f.term && f.term.module_id);
           });
-
+          
           const fallbackStoreBody: any = {
             query: {
               bool: {
@@ -8897,14 +8897,14 @@ export class SearchService {
               'featured', 'zone_id', 'module_id'
             ],
           };
-
+          
           this.logger.debug(`[searchStoresByModule] Fallback store query: ${JSON.stringify(fallbackStoreBody.query).substring(0, 200)}`);
-
+          
           // For fallback, search in all store indices to find stores that serve items in the specified module
           // We'll filter stores by module_id after fetching (strict filtering)
           const fallbackStoreIndices = this.getAllStoreIndices();
           this.logger.debug(`[searchStoresByModule] Searching for stores in ${fallbackStoreIndices.length} indices: ${fallbackStoreIndices.join(', ')}`);
-
+          
           const fallbackStoreResults = await Promise.all(
             fallbackStoreIndices.map(async (index) => {
               try {
@@ -8917,7 +8917,7 @@ export class SearchService {
               }
             })
           );
-
+          
           const fallbackStores: any[] = [];
           fallbackStoreResults.forEach(res => {
             const hits = res.body.hits?.hits || [];
@@ -8925,11 +8925,11 @@ export class SearchService {
             hits.forEach((h: any) => {
               const source = h._source || {};
               let distance: number | undefined;
-
+              
               if (hasGeo) {
                 let storeLat: number | undefined;
                 let storeLon: number | undefined;
-
+                
                 if (source.latitude && source.longitude) {
                   storeLat = parseFloat(String(source.latitude));
                   storeLon = parseFloat(String(source.longitude));
@@ -8940,19 +8940,19 @@ export class SearchService {
                   storeLon = parseFloat(String(source.location[0]));
                   storeLat = parseFloat(String(source.location[1]));
                 }
-
+                
                 if (storeLat !== undefined && !Number.isNaN(storeLat) && storeLon !== undefined && !Number.isNaN(storeLon)) {
                   distance = this.calculateDistance(lat!, lon!, storeLat, storeLon);
                 }
               }
-
+              
               // Recalculate delivery time if distance is available
               let deliveryTime = source.delivery_time;
               if (distance !== undefined && distance !== null && source.delivery_time) {
                 const travelTimeMinutes = this.calculateTravelTime(distance);
                 deliveryTime = this.recalculateDeliveryTime(source.delivery_time, travelTimeMinutes);
               }
-
+              
               // Format address with distance: "{distance_km}km | {address}"
               let formattedAddress = source.address || null;
               if (hasGeo && distance !== undefined && distance !== null && !Number.isNaN(distance) && distance !== Infinity) {
@@ -8963,13 +8963,13 @@ export class SearchService {
                   formattedAddress = `${distanceStr}km`;
                 }
               }
-
+              
               // Ensure cover_photo is included (use image as fallback if cover_photo doesn't exist)
               let coverPhoto = source.cover_photo || null;
               if (!coverPhoto && source.image) {
                 coverPhoto = source.image;
               }
-
+              
               const storeObj: any = {
                 id: h._id,
                 score: h._score,
@@ -8991,11 +8991,11 @@ export class SearchService {
                 avg_rating: source.avg_rating || source.rating || 0,
                 rating: source.rating || source.avg_rating || 0,
               };
-
+              
               fallbackStores.push(storeObj);
             });
           });
-
+          
           // Deduplicate fallback stores
           // Note: For fallback stores, we don't filter by module_id since we're finding stores via items
           // The items might be in different modules, but the stores serving those items are still relevant
@@ -9009,7 +9009,7 @@ export class SearchService {
             return true;
           });
           this.logger.debug(`[searchStoresByModule] After deduplication: ${stores.length} stores`);
-
+          
           // Sort fallback stores
           if (hasGeo) {
             stores.sort((a, b) => {
@@ -9021,16 +9021,16 @@ export class SearchService {
           } else {
             stores.sort((a, b) => (b.order_count || 0) - (a.order_count || 0));
           }
-
+          
           this.logger.debug(`[searchStoresByModule] Found ${stores.length} stores via items/categories fallback`);
           // Note: Fallback stores are marked with matchType: 'item' and will be kept by the main filtering logic
           // even if their module_id doesn't match, because they serve items in the specified module
-
+          
           // Apply filtering again for fallback stores (they were added after initial filtering)
           if (filters?.module_id) {
             const requestedModuleId = Number(filters.module_id);
             const beforeFilterCount = stores.length;
-
+            
             // Separate stores by matchType and module_id
             const storesWithMatchingModuleId = stores.filter((store: any) => {
               if (store.module_id !== undefined && store.module_id !== null) {
@@ -9038,12 +9038,12 @@ export class SearchService {
               }
               return false;
             });
-
+            
             // Keep stores found via items in the specified module, even if store's module_id differs
             const storesFromItems = stores.filter((store: any) => {
               return store.matchType === 'item' || store.matchType === 'category';
             });
-
+            
             // Combine: stores with matching module_id + stores found via items in that module
             const combinedStoreIds = new Set<string>();
             storesWithMatchingModuleId.forEach((store: any) => {
@@ -9052,11 +9052,11 @@ export class SearchService {
             storesFromItems.forEach((store: any) => {
               combinedStoreIds.add(String(store.id));
             });
-
+            
             stores = stores.filter((store: any) => {
               return combinedStoreIds.has(String(store.id));
             });
-
+            
             // Update totalHits to reflect filtered count
             totalHits = stores.length;
             this.logger.debug(`[searchStoresByModule] Filtered fallback stores by module_id ${requestedModuleId}: ${beforeFilterCount} -> ${stores.length} (kept ${storesWithMatchingModuleId.length} with matching module_id, ${storesFromItems.length} from items/categories)`);
@@ -9077,7 +9077,7 @@ export class SearchService {
         return needsAddress || needsCoverPhoto;
       })
       .map((store: any) => String(store.id));
-
+    
     if (storeIdsNeedingData.length > 0) {
       try {
         const dataMap = await this.moduleService.getStoreAddressesAndCoverPhotos(storeIdsNeedingData);
@@ -9098,7 +9098,7 @@ export class SearchService {
               const distanceStr = store.distance_km.toFixed(2);
               store.address = `${distanceStr}km`;
             }
-
+            
             // Update cover_photo
             if (storeData.cover_photo) {
               store.cover_photo = storeData.cover_photo;
@@ -9180,14 +9180,14 @@ export class SearchService {
     };
 
     this.logger.log(`[searchStoresByModule] END: Returning ${paginatedStores.length} stores (page ${page}/${Math.ceil(totalHits / size)}, total: ${totalHits})`);
-
+    
     // Cache results if enabled
     if (this.cacheEnabled) {
       const cacheKey = this.cacheService.buildCacheKey({ type: 'stores', q, ...filters });
-
+      
       // Dynamic TTL based on query type
       let ttl = 300; // Default 5 minutes
-
+      
       if (!q || q.trim() === '') {
         ttl = 600; // 10 min for browse queries
       } else if (totalHits > 100) {
@@ -9195,11 +9195,11 @@ export class SearchService {
       } else if (filters?.lat && filters?.lon) {
         ttl = 60; // 1 min for geo queries (location-sensitive)
       }
-
+      
       await this.cacheService.set(cacheKey, response, ttl);
       this.logger.debug(`[searchStoresByModule] Cached results with TTL: ${ttl}s`);
     }
-
+    
     return response;
   }
 
@@ -9235,7 +9235,7 @@ export class SearchService {
     // Determine category indices based on module_id
     let categoryIndices: string[] = [];
     let itemIndices: string[] = [];
-
+    
     if (filters?.module_id) {
       this.logger.log(`[searchCategoriesByModule] Fetching module ${filters.module_id} from database`);
       let module: any = null;
@@ -9244,7 +9244,7 @@ export class SearchService {
       } catch (error: any) {
         this.logger.warn(`[searchCategoriesByModule] Failed to fetch module from database: ${error?.message || String(error)}. Using fallback mapping.`);
       }
-
+      
       if (!module) {
         // Fallback: Use common module_id to module_type mappings
         const moduleTypeMap: Record<number, string> = {
@@ -9254,7 +9254,7 @@ export class SearchService {
         };
         const moduleType = moduleTypeMap[filters.module_id] || 'food';
         this.logger.log(`[searchCategoriesByModule] Using fallback mapping: module_id=${filters.module_id} -> module_type=${moduleType}`);
-
+        
         if (moduleType === 'food') {
           categoryIndices = ['food_categories'];
           itemIndices = [this.FOOD_ITEMS_INDEX];
@@ -9267,7 +9267,7 @@ export class SearchService {
         }
       } else {
         this.logger.log(`[searchCategoriesByModule] Module found: id=${module.id}, name=${module.name}, type=${module.module_type}`);
-
+        
         // Use module service to get indices
         const moduleType = module.module_type;
         if (moduleType === 'food') {
@@ -9308,12 +9308,12 @@ export class SearchService {
             { match: { name: { query: q, boost: 4, operator: 'and' } } },
             {
               multi_match: {
-                query: q,
-                fields: ['name^3', 'slug^2'],
-                type: 'best_fields',
-                operator: 'and',
-                fuzziness: 'AUTO',
-                lenient: true,
+              query: q,
+              fields: ['name^3', 'slug^2'],
+              type: 'best_fields',
+              operator: 'and',
+              fuzziness: 'AUTO',
+              lenient: true,
               }
             },
             { wildcard: { name: { value: `*${q.toLowerCase()}*`, boost: 2 } } },
@@ -9346,7 +9346,7 @@ export class SearchService {
     };
 
     this.logger.log(`[searchCategoriesByModule] Searching categories in indices: ${categoryIndices.join(', ')}`);
-
+    
     // Search categories
     const categoryResults = await Promise.all(
       categoryIndices.map(index =>
@@ -9372,7 +9372,7 @@ export class SearchService {
 
     // Now filter categories by availability (only categories that have available items/stores)
     const categoryIds = allCategories.map(cat => Number(cat.id));
-
+    
     if (categoryIds.length === 0) {
       return {
         q,
@@ -9409,9 +9409,9 @@ export class SearchService {
     const lat = filters?.lat;
     const lon = filters?.lon;
     const radiusKm = filters?.radius_km;
-    const hasGeo = lat !== undefined && !Number.isNaN(lat) && lon !== undefined && !Number.isNaN(lon) &&
-      !(lat === 0 && lon === 0);
-
+    const hasGeo = lat !== undefined && !Number.isNaN(lat) && lon !== undefined && !Number.isNaN(lon) && 
+                   !(lat === 0 && lon === 0);
+    
     if (hasGeo && radiusKm !== undefined && !Number.isNaN(radiusKm) && !filters?.store_id) {
       itemFilterClauses.push({ geo_distance: { distance: `${radiusKm}km`, store_location: { lat, lon } } });
     }
@@ -9466,7 +9466,7 @@ export class SearchService {
     const parentIds = new Set<number>();
     const sampleCategories = availableCategories.slice(0, 5).map(c => ({ id: c.id, parent_id: c.parent_id }));
     this.logger.log(`[searchCategoriesByModule] Sample categories: ${JSON.stringify(sampleCategories)}`);
-
+    
     availableCategories.forEach(cat => {
       const parentId = cat.parent_id;
       if (parentId !== null && parentId !== undefined && parentId !== 'null' && parentId !== '' && Number(parentId) > 0) {
@@ -9514,7 +9514,7 @@ export class SearchService {
           }
         });
       });
-
+      
       this.logger.log(`[searchCategoriesByModule] Total parent categories found: ${parentCategoriesMap.size} out of ${parentIds.size} requested`);
 
       // Add parent categories to results (if not already present)
@@ -9528,14 +9528,14 @@ export class SearchService {
             parentItemCount += childCat.item_count || 0;
           }
         });
-
+        
         if (!existingCategoryIds.has(parentId)) {
           // Parent category not in results, add it
           availableCategories.push({
             ...parentCat,
             item_count: parentItemCount,
           });
-
+          
           this.logger.log(`[searchCategoriesByModule] Added parent category ${parentId} with item_count ${parentItemCount}`);
         } else {
           // Parent category already exists, update its item_count to include children
