@@ -64,11 +64,21 @@ fi
 # Sync each directory
 TOTAL_SYNCED=0
 TOTAL_FAILED=0
+TOTAL_SKIPPED=0
 
 for DIR in "${DIRECTORIES[@]}"; do
     echo -e "${YELLOW}Syncing: ${DIR}${NC}"
     log "Syncing directory: ${DIR}"
     
+    # If the source prefix does not exist in S3, skip this directory gracefully
+    if ! docker exec $MINIO_CONTAINER mc stat $S3_ALIAS/$S3_BUCKET/$DIR/ >/dev/null 2>&1; then
+        echo -e "${BLUE}  ℹ Skipping ${DIR} (source prefix does not exist in S3)${NC}"
+        log "Skipping ${DIR} - source prefix $S3_ALIAS/$S3_BUCKET/$DIR/ does not exist in S3"
+        TOTAL_SKIPPED=$((TOTAL_SKIPPED + 1))
+        echo ""
+        continue
+    fi
+
     # Count files before sync
     S3_COUNT=$(docker exec $MINIO_CONTAINER mc ls --recursive $S3_ALIAS/$S3_BUCKET/$DIR/ 2>/dev/null | wc -l || echo "0")
     MINIO_COUNT_BEFORE=$(docker exec $MINIO_CONTAINER mc ls --recursive $MINIO_ALIAS/$BUCKET_NAME/$DIR/ 2>/dev/null | wc -l || echo "0")
@@ -106,6 +116,7 @@ done
 
 log "=== Sync Complete ==="
 log "Total files synced: ${TOTAL_SYNCED}"
+log "Skipped directories: ${TOTAL_SKIPPED}"
 log "Failed directories: ${TOTAL_FAILED}"
 
 echo ""
@@ -115,7 +126,14 @@ echo -e "${GREEN}╚════════════════════
 echo ""
 echo "📊 Summary:"
 echo "  • Files synced: ${TOTAL_SYNCED}"
-echo "  • Failed directories: ${TOTAL_FAILED}"
+if [ $TOTAL_SKIPPED -gt 0 ]; then
+    echo "  • Skipped directories: ${TOTAL_SKIPPED} (not in S3)"
+fi
+if [ $TOTAL_FAILED -gt 0 ]; then
+    echo -e "  • ${RED}Failed directories: ${TOTAL_FAILED}${NC}"
+else
+    echo "  • Failed directories: 0"
+fi
 echo "  • Log file: ${LOG_FILE}"
 echo ""
 echo "🔄 To set up automatic syncing, add to crontab:"

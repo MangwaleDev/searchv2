@@ -58,7 +58,8 @@ class ReindexService {
     });
 
     // Initialize OpenSearch client
-    const osNode = process.env.OPENSEARCH_HOST || 'http://search-opensearch:9200';
+    // Default to production port 9210 if running outside Docker
+    const osNode = process.env.OPENSEARCH_HOST || process.env.OPENSEARCH_URL || 'http://127.0.0.1:9210';
     const osUsername = process.env.OPENSEARCH_USERNAME;
     const osPassword = process.env.OPENSEARCH_PASSWORD;
     
@@ -167,28 +168,30 @@ class ReindexService {
   }
 
   /**
-   * Fetch items from MySQL
+   * Fetch items from MySQL (only items with valid active stores)
    */
   async fetchItems(moduleId, offset, limit) {
     const [items] = await this.mysqlPool.query(
       `SELECT 
-        id, name, description, image, images,
-        category_id, category_ids,
-        variations, add_ons, attributes, choice_options,
-        price, tax, tax_type, tax_included,
-        discount, discount_type,
-        available_time_starts, available_time_ends,
-        veg, status, store_id,
-        created_at, updated_at,
-        order_count, avg_rating, rating_count, rating,
-        module_id, stock, unit_id,
-        food_variations, slug, recommended, organic,
-        maximum_cart_quantity, is_approved, is_halal, is_visible
-      FROM items 
-      WHERE module_id = ? 
-        AND status = 1 
-        AND is_approved = 1
-      ORDER BY id ASC
+        i.id, i.name, i.description, i.image, i.images,
+        i.category_id, i.category_ids,
+        i.variations, i.add_ons, i.attributes, i.choice_options,
+        i.price, i.tax, i.tax_type, i.tax_included,
+        i.discount, i.discount_type,
+        i.available_time_starts, i.available_time_ends,
+        i.veg, i.status, i.store_id,
+        i.created_at, i.updated_at,
+        i.order_count, i.avg_rating, i.rating_count, i.rating,
+        i.module_id, i.stock, i.unit_id,
+        i.food_variations, i.slug, i.recommended, i.organic,
+        i.maximum_cart_quantity, i.is_approved, i.is_halal, i.is_visible
+      FROM items i
+      INNER JOIN stores s ON i.store_id = s.id
+      WHERE i.module_id = ? 
+        AND i.status = 1 
+        AND i.is_approved = 1
+        AND s.status = 1
+      ORDER BY i.id ASC
       LIMIT ? OFFSET ?`,
       [moduleId, limit, offset]
     );
@@ -355,13 +358,19 @@ class ReindexService {
     const storeMap = await this.loadStores(module.id);
     const categoryMap = await this.loadCategories(module.id);
 
-    // Count total items
+    // Count total items (only with valid active stores)
     const [countResult] = await this.mysqlPool.query(
-      'SELECT COUNT(*) as total FROM items WHERE module_id = ? AND status = 1 AND is_approved = 1',
+      `SELECT COUNT(*) as total 
+       FROM items i
+       INNER JOIN stores s ON i.store_id = s.id
+       WHERE i.module_id = ? 
+         AND i.status = 1 
+         AND i.is_approved = 1
+         AND s.status = 1`,
       [module.id]
     );
     const totalItems = countResult[0].total;
-    this.logger.log(`Total items to index: ${totalItems}`);
+    this.logger.log(`Total items to index (with valid stores): ${totalItems}`);
 
     let offset = 0;
     let totalIndexed = 0;
