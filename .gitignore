@@ -16,6 +16,7 @@ build/
 # Environment & Secrets
 .env
 .env.local
+.env.production
 .env.*.local
 *.pem
 *.key
@@ -87,3 +88,4 @@ test-results/
 .nyc_output/
 myminio/
 letsencrypt/
+.env.production
