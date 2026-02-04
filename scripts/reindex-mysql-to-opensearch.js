@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 /**
  * Complete Reindexing Script for MySQL to OpenSearch
- * 
+ *
  * This script properly indexes items, stores, and categories from MySQL to OpenSearch
  * with correct ID mappings, price calculations, discounts, and relationships.
- * 
+ *
  * Features:
  * - Proper category_id to category_name mapping
  * - Correct discount calculation (percentage and amount)
@@ -12,7 +12,7 @@
  * - Category_ids extraction from JSON format
  * - Image URL transformations
  * - Zone-aware indexing
- * 
+ *
  * Usage:
  *   node scripts/reindex-mysql-to-opensearch.js --module food
  *   node scripts/reindex-mysql-to-opensearch.js --module ecom
@@ -62,7 +62,7 @@ class ReindexService {
     const osNode = process.env.OPENSEARCH_HOST || process.env.OPENSEARCH_URL || 'http://127.0.0.1:9210';
     const osUsername = process.env.OPENSEARCH_USERNAME;
     const osPassword = process.env.OPENSEARCH_PASSWORD;
-    
+
     this.osClient = new Client({
       node: osNode,
       auth: osUsername && osPassword ? { username: osUsername, password: osPassword } : undefined,
@@ -325,7 +325,7 @@ class ReindexService {
         const errors = response.body.items.filter(i => i.index?.error);
         const failed = errors.length;
         const indexed = items.length - failed;
-        
+
         // Log first few errors
         errors.slice(0, 3).forEach(err => {
           this.logger.error(`Index error for ID ${err.index._id}: ${err.index.error.reason}`);
@@ -382,7 +382,7 @@ class ReindexService {
       if (items.length === 0) break;
 
       // Transform items
-      const transformed = items.map(item => 
+      const transformed = items.map(item =>
         this.transformItem(item, storeMap, categoryMap)
       ).filter(item => {
         // Filter out items without valid store

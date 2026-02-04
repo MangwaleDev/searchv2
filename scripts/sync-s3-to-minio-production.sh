@@ -69,7 +69,7 @@ TOTAL_SKIPPED=0
 for DIR in "${DIRECTORIES[@]}"; do
     echo -e "${YELLOW}Syncing: ${DIR}${NC}"
     log "Syncing directory: ${DIR}"
-    
+
     # If the source prefix does not exist in S3, skip this directory gracefully
     if ! docker exec $MINIO_CONTAINER mc stat $S3_ALIAS/$S3_BUCKET/$DIR/ >/dev/null 2>&1; then
         echo -e "${BLUE}  ℹ Skipping ${DIR} (source prefix does not exist in S3)${NC}"
@@ -82,7 +82,7 @@ for DIR in "${DIRECTORIES[@]}"; do
     # Count files before sync
     S3_COUNT=$(docker exec $MINIO_CONTAINER mc ls --recursive $S3_ALIAS/$S3_BUCKET/$DIR/ 2>/dev/null | wc -l || echo "0")
     MINIO_COUNT_BEFORE=$(docker exec $MINIO_CONTAINER mc ls --recursive $MINIO_ALIAS/$BUCKET_NAME/$DIR/ 2>/dev/null | wc -l || echo "0")
-    
+
     # Sync from S3 to MinIO (only new/changed files)
     SYNC_OUTPUT=$(docker exec $MINIO_CONTAINER mc mirror \
         --overwrite=false \
@@ -95,11 +95,11 @@ for DIR in "${DIRECTORIES[@]}"; do
         TOTAL_FAILED=$((TOTAL_FAILED + 1))
         continue
     }
-    
+
     # Count files after sync
     MINIO_COUNT_AFTER=$(docker exec $MINIO_CONTAINER mc ls --recursive $MINIO_ALIAS/$BUCKET_NAME/$DIR/ 2>/dev/null | wc -l || echo "0")
     SYNCED_COUNT=$((MINIO_COUNT_AFTER - MINIO_COUNT_BEFORE))
-    
+
     if [ $SYNCED_COUNT -gt 0 ]; then
         echo -e "${GREEN}  ✓ Synced ${SYNCED_COUNT} new files${NC}"
         log "Synced ${SYNCED_COUNT} new files in ${DIR}"
@@ -108,7 +108,7 @@ for DIR in "${DIRECTORIES[@]}"; do
         echo -e "${BLUE}  ℹ No new files to sync${NC}"
         log "No new files in ${DIR}"
     fi
-    
+
     # Show summary
     echo "  S3: ${S3_COUNT} files | MinIO: ${MINIO_COUNT_AFTER} files"
     echo ""
