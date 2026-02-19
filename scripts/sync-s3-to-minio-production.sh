@@ -136,7 +136,7 @@ else
 fi
 echo "  • Log file: ${LOG_FILE}"
 echo ""
-echo "🔄 To set up automatic syncing, add to crontab:"
-echo "   # Sync every 6 hours"
-echo "   0 */6 * * * /root/searchv2/scripts/sync-s3-to-minio-production.sh"
+echo "🔄 To set up automatic syncing (every 6 hours), run:"
+echo "   ./scripts/install-crontab-s3-sync.sh"
+echo "   (Or run 'crontab -e' and paste the line there. Do not paste it at the shell prompt.)"
 echo ""

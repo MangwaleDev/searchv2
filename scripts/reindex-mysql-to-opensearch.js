@@ -299,6 +299,96 @@ class ReindexService {
   }
 
   /**
+   * Get set of current valid item IDs from MySQL (active, approved, valid store)
+   */
+  async getValidItemIds(moduleId) {
+    const [rows] = await this.mysqlPool.query(
+      `SELECT i.id FROM items i
+       INNER JOIN stores s ON i.store_id = s.id
+       WHERE i.module_id = ? AND i.status = 1 AND i.is_approved = 1 AND s.status = 1`,
+      [moduleId]
+    );
+    return new Set(rows.map(r => String(r.id)));
+  }
+
+  /**
+   * Get all document IDs currently in the OpenSearch index (for this module's index)
+   */
+  async getIndexedItemIds(indexName) {
+    const ids = new Set();
+    try {
+      const response = await this.osClient.search({
+        index: indexName,
+        body: {
+          size: 1000,
+          _source: false,
+          query: { match_all: {} },
+        },
+        scroll: '2m',
+      });
+      let scrollId = response.body._scroll_id;
+      let hits = response.body.hits?.hits || [];
+      while (hits.length > 0) {
+        hits.forEach(hit => ids.add(String(hit._id)));
+        if (!scrollId || hits.length < 1000) break;
+        const scrollRes = await this.osClient.scroll({ scroll_id: scrollId, scroll: '2m' });
+        hits = scrollRes.body.hits?.hits || [];
+        scrollId = scrollRes.body._scroll_id;
+      }
+    } catch (e) {
+      if (e.meta?.body?.error?.type !== 'index_not_found_exception') {
+        this.logger.warn(`Could not scroll index ${indexName}: ${e.message}`);
+      }
+    }
+    return ids;
+  }
+
+  /**
+   * Bulk delete documents by ID from OpenSearch (removes deleted/inactive items)
+   */
+  async bulkDeleteFromIndex(indexName, ids) {
+    if (ids.length === 0) return { deleted: 0, failed: 0 };
+    const body = ids.flatMap(id => [
+      { delete: { _index: indexName, _id: id } },
+    ]);
+    try {
+      const response = await this.osClient.bulk({ body, refresh: true });
+      if (response.body.errors) {
+        const failed = response.body.items.filter(i => i.delete?.error).length;
+        const deleted = ids.length - failed;
+        return { deleted, failed };
+      }
+      return { deleted: ids.length, failed: 0 };
+    } catch (error) {
+      this.logger.error(`Bulk delete error: ${error.message}`);
+      return { deleted: 0, failed: ids.length };
+    }
+  }
+
+  /**
+   * Remove from OpenSearch any items that are no longer valid in DB (deleted, inactive, unapproved)
+   */
+  async removeDeletedItems(indexName, moduleId) {
+    this.logger.log(`Removing deleted/inactive items from ${indexName}...`);
+    const validIds = await this.getValidItemIds(moduleId);
+    const indexedIds = await this.getIndexedItemIds(indexName);
+    const toDelete = [...indexedIds].filter(id => !validIds.has(id));
+    if (toDelete.length === 0) {
+      this.logger.log(`No stale documents to remove.`);
+      return { deleted: 0 };
+    }
+    this.logger.log(`Removing ${toDelete.length} stale document(s) (deleted/inactive in DB).`);
+    let totalDeleted = 0;
+    for (let i = 0; i < toDelete.length; i += CHUNK_SIZE) {
+      const chunk = toDelete.slice(i, i + CHUNK_SIZE);
+      const result = await this.bulkDeleteFromIndex(indexName, chunk);
+      totalDeleted += result.deleted;
+    }
+    this.logger.success(`Removed ${totalDeleted} deleted/inactive items from ${indexName}`);
+    return { deleted: totalDeleted };
+  }
+
+  /**
    * Bulk index items to OpenSearch
    */
   async bulkIndexItems(items, indexName) {
@@ -403,8 +493,11 @@ class ReindexService {
       this.logger.log(`Progress: ${progress}/${totalItems} (${((progress/totalItems)*100).toFixed(1)}%) - Indexed: ${totalIndexed}, Failed: ${totalFailed}`);
     }
 
-    this.logger.success(`Completed ${module.name} reindex: ${totalIndexed} indexed, ${totalFailed} failed`);
-    return { indexed: totalIndexed, failed: totalFailed };
+    // Remove from OpenSearch any items that are deleted/inactive in DB (so they don't show in search)
+    const { deleted: removed } = await this.removeDeletedItems(indexName, module.id);
+
+    this.logger.success(`Completed ${module.name} reindex: ${totalIndexed} indexed, ${totalFailed} failed, ${removed} deleted items removed`);
+    return { indexed: totalIndexed, failed: totalFailed, removed };
   }
 
   /**

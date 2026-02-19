@@ -47,11 +47,10 @@ export class ImageService {
   };
   
   // Working image date ranges (images available in storage)
-  // MinIO: 2025-03-23 to 2026-01-04 (12,089 images synced)
+  // MinIO: kept wide so S3→MinIO synced images (including 2026+) are used
   // S3: Not accessible (403 errors)
-  // Images from 2024 and earlier are NOT in MinIO storage
   private readonly workingDateRanges = {
-    minio: { start: '2025-03', end: '2026-01' }, // Only 2025 images available
+    minio: { start: '2025-01', end: '2027-12' },
     s3: { start: '2099-01', end: '2099-01' }, // S3 not accessible
   };
 
@@ -250,27 +249,48 @@ export class ImageService {
       transformed.veg = isVeg ? 1 : 0;
     }
     
-    // Main image - use smart URL generation
+    // Main image - use smart URL generation with cache-bust so updated images show
     if (item.image) {
       const smartUrl = this.getSmartImageUrl(item.image, 'product');
-      transformed.image_full_url = smartUrl.primary;
-      transformed.image_fallback_url = smartUrl.fallback;
+      const cacheBust = this.getCacheBustValue(item.updated_at, item.id);
+      transformed.image_full_url = smartUrl.primary ? this.appendCacheBust(smartUrl.primary, cacheBust) : smartUrl.primary;
+      transformed.image_fallback_url = smartUrl.fallback ? this.appendCacheBust(smartUrl.fallback, cacheBust) : smartUrl.fallback;
       transformed.image_status = smartUrl.status;
     }
-    
-    // Additional images array
+
+    // Additional images array (with cache-bust so updated images show)
     if (item.images && Array.isArray(item.images)) {
+      const cacheBust = this.getCacheBustValue(item.updated_at, item.id);
       transformed.images_full_url = item.images.map((img: any) => {
+        let primary: string | null = null;
         if (typeof img === 'string') {
-          return this.getSmartImageUrl(img, 'product').primary;
+          primary = this.getSmartImageUrl(img, 'product').primary;
         } else if (img && typeof img === 'object') {
-          return this.getSmartImageUrl(img.img, 'product').primary;
+          primary = this.getSmartImageUrl(img.img, 'product').primary;
         }
-        return null;
+        return primary ? this.appendCacheBust(primary, cacheBust) : null;
       }).filter(Boolean);
     }
-    
+
     return transformed;
+  }
+
+  /** Cache-bust value from updated_at (or id) so browsers/CDN fetch updated images */
+  private getCacheBustValue(updatedAt: unknown, id: unknown): string {
+    if (updatedAt) {
+      let t = NaN;
+      if (typeof updatedAt === 'string') t = new Date(updatedAt).getTime();
+      else if (updatedAt instanceof Date) t = updatedAt.getTime();
+      else t = Number(updatedAt);
+      if (!isNaN(t)) return String(Math.floor(t / 1000));
+    }
+    return id != null ? String(id) : '';
+  }
+
+  private appendCacheBust(url: string, cacheBust: string): string {
+    if (!cacheBust) return url;
+    const sep = url.includes('?') ? '&' : '?';
+    return `${url}${sep}v=${cacheBust}`;
   }
 
   /**
@@ -279,31 +299,32 @@ export class ImageService {
    */
   transformStoreImages(store: Record<string, any>): Record<string, any> {
     if (!store) return store;
-    
+
     const transformed = { ...store };
-    
-    // Logo - use smart URL generation
+    const cacheBust = this.getCacheBustValue(store.updated_at, store.id);
+
+    // Logo - use smart URL generation with cache-bust
     if (store.logo) {
       const smartUrl = this.getSmartImageUrl(store.logo, 'store_logo');
-      transformed.logo_full_url = smartUrl.primary;
-      transformed.logo_fallback_url = smartUrl.fallback;
+      transformed.logo_full_url = smartUrl.primary ? this.appendCacheBust(smartUrl.primary, cacheBust) : smartUrl.primary;
+      transformed.logo_fallback_url = smartUrl.fallback ? this.appendCacheBust(smartUrl.fallback, cacheBust) : smartUrl.fallback;
       transformed.logo_status = smartUrl.status;
     }
-    
-    // Cover photo - use smart URL generation
+
+    // Cover photo - use smart URL generation with cache-bust
     if (store.cover_photo) {
       const smartUrl = this.getSmartImageUrl(store.cover_photo, 'cover_photo');
-      transformed.cover_photo_full_url = smartUrl.primary;
-      transformed.cover_photo_fallback_url = smartUrl.fallback;
+      transformed.cover_photo_full_url = smartUrl.primary ? this.appendCacheBust(smartUrl.primary, cacheBust) : smartUrl.primary;
+      transformed.cover_photo_fallback_url = smartUrl.fallback ? this.appendCacheBust(smartUrl.fallback, cacheBust) : smartUrl.fallback;
       transformed.cover_photo_status = smartUrl.status;
     }
-    
+
     // Sometimes stores also have an image field
     if (store.image) {
       const smartUrl = this.getSmartImageUrl(store.image, 'store');
-      transformed.image_full_url = smartUrl.primary;
+      transformed.image_full_url = smartUrl.primary ? this.appendCacheBust(smartUrl.primary, cacheBust) : smartUrl.primary;
     }
-    
+
     return transformed;
   }
 
@@ -313,16 +334,17 @@ export class ImageService {
    */
   transformCategoryImages(category: Record<string, any>): Record<string, any> {
     if (!category) return category;
-    
+
     const transformed = { ...category };
-    
+    const cacheBust = this.getCacheBustValue(category.updated_at, category.id);
+
     if (category.image) {
       const smartUrl = this.getSmartImageUrl(category.image, 'category');
-      transformed.image_full_url = smartUrl.primary;
-      transformed.image_fallback_url = smartUrl.fallback;
+      transformed.image_full_url = smartUrl.primary ? this.appendCacheBust(smartUrl.primary, cacheBust) : smartUrl.primary;
+      transformed.image_fallback_url = smartUrl.fallback ? this.appendCacheBust(smartUrl.fallback, cacheBust) : smartUrl.fallback;
       transformed.image_status = smartUrl.status;
     }
-    
+
     return transformed;
   }
 
