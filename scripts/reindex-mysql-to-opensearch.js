@@ -287,13 +287,17 @@ class ReindexService {
       }
     });
 
-    // Add available time
-    if (item.available_time_starts !== null) {
-      transformed.available_time_starts = Number(item.available_time_starts);
-    }
-    if (item.available_time_ends !== null) {
-      transformed.available_time_ends = Number(item.available_time_ends);
-    }
+    // Add available time - store as HH:mm (per SEARCH_API_RESPONSE_FORMAT.md) or number (ms)
+    const normTime = (v) => {
+      if (v == null) return null;
+      if (typeof v === 'string' && /^\d{1,2}:\d{2}/.test(v)) return v.substring(0, 5); // "10:00:00" -> "10:00"
+      const n = Number(v);
+      return !isNaN(n) ? n : null;
+    };
+    const st = normTime(item.available_time_starts);
+    const en = normTime(item.available_time_ends);
+    if (st != null) transformed.available_time_starts = st;
+    if (en != null) transformed.available_time_ends = en;
 
     return transformed;
   }

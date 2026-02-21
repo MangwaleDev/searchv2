@@ -244,7 +244,7 @@ export class SearchService {
       const hits = response.body.hits.hits || [];
       
       // Separate stores and items
-      const stores = hits
+      let stores = hits
         .filter((h: any) => h._index === storesIndex)
         .slice(0, 20) // Top 20 stores
         .map((h: any) => {
@@ -252,15 +252,49 @@ export class SearchService {
           return {
             id: store.id,
             name: store.name,
+            description: store.description,
             logo: store.logo,
             logo_url: store.logo_full_url,
             logo_full_url: store.logo_full_url,
+            image_full_url: store.logo_full_url,
             cover_photo: store.cover_photo,
             cover_url: store.cover_full_url,
-            rating: store.rating || 0,
-            distance: store.distance
+            cover_photo_full_url: store.cover_photo_full_url,
+            address: store.address,
+            latitude: store.latitude,
+            longitude: store.longitude,
+            location: store.location,
+            minimum_order: store.minimum_order ?? 0,
+            delivery_time: store.delivery_time,
+            rating: store.rating || store.avg_rating || 0,
+            avg_rating: store.avg_rating || store.rating || 0,
+            rating_count: store.rating_count,
+            order_count: store.order_count,
+            distance: store.distance,
+            active: store.active,
+            status: store.status,
+            veg: store.veg,
+            non_veg: store.non_veg,
+            featured: store.featured,
+            zone_id: store.zone_id,
+            module_id: store.module_id
           };
         });
+
+      // Fetch schedules and attach to stores (per SEARCH_API_RESPONSE_FORMAT.md)
+      const storeIds = stores.map((s: any) => String(s.id));
+      if (storeIds.length > 0) {
+        try {
+          const schedulesByStore = await this.fetchStoreSchedules(storeIds);
+          stores.forEach((store: any) => {
+            const sched = schedulesByStore.get(String(store.id));
+            if (sched) store.schedule = sched;
+          });
+        } catch (err: any) {
+          this.logger.warn(`[searchWithStoreBoosting] Failed to fetch store schedules: ${err?.message || err}`);
+        }
+      }
+      stores = stores.map((s: any) => this.formatStoreForApiResponse(s));
 
       // Get all store IDs from items to lookup store names
       const itemStoreIds = [...new Set(
@@ -376,11 +410,26 @@ export class SearchService {
               name: item.store_name,
               logo_url: item.logo_url || null,
               rating: item.rating || 0,
-              distance: item.distance || null
+              distance: item.distance || null,
+              minimum_order: 0,
+              active: 1
             });
           }
         });
-        finalStores = Array.from(storeMap.values()).slice(0, 20);
+        const extractedStores = Array.from(storeMap.values()).slice(0, 20);
+        const extIds = extractedStores.map((s: any) => String(s.id));
+        if (extIds.length > 0) {
+          try {
+            const schedByStore = await this.fetchStoreSchedules(extIds);
+            extractedStores.forEach((s: any) => {
+              const sched = schedByStore.get(String(s.id));
+              if (sched) s.schedule = sched;
+            });
+          } catch (_) {}
+          finalStores = extractedStores.map((s: any) => this.formatStoreForApiResponse(s));
+        } else {
+          finalStores = extractedStores;
+        }
         this.logger.log(`🏪 Extracted ${finalStores.length} stores from ${validItems.length} items for query "${q}"`);
       }
 
@@ -705,24 +754,32 @@ export class SearchService {
           database: this.config.get<string>('MYSQL_DATABASE'),
         });
 
+        // Use parameterized query for safety
+        const placeholders = storeIdsToFetch.map(() => '?').join(',');
         const [rows] = await connection.execute(
-          `SELECT store_id, day, opening_time, closing_time 
+          `SELECT id, store_id, day, opening_time, closing_time 
            FROM store_schedule 
-           WHERE store_id IN (${storeIdsToFetch.join(',')})`
+           WHERE store_id IN (${placeholders})`,
+          storeIdsToFetch
         );
 
         await connection.end();
 
-        // Group by store_id and cache
+        this.logger.debug(`[fetchStoreSchedules] Fetched ${(rows as any[]).length} schedule rows for ${storeIdsToFetch.length} stores (IDs: ${storeIdsToFetch.join(', ')})`);
+
+        // Group by store_id and cache. Keep day 0-6 (0=Sun) for getStoreTimingStatus.
+        // opening_time, closing_time: HH:mm (24-hour) per SEARCH_API_RESPONSE_FORMAT.md
         (rows as any[]).forEach((row: any) => {
           const storeId = String(row.store_id);
           if (!schedulesByStore.has(storeId)) {
             schedulesByStore.set(storeId, []);
           }
           schedulesByStore.get(storeId)!.push({
+            id: row.id,
+            store_id: Number(row.store_id),
             day: row.day,
-            opening_time: row.opening_time,
-            closing_time: row.closing_time
+            opening_time: this.normalizeTimeToHHmm(row.opening_time),
+            closing_time: this.normalizeTimeToHHmm(row.closing_time)
           });
         });
 
@@ -741,6 +798,52 @@ export class SearchService {
     }
 
     return schedulesByStore;
+  }
+
+  /**
+   * Format store for API response per SEARCH_API_RESPONSE_FORMAT.md
+   * Adds open, active, schedules with opening_time/closing_time in HH:mm
+   */
+  private formatStoreForApiResponse(store: any): any {
+    const timingInfo = this.getStoreTimingStatus(store);
+    const open = timingInfo.isOpen ? 1 : 0;
+    const active = store.active !== undefined && store.active !== null
+      ? (store.active ? 1 : 0)
+      : 1;
+    // Doc format: day 1=Monday ... 7=Sunday (internal uses 0=Sun, 1=Mon, ... 6=Sat)
+    const schedules = (Array.isArray(store.schedule) ? store.schedule : []).map((s: any) => ({
+      id: s.id,
+      store_id: s.store_id,
+      day: s.day === 0 ? 7 : s.day,
+      opening_time: s.opening_time,
+      closing_time: s.closing_time
+    }));
+    return {
+      ...store,
+      open,
+      active,
+      schedules,
+      timing_status: timingInfo.status,
+      timing_message: timingInfo.message,
+      is_open: timingInfo.isOpen,
+      ...(timingInfo.minutesRemaining !== undefined && { minutes_until_closing: timingInfo.minutesRemaining })
+    };
+  }
+
+  /**
+   * Normalize MySQL TIME or string to HH:mm format (24-hour)
+   * Handles "09:00:00", "09:00:00.000000", "09:00", etc.
+   */
+  private normalizeTimeToHHmm(value: any): string {
+    if (!value && value !== 0) return '00:00';
+    const str = typeof value === 'string' ? value : String(value);
+    const match = str.match(/^(\d{1,2}):(\d{2})/);
+    if (match) {
+      const h = match[1].padStart(2, '0');
+      const m = match[2].padStart(2, '0');
+      return `${h}:${m}`;
+    }
+    return '00:00';
   }
 
   /**
@@ -919,31 +1022,19 @@ export class SearchService {
     // Currently open - calculate minutes until closing
     const minutesUntilClosing = currentSlot!.closing - currentTimeMinutes;
     
-    if (minutesUntilClosing <= 10) {
-      return {
-        status: 'closing_very_soon',
-        message: `Closing in ${minutesUntilClosing} min`,
-        minutesRemaining: minutesUntilClosing,
-        isOpen: true
-      };
-    } else if (minutesUntilClosing <= 30) {
+    // Show "Closes at" if closing within 1 hour (60 minutes)
+    if (minutesUntilClosing <= 60) {
       return {
         status: 'closing_soon',
-        message: `Closing in ${minutesUntilClosing} min`,
-        minutesRemaining: minutesUntilClosing,
-        isOpen: true
-      };
-    } else if (minutesUntilClosing <= 60) {
-      return {
-        status: 'open',
         message: `Closes at ${formatTime(currentSlot!.closing)}`,
         minutesRemaining: minutesUntilClosing,
         isOpen: true
       };
     } else {
+      // Open and closing in more than 1 hour - no timing message needed
       return {
         status: 'open',
-        message: `Open until ${formatTime(currentSlot!.closing)}`,
+        message: `Open`,
         minutesRemaining: minutesUntilClosing,
         isOpen: true
       };
@@ -2004,6 +2095,8 @@ export class SearchService {
             store.timing_status = timingInfo.status;
             store.timing_message = timingInfo.message;
             store.is_open = timingInfo.isOpen;
+            store.open = timingInfo.isOpen ? 1 : 0;
+            store.schedules = Array.isArray(store.schedule) ? store.schedule : [];
             if (timingInfo.minutesRemaining !== undefined) {
               store.minutes_until_closing = timingInfo.minutesRemaining;
             }
@@ -5503,16 +5596,8 @@ export class SearchService {
       }
     }
 
-    // Add timing status to each store BEFORE image transformation
-    stores.forEach((store: any) => {
-      const timingInfo = this.getStoreTimingStatus(store);
-      store.timing_status = timingInfo.status;
-      store.timing_message = timingInfo.message;
-      store.is_open = timingInfo.isOpen;
-      if (timingInfo.minutesRemaining !== undefined) {
-        store.minutes_until_closing = timingInfo.minutesRemaining;
-      }
-    });
+    // Add open, active, schedules per SEARCH_API_RESPONSE_FORMAT.md
+    stores = stores.map((store: any) => this.formatStoreForApiResponse(store));
 
     // Populate store_name for items that don't have it (indexing issue - some items missing store_name)
     const itemStoreIds = [...new Set(items.map((item: any) => String(item.store_id)).filter(Boolean))];
@@ -7406,6 +7491,15 @@ export class SearchService {
                 store.timing_status = timingInfo.status;
                 store.timing_message = timingInfo.message;
                 store.is_open = timingInfo.isOpen;
+                store.open = timingInfo.isOpen ? 1 : 0;
+                // Convert day 0 (Sunday) to day 7 per API spec
+                store.schedules = (Array.isArray(store.schedule) ? store.schedule : []).map((s: any) => ({
+                  id: s.id,
+                  store_id: s.store_id,
+                  day: s.day === 0 ? 7 : s.day,
+                  opening_time: s.opening_time,
+                  closing_time: s.closing_time
+                }));
                 if (timingInfo.minutesRemaining !== undefined) {
                   store.minutes_until_closing = timingInfo.minutesRemaining;
                 }
@@ -9138,20 +9232,8 @@ export class SearchService {
       }
     }
 
-    // Add timing status to paginated stores
-    paginatedStores.forEach((store: any) => {
-      const timingInfo = this.getStoreTimingStatus(store);
-      store.timing_status = timingInfo.status;
-      store.timing_message = timingInfo.message;
-      store.is_open = timingInfo.isOpen;
-      if (timingInfo.minutesRemaining !== undefined) {
-        store.minutes_until_closing = timingInfo.minutesRemaining;
-      }
-      // Debug: Log the assignment for store 228
-      if (store.id === 228 || store.store_id === 228) {
-        this.logger.debug(`[AFTER ASSIGNMENT] Store 228 timing_message: "${store.timing_message}"`);
-      }
-    });
+    // Add open, active, schedules per SEARCH_API_RESPONSE_FORMAT.md
+    const formattedStores = paginatedStores.map((store: any) => this.formatStoreForApiResponse(store));
 
     // Log analytics
     this.analytics.logSearch({
@@ -9169,7 +9251,7 @@ export class SearchService {
     const response = {
       q,
       filters,
-      stores: this.imageService.transformStoresWithImages(paginatedStores),
+      stores: this.imageService.transformStoresWithImages(formattedStores),
       meta: {
         total: totalHits,
         page,
@@ -9179,7 +9261,7 @@ export class SearchService {
       },
     };
 
-    this.logger.log(`[searchStoresByModule] END: Returning ${paginatedStores.length} stores (page ${page}/${Math.ceil(totalHits / size)}, total: ${totalHits})`);
+    this.logger.log(`[searchStoresByModule] END: Returning ${formattedStores.length} stores (page ${page}/${Math.ceil(totalHits / size)}, total: ${totalHits})`);
     
     // Cache results if enabled
     if (this.cacheEnabled) {
