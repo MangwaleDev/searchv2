@@ -464,6 +464,30 @@ export class SearchService {
    * NEW: Uses multi-index boosting by default (Option B) - no hardcoded brands needed
    */
   async searchItemsByIntent(q: string, filters: Record<string, any>) {
+    const applyStoreTimingToItems = async (items: any[]): Promise<any[]> => {
+      if (!items || items.length === 0) return items;
+      const storeIds = [...new Set(items.map(item => item.store_id).filter(Boolean))];
+      if (storeIds.length === 0) return items;
+      const storeDetails = await this.getStoreDetails(storeIds, 'all');
+      const schedulesByStore = await this.fetchStoreSchedules(storeIds.map(id => String(id)));
+
+      return items.map(item => {
+        const storeIdStr = item.store_id ? String(item.store_id) : null;
+        const schedule = storeIdStr ? schedulesByStore.get(storeIdStr) : undefined;
+        const storeDetail = storeIdStr ? storeDetails[storeIdStr] : undefined;
+        const timingInfo = schedule
+          ? this.getStoreTimingStatus({ schedule, off_day: storeDetail?.off_day })
+          : { status: '', message: '', isOpen: true };
+
+        return {
+          ...item,
+          timing_status: timingInfo.status,
+          timing_message: timingInfo.message,
+          is_open: timingInfo.isOpen,
+          open: timingInfo.isOpen ? 1 : 0,
+        };
+      });
+    };
     // Respect explicit store filter from caller; no intent parsing needed
     if (filters?.store_id) {
       return this.searchItemsByModule(q, filters);
@@ -477,6 +501,7 @@ export class SearchService {
         // Ensure cached response has items (not stores) - safety check
         if (cached.items && !cached.stores) {
           this.logger.debug(`[searchItemsByIntent] Cache HIT: q="${q}"`);
+          cached.items = await applyStoreTimingToItems(cached.items);
           return cached;
         } else if (cached.stores && !cached.items) {
           // Old cached response with stores - skip it and regenerate
@@ -485,6 +510,7 @@ export class SearchService {
         } else {
           // Valid cache entry
           this.logger.debug(`[searchItemsByIntent] Cache HIT: q="${q}"`);
+          cached.items = await applyStoreTimingToItems(cached.items || []);
           return cached;
         }
       }
@@ -495,12 +521,13 @@ export class SearchService {
     // OpenSearch automatically ranks stores higher (10x boost)
     if (q && q.trim()) {
       const result = await this.searchWithStoreBoosting(q, filters);
+      const itemsWithTiming = await applyStoreTimingToItems(result.items || []);
       // For /v2/search/items endpoint, only return items (not stores)
       // Flutter expects response to have "items" key, not "stores"
       const transformedResponse = {
         q: result.query || q,
         filters: result.filters || filters,
-        items: result.items || [],
+        items: itemsWithTiming,
         resolved_store: result.stores?.[0] || null, // Keep first store for reference if needed
         meta: {
           total: result.meta?.total_items || result.meta?.total || 0,
@@ -1034,7 +1061,7 @@ export class SearchService {
       // Open and closing in more than 1 hour - no timing message needed
       return {
         status: 'open',
-        message: `Open`,
+        message: ``,
         minutesRemaining: minutesUntilClosing,
         isOpen: true
       };
@@ -6224,9 +6251,13 @@ export class SearchService {
         }
         allItems = allItems.slice(from, from + size);
 
-        // Get store names
+        // Get store names, details, and schedules for timing
         const storeIds = [...new Set(allItems.map(item => item.store_id).filter(Boolean))];
         const storeNames = await this.getStoreNames(storeIds, 'all'); // Search all store indices
+        const storeDetails = await this.getStoreDetails(storeIds, 'all');
+        const schedulesByStore = storeIds.length > 0
+          ? await this.fetchStoreSchedules(storeIds.map(id => String(id)))
+          : new Map<string, any[]>();
 
         const items = allItems.map(item => {
           // Remove _source and _score fields if they exist (shouldn't be in response)
@@ -6240,9 +6271,20 @@ export class SearchService {
           if (!storeName && cleanItem.store_id) {
             storeName = storeNames[String(cleanItem.store_id)] || storeNames[cleanItem.store_id] || null;
           }
+          const storeIdStr = cleanItem.store_id ? String(cleanItem.store_id) : null;
+          const schedule = storeIdStr ? schedulesByStore.get(storeIdStr) : undefined;
+          const storeDetail = storeIdStr ? storeDetails[storeIdStr] : undefined;
+          const timingInfo = schedule
+            ? this.getStoreTimingStatus({ schedule, off_day: storeDetail?.off_day })
+            : { status: '', message: '', isOpen: true };
+
           return {
             ...cleanItem,
             store_name: storeName || null, // Explicitly set to null if missing
+            timing_status: timingInfo.status,
+            timing_message: timingInfo.message,
+            is_open: timingInfo.isOpen,
+            open: timingInfo.isOpen ? 1 : 0,
           };
         });
 
@@ -7113,9 +7155,13 @@ export class SearchService {
           
           this.logger.debug(`[searchItemsByModule] Returning ${fallbackItems.length} fallback items after pagination`);
           
-          // Get store names
+          // Get store names, details, and schedules for timing
           const fallbackStoreIds = [...new Set(fallbackItems.map(item => item.store_id).filter(Boolean))];
           const fallbackStoreNames = await this.getStoreNames(fallbackStoreIds, 'all');
+          const fallbackStoreDetails = await this.getStoreDetails(fallbackStoreIds, 'all');
+          const fallbackSchedulesByStore = fallbackStoreIds.length > 0
+            ? await this.fetchStoreSchedules(fallbackStoreIds.map(id => String(id)))
+            : new Map<string, any[]>();
           
           const items = fallbackItems.map(item => {
             // Remove _source and _score fields if they exist (shouldn't be in response)
@@ -7138,9 +7184,20 @@ export class SearchService {
               cleanItem.available_time_ends = this.convertMillisecondsToTime(cleanItem.available_time_ends);
             }
             
+            const storeIdStr = cleanItem.store_id ? String(cleanItem.store_id) : null;
+            const schedule = storeIdStr ? fallbackSchedulesByStore.get(storeIdStr) : undefined;
+            const storeDetail = storeIdStr ? fallbackStoreDetails[storeIdStr] : undefined;
+            const timingInfo = schedule
+              ? this.getStoreTimingStatus({ schedule, off_day: storeDetail?.off_day })
+              : { status: '', message: '', isOpen: true };
+
             return {
               ...cleanItem,
               store_name: storeName || null, // Explicitly set to null if missing
+              timing_status: timingInfo.status,
+              timing_message: timingInfo.message,
+              is_open: timingInfo.isOpen,
+              open: timingInfo.isOpen ? 1 : 0,
             };
           });
           
@@ -7206,6 +7263,9 @@ export class SearchService {
     const storeIds = [...new Set(allItems.map(item => item.store_id).filter(Boolean))];
     const storeNames = await this.getStoreNames(storeIds, 'all'); // Search all store indices
     const storeDetails = await this.getStoreDetails(storeIds, 'all'); // Get store locations
+    const schedulesByStore = storeIds.length > 0
+      ? await this.fetchStoreSchedules(storeIds.map(id => String(id)))
+      : new Map<string, any[]>();
 
     const items = allItems.map(item => {
       let distanceKm = item.distance_km;
@@ -7286,12 +7346,23 @@ export class SearchService {
         }
       }
       
+      const storeIdStr = cleanItem.store_id ? String(cleanItem.store_id) : null;
+      const schedule = storeIdStr ? schedulesByStore.get(storeIdStr) : undefined;
+      const storeDetailForTiming = storeIdStr ? storeDetails[storeIdStr] : undefined;
+      const timingInfo = schedule
+        ? this.getStoreTimingStatus({ schedule, off_day: storeDetailForTiming?.off_day })
+        : { status: '', message: '', isOpen: true };
+
       return {
         ...cleanItem,
         distance: distanceKm, // Flutter expects 'distance' field
         distance_km: distanceKm, // Keep for backward compatibility
         store_name: storeName || null, // Explicitly set to null if missing
         delivery_time: deliveryTime || null, // Ensure delivery_time is present
+        timing_status: timingInfo.status,
+        timing_message: timingInfo.message,
+        is_open: timingInfo.isOpen,
+        open: timingInfo.isOpen ? 1 : 0,
       };
     });
 
@@ -7700,8 +7771,21 @@ export class SearchService {
 
     // Status filters - Only show active AND approved stores
     filterClauses.push({ term: { status: 1 } });  // status=1 means active
-    filterClauses.push({ term: { active: 1 } });  // active=1 means approved
-    this.logger.debug(`[searchStoresByModule] Applied status=1, active=1 filter`);
+    if (q && q.trim()) {
+      filterClauses.push({
+        bool: {
+          should: [
+            { term: { active: 1 } },
+            { term: { 'name.keyword': { value: q, case_insensitive: true } } }
+          ],
+          minimum_should_match: 1
+        }
+      });
+      this.logger.debug(`[searchStoresByModule] Applied status=1 and active=1-or-exact-name filter`);
+    } else {
+      filterClauses.push({ term: { active: 1 } });  // active=1 means approved
+      this.logger.debug(`[searchStoresByModule] Applied status=1, active=1 filter`);
+    }
 
     // Veg/Non-Veg filter
     const vegFilter = filters?.veg;
